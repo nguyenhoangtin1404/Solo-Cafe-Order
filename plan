@@ -1,0 +1,516 @@
+# Solo Cafe Order — Project Plan
+
+## 1. Project Overview
+
+Ứng dụng web/PWA dành cho quán cafe take-away nhỏ, tối ưu cho mô hình:
+
+- 1 người vận hành
+- ít nhân sự
+- order nhanh
+- giảm overload khi đông khách
+- không cần POS enterprise phức tạp
+
+Core flow:
+
+```txt
+Khách scan QR
+→ xem menu
+→ chọn món
+→ gửi order
+→ chủ quán nhận realtime
+→ pha chế
+→ hoàn thành
+```
+
+---
+
+# 2. Goals
+
+## Business Goals
+
+- Giảm thời gian nhận order
+- Giảm sai món
+- Giảm context switching
+- Tăng tốc độ phục vụ
+- Tạo trải nghiệm hiện đại
+- Dễ mở rộng loyalty/gamification sau này
+
+## Technical Goals
+
+- Build nhanh
+- Dễ maintain
+- Dễ scale vừa phải
+- Mobile-first
+- Realtime
+- Không over-engineering
+
+---
+
+# 3. Recommended Stack
+
+## Frontend
+
+- Next.js
+- TypeScript
+- TailwindCSS
+- shadcn/ui
+
+## Backend
+
+- Supabase
+
+## Database
+
+- PostgreSQL (Supabase)
+
+## Realtime
+
+- Supabase Realtime
+
+## Storage
+
+- Supabase Storage
+
+## Deployment
+
+- Vercel
+
+## Analytics
+
+- Posthog
+
+## Payment (Future)
+
+- VietQR
+- Momo
+- VNPay
+
+---
+
+# 4. Repository Name Suggestions
+
+```txt
+solo-cafe-order
+mini-cafe-order
+tiny-order-pos
+qr-order-lite
+```
+
+Recommended:
+
+```txt
+solo-cafe-order
+```
+
+---
+
+# 5. Repository Structure
+
+```txt
+solo-cafe-order/
+├─ app/
+│  ├─ menu/
+│  │  └─ page.tsx
+│  ├─ cart/
+│  │  └─ page.tsx
+│  ├─ dashboard/
+│  │  └─ page.tsx
+│  ├─ admin/
+│  │  └─ page.tsx
+│  ├─ api/
+│  └─ layout.tsx
+│
+├─ components/
+│  ├─ menu/
+│  ├─ cart/
+│  ├─ dashboard/
+│  ├─ admin/
+│  └─ ui/
+│
+├─ lib/
+│  ├─ supabase.ts
+│  ├─ constants.ts
+│  ├─ utils.ts
+│  └─ validators.ts
+│
+├─ hooks/
+│
+├─ types/
+│  ├─ product.ts
+│  ├─ order.ts
+│  └─ customer.ts
+│
+├─ supabase/
+│  ├─ schema.sql
+│  ├─ seed.sql
+│  └─ policies.sql
+│
+├─ docs/
+│  ├─ roadmap.md
+│  ├─ architecture.md
+│  ├─ api-flow.md
+│  ├─ database.md
+│  └─ decisions.md
+│
+├─ public/
+│
+├─ .env.example
+├─ README.md
+├─ package.json
+└─ tsconfig.json
+```
+
+---
+
+# 6. Git Branch Strategy
+
+## Main Branches
+
+```txt
+main
+develop
+```
+
+## Feature Branches
+
+```txt
+feature/menu-page
+feature/cart
+feature/realtime-dashboard
+feature/loyalty
+```
+
+## Fix Branches
+
+```txt
+fix/order-status
+fix/mobile-ui
+```
+
+---
+
+# 7. Git Rules
+
+## Commit Rules
+
+Format:
+
+```txt
+feat:
+fix:
+refactor:
+docs:
+style:
+test:
+```
+
+Examples:
+
+```txt
+feat: add qr menu page
+fix: resolve realtime order duplication
+refactor: simplify order state logic
+```
+
+## Rules
+
+- Không commit trực tiếp vào main
+- Feature phải qua PR
+- Mỗi PR nên nhỏ
+- Không merge code chưa test
+- Không push secrets/env
+
+---
+
+# 8. MVP Scope
+
+## Core Features
+
+### Public QR Menu
+
+- Xem menu
+- Ảnh món
+- Giá
+- Category
+- Topping
+- Size
+
+### Cart
+
+- Add/remove item
+- Quantity
+- Note
+
+### Submit Order
+
+- Gửi order
+- Sinh mã đơn
+
+### Dashboard
+
+- Realtime order queue
+- Đổi trạng thái:
+  - new
+  - making
+  - done
+  - cancelled
+
+### Admin
+
+- Bật/tắt món
+- Đổi giá
+- Upload ảnh
+- Đánh dấu hết hàng
+
+---
+
+# 9. Features NOT Needed For MVP
+
+```txt
+- Native mobile app
+- AI recommendation
+- Face emotion detection
+- Multi-store
+- Inventory phức tạp
+- Offline sync
+- ERP
+- Staff management
+- Full accounting
+```
+
+---
+
+# 10. Development Phases
+
+# Phase 1 — QR Menu MVP
+
+## Goal
+
+Khách scan QR và gửi order được.
+
+## Tasks
+
+- Setup project
+- Setup Tailwind
+- Setup Supabase
+- Build menu page
+- Build cart
+- Submit order
+- Build realtime dashboard
+
+---
+
+# Phase 2 — Operations
+
+## Goal
+
+Giảm stress vận hành.
+
+## Tasks
+
+- Order status
+- Product availability
+- Revenue summary
+- Admin panel
+- Mobile optimization
+
+---
+
+# Phase 3 — Loyalty
+
+## Goal
+
+Tăng retention khách hàng.
+
+## Tasks
+
+- Point system
+- Voucher
+- Buy X get Y
+- QR customer rewards
+
+---
+
+# Phase 4 — Gamification
+
+## Goal
+
+Tăng trải nghiệm và viral.
+
+## Tasks
+
+- Lucky wheel
+- Secret menu
+- Reward animation
+- Mini game after order
+
+---
+
+# 11. Database Design
+
+# categories
+
+```sql
+id
+name
+sort_order
+created_at
+```
+
+# products
+
+```sql
+id
+category_id
+name
+description
+price
+image_url
+is_available
+created_at
+```
+
+# product_options
+
+```sql
+id
+product_id
+name
+type
+```
+
+# product_option_values
+
+```sql
+id
+option_id
+name
+extra_price
+```
+
+# orders
+
+```sql
+id
+order_code
+status
+total_amount
+note
+created_at
+```
+
+# order_items
+
+```sql
+id
+order_id
+product_id
+product_name
+quantity
+unit_price
+note
+```
+
+---
+
+# 12. Order Flow
+
+```txt
+Customer scan QR
+→ open menu
+→ select items
+→ submit order
+→ dashboard receive realtime event
+→ owner prepare drink
+→ update status
+→ order complete
+```
+
+---
+
+# 13. UI Principles
+
+## Priorities
+
+- Fast
+- Minimal
+- Mobile-first
+- Large tap targets
+- No login required
+- Few clicks as possible
+
+## Avoid
+
+- Popup spam
+- Complex navigation
+- Slow loading
+- Heavy animation
+- Long forms
+
+---
+
+# 14. Recommended MVP Screens
+
+## Customer
+
+- Menu page
+- Product detail modal
+- Cart
+- Order success page
+
+## Owner
+
+- Dashboard
+- Order queue
+- Admin menu page
+
+---
+
+# 15. Recommended Initial Issues
+
+```txt
+#1 Setup Next.js + Tailwind + Supabase
+#2 Setup database schema
+#3 Create menu page
+#4 Create product card component
+#5 Create cart logic
+#6 Submit order API
+#7 Build realtime dashboard
+#8 Add order status update
+#9 Add product availability toggle
+#10 Add daily revenue summary
+#11 Deploy to Vercel
+```
+
+---
+
+# 16. Recommended Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+---
+
+# 17. Long-Term Vision
+
+Không build POS enterprise.
+
+Mục tiêu:
+
+```txt
+Tiny but delightful ordering system
+for small take-away coffee shops.
+```
+
+Focus:
+
+- Fast UX
+- Fun experience
+- Simple operation
+- Easy maintenance
+- Gamification
+- Loyalty
+- Solo operator friendly
