@@ -15,10 +15,11 @@ Core flow:
 ```txt
 Khách scan QR
 → xem menu
-→ chọn món
+→ chọn món + nhập tên lấy đồ (optional)
 → gửi order
 → chủ quán nhận realtime
 → pha chế
+→ gọi tên / order_code
 → hoàn thành
 ```
 
@@ -28,12 +29,25 @@ Khách scan QR
 
 ## Business Goals
 
-- Giảm thời gian nhận order
-- Giảm sai món
-- Giảm context switching
+- Giảm thời gian nhận order (target: từ 2 phút → dưới 30 giây)
+- Giảm sai món (target: 0 lỗi nhận order)
+- Giảm context switching (owner không cần nghe/ghi tay)
 - Tăng tốc độ phục vụ
 - Tạo trải nghiệm hiện đại
 - Dễ mở rộng loyalty/gamification sau này
+
+## Success Metrics (Phase 1)
+
+- Thời gian từ scan QR → gửi order thành công: < 60 giây
+- Tỷ lệ order thành công / total submit: ≥ 99%
+- Dashboard nhận order realtime: < 2 giây sau khi khách submit
+- Zero duplicate `order_code` under concurrent load
+
+## Business Model (sơ bộ)
+
+- Phase 1-2: free, dùng cho quán của chính mình
+- Phase 3+: SaaS multi-tenant nếu có nhu cầu mở rộng
+- Chi phí vận hành: Supabase Pro (~$25/tháng) + Vercel Hobby (free) → viable từ ngày đầu
 
 ## Technical Goals
 
@@ -50,14 +64,15 @@ Khách scan QR
 
 ## Frontend
 
-- Next.js
-- TypeScript
+- Next.js (App Router)
+- TypeScript (strict mode)
 - TailwindCSS
 - shadcn/ui
 
 ## Backend
 
-- Supabase
+- Supabase (BaaS)
+- Next.js API Routes
 
 ## Database
 
@@ -75,6 +90,10 @@ Khách scan QR
 
 - Vercel
 
+## Rate Limiting
+
+- Upstash Redis + `@upstash/ratelimit` — bảo vệ public API endpoints
+
 ## Analytics
 
 - Posthog
@@ -87,24 +106,7 @@ Khách scan QR
 
 ---
 
-# 4. Repository Name Suggestions
-
-```txt
-solo-cafe-order
-mini-cafe-order
-tiny-order-pos
-qr-order-lite
-```
-
-Recommended:
-
-```txt
-solo-cafe-order
-```
-
----
-
-# 5. Repository Structure
+# 4. Repository Structure
 
 ```txt
 solo-cafe-order/
@@ -113,9 +115,13 @@ solo-cafe-order/
 │  │  └─ page.tsx
 │  ├─ cart/
 │  │  └─ page.tsx
+│  ├─ order-success/
+│  │  └─ page.tsx
 │  ├─ dashboard/
 │  │  └─ page.tsx
 │  ├─ admin/
+│  │  └─ page.tsx
+│  ├─ login/
 │  │  └─ page.tsx
 │  ├─ api/
 │  └─ layout.tsx
@@ -129,6 +135,8 @@ solo-cafe-order/
 │
 ├─ lib/
 │  ├─ supabase.ts
+│  ├─ services/
+│  ├─ repositories/
 │  ├─ constants.ts
 │  ├─ utils.ts
 │  └─ validators.ts
@@ -141,19 +149,22 @@ solo-cafe-order/
 │  └─ customer.ts
 │
 ├─ supabase/
-│  ├─ schema.sql
+│  ├─ migrations/
 │  ├─ seed.sql
 │  └─ policies.sql
 │
 ├─ docs/
-│  ├─ roadmap.md
-│  ├─ architecture.md
-│  ├─ api-flow.md
-│  ├─ database.md
-│  └─ decisions.md
+│  ├─ ROADMAP.md
+│  ├─ ARCHITECTURE.md
+│  ├─ DB_SCHEMA.md
+│  ├─ DOMAIN.md
+│  ├─ API_CONTRACT.md
+│  ├─ ERROR_HANDLING.md
+│  ├─ ENV.md
+│  ├─ AI_RULES.md
+│  └─ PROMPT_TEMPLATE.md
 │
-├─ public/
-│
+├─ middleware.ts
 ├─ .env.example
 ├─ README.md
 ├─ package.json
@@ -162,7 +173,7 @@ solo-cafe-order/
 
 ---
 
-# 6. Git Branch Strategy
+# 5. Git Branch Strategy
 
 ## Main Branches
 
@@ -189,11 +200,9 @@ fix/mobile-ui
 
 ---
 
-# 7. Git Rules
+# 6. Git Rules
 
-## Commit Rules
-
-Format:
+## Commit Format
 
 ```txt
 feat:
@@ -202,14 +211,6 @@ refactor:
 docs:
 style:
 test:
-```
-
-Examples:
-
-```txt
-feat: add qr menu page
-fix: resolve realtime order duplication
-refactor: simplify order state logic
 ```
 
 ## Rules
@@ -222,49 +223,45 @@ refactor: simplify order state logic
 
 ---
 
-# 8. MVP Scope
+# 7. MVP Scope
 
 ## Core Features
 
 ### Public QR Menu
 
-- Xem menu
-- Ảnh món
-- Giá
-- Category
-- Topping
-- Size
+- Xem menu, ảnh, giá, category
+- Topping + Size options
+- Empty state khi tất cả món hết hàng
 
 ### Cart
 
-- Add/remove item
-- Quantity
-- Note
+- Add/remove item, quantity, note từng món
+- Empty state khi cart trống
+- Validate lại availability khi submit
 
 ### Submit Order
 
-- Gửi order
-- Sinh mã đơn
+- Nhập `pickup_name` (optional) — để owner biết gọi ai
+- Gửi order → nhận `order_code`
+- Order success screen: hiển thị `order_code`, `pickup_name`, danh sách món, tổng tiền
 
-### Dashboard
+### Dashboard (Owner — realtime)
 
-- Realtime order queue
-- Đổi trạng thái:
-  - new
-  - making
-  - done
-  - cancelled
+- Realtime order queue (Supabase Realtime, recover khi mất mạng)
+- Đổi trạng thái: `new` → `making` → `done` | `cancelled`
+- Hiển thị `pickup_name` + `order_code` + danh sách món
+- Empty state khi không có order
 
-### Admin
+### Admin (Owner — quản lý menu)
 
-- Bật/tắt món
-- Đổi giá
-- Upload ảnh
-- Đánh dấu hết hàng
+- Bật/tắt món (`is_available`)
+- Xem danh sách sản phẩm
+- Thêm/sửa/xóa product (Phase 1: basic — chỉ cần đủ để seed menu)
+- Upload ảnh món (Supabase Storage)
 
 ---
 
-# 9. Features NOT Needed For MVP
+# 8. Features NOT Needed For MVP
 
 ```txt
 - Native mobile app
@@ -276,168 +273,217 @@ refactor: simplify order state logic
 - ERP
 - Staff management
 - Full accounting
+- Customer loyalty (Phase 3)
+- Gamification (Phase 4)
 ```
 
 ---
 
-# 10. Development Phases
+# 9. Development Phases
 
-# Phase 1 — QR Menu MVP
+## Phase 1 — QR Menu MVP (~3 tuần, 1 dev)
 
-## Goal
+### Goal
+Khách scan QR và gửi order được. Owner nhận realtime và quản lý menu cơ bản.
 
-Khách scan QR và gửi order được.
+### Tasks
 
-## Tasks
+```
+Tuần 1:
+  #1  Setup Next.js + TailwindCSS + Supabase + shadcn/ui
+  #2  DB schema + migrations + seed
+  #3  Owner auth (Supabase Auth login page)
+  #4  Middleware bảo vệ /dashboard và /admin
 
-- Setup project
-- Setup Tailwind
-- Setup Supabase
-- Build menu page
-- Build cart
-- Submit order
-- Build realtime dashboard
+Tuần 2:
+  #5  Menu page (public, mobile-first)
+  #6  Product card + detail modal
+  #7  Cart logic (localStorage)
+  #8  Submit order API (POST /api/orders)
+  #9  Order success screen
+
+Tuần 3:
+  #10 Realtime dashboard (owner)
+  #11 Order status update (PATCH /api/orders/:id/status)
+  #12 Basic admin panel (list + toggle availability + add/edit product)
+  #13 Rate limiting trên POST /api/orders
+  #14 Deploy to Vercel + smoke test
+```
+
+### Acceptance Criteria (Phase 1 Done)
+
+- [ ] Khách scan QR → gửi order thành công trong < 60 giây
+- [ ] Dashboard nhận order mới realtime < 2 giây
+- [ ] Owner có thể đổi status `new → making → done`
+- [ ] Owner có thể bật/tắt món từ admin panel
+- [ ] 2 đơn hàng submit đồng thời → không duplicate `order_code`
+- [ ] POST /api/orders với product đã tắt → trả về `PRODUCT_UNAVAILABLE`
+- [ ] Deploy hoạt động trên mobile browser (iOS Safari + Android Chrome)
 
 ---
 
-# Phase 2 — Operations
+## Phase 2 — Operations (~2 tuần)
 
-## Goal
+### Goal
+Giảm stress vận hành hàng ngày, đủ dùng thực tế.
 
-Giảm stress vận hành.
+### Tasks
 
-## Tasks
+- Daily revenue summary (dashboard)
+- Mobile optimization pass
+- Print / share QR code (tạo QR image tự động)
+- Thêm `updated_at` + audit log cơ bản cho orders
+- Error boundary + offline detection UI
 
-- Order status
-- Product availability
-- Revenue summary
-- Admin panel
-- Mobile optimization
+### Acceptance Criteria (Phase 2 Done)
+
+- [ ] Owner xem được doanh thu hôm nay trên dashboard
+- [ ] QR code in ra được (PNG/PDF)
+- [ ] UI hoạt động smooth trên iPhone SE (nhỏ nhất)
 
 ---
 
-# Phase 3 — Loyalty
+## Phase 3 — Loyalty (~3 tuần)
 
-## Goal
-
+### Goal
 Tăng retention khách hàng.
 
-## Tasks
+> ⚠️ **Prep từ Phase 1**: Order schema có sẵn `customer_ref` nullable — Phase 3 sẽ populate, không cần migrate breaking change.
 
+### Tasks
+
+- Customer soft identity (phone number optional khi order)
 - Point system
-- Voucher
+- Voucher / discount code
 - Buy X get Y
-- QR customer rewards
+- Customer order history (qua phone lookup)
 
 ---
 
-# Phase 4 — Gamification
+## Phase 4 — Gamification (~2 tuần)
 
-## Goal
-
+### Goal
 Tăng trải nghiệm và viral.
 
-## Tasks
+### Tasks
 
-- Lucky wheel
-- Secret menu
+- Lucky wheel sau khi order
+- Secret menu (unlock bằng code)
 - Reward animation
 - Mini game after order
 
 ---
 
-# 11. Database Design
+# 10. Database Design
 
-# categories
+## categories
 
 ```sql
-id
-name
-sort_order
-created_at
+id            uuid        PK
+name          varchar     NOT NULL
+sort_order    int
+created_at    timestamp   DEFAULT now()
 ```
 
-# products
+## products
 
 ```sql
-id
-category_id
-name
-description
-price
-image_url
-is_available
-created_at
+id            uuid        PK
+category_id   uuid        FK → categories.id
+name          varchar     NOT NULL
+description   text
+price         int         -- VND, NOT NULL, > 0
+image_url     varchar
+is_available  boolean     DEFAULT true
+created_at    timestamp   DEFAULT now()
 ```
 
-# product_options
+## product_options
 
 ```sql
-id
-product_id
-name
-type
+id            uuid        PK
+product_id    uuid        FK → products.id
+name          varchar     -- "Size", "Topping"
+type          varchar     -- 'select' | 'multi'
 ```
 
-# product_option_values
+## product_option_values
 
 ```sql
-id
-option_id
-name
-extra_price
+id            uuid        PK
+option_id     uuid        FK → product_options.id
+name          varchar     -- "M", "L", "XL"
+extra_price   int         DEFAULT 0
 ```
 
-# orders
+## orders
 
 ```sql
-id
-order_code
-status
-total_amount
-note
-created_at
+id            uuid        PK
+order_code    varchar     UNIQUE  -- sinh bởi DB function, reset hàng ngày: A001..A999
+status        varchar     -- new | making | done | cancelled
+total_amount  int         -- VND, snapshot lúc submit
+pickup_name   varchar     -- tên khách lấy đồ (optional)
+note          text        -- ghi chú toàn đơn
+customer_ref  varchar     -- nullable, dùng từ Phase 3 (phone hoặc QR token)
+created_at    timestamp   DEFAULT now()
 ```
 
-# order_items
+### order_code Generation
 
 ```sql
-id
-order_id
-product_id
-product_name
-quantity
-unit_price
-note
+-- DB function sinh order_code, reset theo ngày
+-- Format: A001 → A999 → B001 (không bao giờ duplicate trong ngày)
+-- Gọi từ Service layer khi tạo order mới
+CREATE OR REPLACE FUNCTION generate_order_code()
+RETURNS varchar AS $$
+  -- implementation: prefix chữ cái + sequence reset daily
+$$ LANGUAGE plpgsql;
+```
+
+## order_items
+
+```sql
+id              uuid    PK
+order_id        uuid    FK → orders.id
+product_id      uuid    FK → products.id  -- soft ref
+product_name    varchar -- snapshot
+quantity        int     -- NOT NULL, > 0
+unit_price      int     -- snapshot VND
+note            text
 ```
 
 ---
 
-# 12. Order Flow
+# 11. Order Flow
 
 ```txt
 Customer scan QR
 → open menu
-→ select items
+→ select items + options
+→ enter pickup_name (optional)
 → submit order
-→ dashboard receive realtime event
-→ owner prepare drink
-→ update status
-→ order complete
+→ API validate product availability
+→ API create order (DB function sinh order_code)
+→ dashboard receive realtime INSERT event
+→ owner sees order với pickup_name + items
+→ owner update status: making
+→ owner calls pickup_name (hoặc order_code)
+→ owner update status: done
 ```
 
 ---
 
-# 13. UI Principles
+# 12. UI Principles
 
 ## Priorities
 
-- Fast
-- Minimal
-- Mobile-first
-- Large tap targets
-- No login required
-- Few clicks as possible
+- Fast (Lighthouse score ≥ 90 mobile)
+- Minimal, mobile-first
+- Large tap targets (≥ 44px)
+- No login required (khách)
+- Ít click nhất có thể
+- Empty states rõ ràng (menu rỗng, cart rỗng, no orders)
 
 ## Avoid
 
@@ -447,49 +493,102 @@ Customer scan QR
 - Heavy animation
 - Long forms
 
+## Screens & Empty States
+
+| Screen | Empty State |
+|---|---|
+| Menu | "Hôm nay quán tạm đóng 🙏" |
+| Cart | "Chưa chọn món nào" + CTA về Menu |
+| Dashboard | "Chưa có đơn hàng hôm nay" |
+| Admin | "Chưa có sản phẩm nào" + CTA thêm mới |
+
 ---
 
-# 14. Recommended MVP Screens
+# 13. MVP Screens
 
 ## Customer
 
-- Menu page
-- Product detail modal
-- Cart
-- Order success page
+- `/menu` — menu page, category tabs, product cards
+- Product detail modal — ảnh, mô tả, options
+- `/cart` — items, note, `pickup_name` input, submit
+- `/order-success` — order_code, pickup_name, items, total
 
 ## Owner
 
-- Dashboard
-- Order queue
-- Admin menu page
+- `/login` — Supabase Auth
+- `/dashboard` — realtime order queue
+- `/admin` — product management
 
 ---
 
-# 15. Recommended Initial Issues
+# 14. Security & Infrastructure
 
-```txt
-#1 Setup Next.js + Tailwind + Supabase
-#2 Setup database schema
-#3 Create menu page
-#4 Create product card component
-#5 Create cart logic
-#6 Submit order API
-#7 Build realtime dashboard
-#8 Add order status update
-#9 Add product availability toggle
-#10 Add daily revenue summary
-#11 Deploy to Vercel
+## Rate Limiting
+
+- `POST /api/orders`: 10 requests / 1 phút / IP
+- Dùng Upstash Redis + `@upstash/ratelimit` tại Vercel Edge
+- Trả về `429 Too Many Requests` khi vượt
+
+## Auth
+
+- Middleware `middleware.ts` bảo vệ `/dashboard/**` và `/admin/**`
+- Dùng `@supabase/ssr` để check session server-side
+- `SUPABASE_SERVICE_ROLE_KEY` chỉ dùng trong Server-side code
+
+## RLS
+
+- Bật RLS trên tất cả tables
+- Public: READ on `categories`, `products`, `product_options`, `product_option_values` (chỉ `is_available = true`)
+- Public: INSERT on `orders`, `order_items`
+- Authenticated (owner): full access
+
+---
+
+# 15. Test Strategy
+
+## Phân loại test
+
+| Loại | Tool | Coverage |
+|---|---|---|
+| Unit | Vitest | Services, validators, utils |
+| Integration | Vitest + Supabase local | API routes |
+| E2E | Playwright | Happy path flows |
+
+## Critical Test Cases — Phase 1
+
+```
+TC-01: 2 requests đồng thời → order_code không duplicate
+TC-02: Submit order với product is_available=false → PRODUCT_UNAVAILABLE
+TC-03: Đổi status done → making → INVALID_STATUS_TRANSITION
+TC-04: POST /api/orders vượt rate limit → 429
+TC-05: Cart có sản phẩm bị xóa giữa chừng → error graceful
+TC-06: Dashboard mất mạng 10 giây → reconnect và sync lại đúng
+TC-07: XSS trong pickup_name / order note → sanitized
+TC-08: order_code > 999 trong ngày → logic roll-over đúng
 ```
 
+## Staging
+
+- Supabase project riêng cho staging (không chung production)
+- Vercel Preview Deployment cho mỗi PR
+- Smoke test checklist chạy trước mỗi merge vào main
+
 ---
 
-# 16. Recommended Environment Variables
+# 16. Environment Variables
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# Rate limiting
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
+# Optional
+NEXT_PUBLIC_POSTHOG_KEY=
+LOG_LEVEL=info
 ```
 
 ---

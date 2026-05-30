@@ -1,7 +1,7 @@
 # API Contract
 
-> Base path: `/api`  
-> Content-Type: `application/json`  
+> Base path: `/api`
+> Content-Type: `application/json`
 > Error format: `{ "code": "ERROR_CODE", "message": "..." }`
 
 ---
@@ -9,7 +9,8 @@
 ## Public Endpoints (không cần auth)
 
 ### GET /api/menu
-Lấy toàn bộ menu, nhóm theo category. Chỉ trả về `is_available = true`.
+
+Lấy toàn bộ menu, nhóm theo category. Chỉ trả về sản phẩm `is_available = true`.
 
 **Response 200**
 ```json
@@ -44,14 +45,20 @@ Lấy toàn bộ menu, nhóm theo category. Chỉ trả về `is_available = tru
 }
 ```
 
+**Empty case**: Trả về `categories: []` nếu không có sản phẩm available.
+
 ---
 
 ### POST /api/orders
+
 Submit đơn hàng mới từ khách.
+
+**Rate limit**: 10 requests / phút / IP. Vượt → `429 Too Many Requests`.
 
 **Request**
 ```json
 {
+  "pickup_name": "Minh",
   "note": "Ít đá",
   "items": [
     {
@@ -67,29 +74,48 @@ Submit đơn hàng mới từ khách.
 }
 ```
 
+- `pickup_name`: optional, max 50 ký tự, sanitize XSS
+- `note`: optional, max 200 ký tự
+- `items`: bắt buộc, không rỗng
+- `unit_price`: client gửi lên, server **phải validate** lại với DB price
+
 **Response 201**
 ```json
 {
-  "order_code": "#A001",
-  "total_amount": 80000
+  "order_code": "A001",
+  "pickup_name": "Minh",
+  "total_amount": 80000,
+  "items": [
+    {
+      "product_name": "Cà Phê Sữa",
+      "quantity": 2,
+      "unit_price": 40000
+    }
+  ]
 }
 ```
 
 **Errors**
-- `400 VALIDATION_ERROR` — thiếu field, quantity ≤ 0
-- `422 PRODUCT_UNAVAILABLE` — sản phẩm đã hết / tắt
+- `400 VALIDATION_ERROR` — thiếu items, quantity ≤ 0, pickup_name > 50 ký tự
+- `422 PRODUCT_UNAVAILABLE` — sản phẩm đã tắt (`is_available = false`)
 - `422 PRODUCT_NOT_FOUND` — product_id không tồn tại
+- `422 PRICE_MISMATCH` — unit_price client gửi khác DB (tampered)
+- `429` — rate limit exceeded
 
 ---
 
 ## Protected Endpoints (cần Owner auth)
 
-> Gửi session cookie qua Supabase Auth. Middleware check session server-side.
+> Session cookie via Supabase Auth. Middleware check server-side.
+> Nếu không có session: `401 UNAUTHORIZED`
+
+---
 
 ### GET /api/orders
-Lấy danh sách order (mặc định hôm nay, sắp xếp mới nhất trước).
 
-**Query params**: `?status=new` (optional filter)
+Lấy danh sách order hôm nay, mới nhất trước.
+
+**Query params**: `?status=new` (optional filter by status)
 
 **Response 200**
 ```json
@@ -97,12 +123,20 @@ Lấy danh sách order (mặc định hôm nay, sắp xếp mới nhất trướ
   "orders": [
     {
       "id": "uuid",
-      "order_code": "#A001",
+      "order_code": "A001",
       "status": "new",
       "total_amount": 80000,
+      "pickup_name": "Minh",
       "note": "Ít đá",
       "created_at": "2025-01-01T10:00:00Z",
-      "items": [...]
+      "items": [
+        {
+          "product_name": "Cà Phê Sữa",
+          "quantity": 2,
+          "unit_price": 40000,
+          "note": "Nhiều đường"
+        }
+      ]
     }
   ]
 }
@@ -111,7 +145,8 @@ Lấy danh sách order (mặc định hôm nay, sắp xếp mới nhất trướ
 ---
 
 ### PATCH /api/orders/:id/status
-Đổi trạng thái order.
+
+Đổi trạng thái order. Phải đúng flow: `new → making → done` hoặc `new → cancelled`.
 
 **Request**
 ```json
@@ -125,13 +160,14 @@ Lấy danh sách order (mặc định hôm nay, sắp xếp mới nhất trướ
 
 **Errors**
 - `404 ORDER_NOT_FOUND`
-- `422 INVALID_STATUS_TRANSITION` — không đúng flow (e.g. done → making)
+- `422 INVALID_STATUS_TRANSITION`
 - `401 UNAUTHORIZED`
 
 ---
 
 ### PATCH /api/products/:id/availability
-Bật/tắt sản phẩm.
+
+Bật/tắt sản phẩm. Cập nhật ngay, menu public filter theo `is_available`.
 
 **Request**
 ```json
@@ -143,9 +179,54 @@ Bật/tắt sản phẩm.
 { "id": "uuid", "is_available": false }
 ```
 
+**Errors**
+- `404 PRODUCT_NOT_FOUND`
+- `401 UNAUTHORIZED`
+
+---
+
+### POST /api/products
+
+Thêm sản phẩm mới.
+
+**Request**
+```json
+{
+  "category_id": "uuid",
+  "name": "Bạc Xỉu",
+  "description": "...",
+  "price": 30000,
+  "image_url": "https://..."
+}
+```
+
+**Response 201**
+```json
+{ "id": "uuid", "name": "Bạc Xỉu", "price": 30000, "is_available": true }
+```
+
+**Errors**
+- `400 VALIDATION_ERROR`
+- `404 CATEGORY_NOT_FOUND`
+- `401 UNAUTHORIZED`
+
+---
+
+### PATCH /api/products/:id
+
+Sửa thông tin sản phẩm (partial update).
+
+**Request** (tất cả fields optional)
+```json
+{ "name": "...", "price": 35000, "description": "...", "image_url": "..." }
+```
+
+**Response 200**: Updated product object.
+
 ---
 
 ## Notes
 
-- Thêm endpoint mới phải có spec đầy đủ: method, path, request/response schema, validation rules, auth, error codes
+- Thêm endpoint mới phải có spec đầy đủ: method, path, request/response schema, validation, auth, error codes
+- Server luôn validate lại `unit_price` với DB — không trust client price
 - Không tự giả định behavior nếu chưa có spec

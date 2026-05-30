@@ -3,30 +3,41 @@
 ## Entities
 
 ### Product
+
 - Có category (bắt buộc)
-- Giá là VND (int), không âm
+- Giá là VND (int > 0), không âm, không float
 - `is_available = false` → ẩn khỏi menu khách, không thể thêm vào cart
 - Có thể có nhiều options (Size, Topping...)
 - Mỗi option có nhiều values, mỗi value có thể có `extra_price`
+- Image: JPG/PNG/WebP, max 2MB
 
 ### Order
-- Sinh `order_code` human-readable khi submit (format `#A001`, `#A002`...)
+
+- Sinh `order_code` bởi DB function — không sinh trong application code
+- Format: `A001`, `A002`... reset mỗi ngày. Sau A999 → B001
 - Status lifecycle: `new → making → done` hoặc `new → cancelled`
 - **Chỉ cancel được khi status = `new`**
-- `total_amount` = tổng tính lúc submit, không tính lại sau
+- **Không đổi status ngược** — `done → making` là invalid
+- `total_amount` = tổng tính lúc submit, bất biến
 - `order_items` snapshot `product_name` + `unit_price` — bất biến sau khi tạo
+- `pickup_name` (nullable): tên khách để owner gọi khi xong đồ. Không bắt buộc
+- `customer_ref` (nullable): dành cho Phase 3 loyalty — phone hoặc QR token
 - Không cần customer account — khách anonymous
 
 ### Cart (client-side only)
+
 - Cart chỉ tồn tại ở local state / localStorage
 - Không persist cart xuống database
+- **Validate lại `is_available` của từng product khi submit** — không tin cart state
 - Clear cart sau khi submit order thành công
+- Nếu product bị tắt giữa chừng → hiện thông báo, remove item khỏi cart
 
 ### Owner (Admin)
+
 - 1 Supabase Auth account cho owner
 - Có quyền đổi trạng thái order
 - Có quyền bật/tắt `is_available` của product
-- Có quyền đổi giá, upload ảnh
+- Có quyền thêm/sửa/xóa product và upload ảnh
 - Xem realtime dashboard
 
 ---
@@ -34,11 +45,35 @@
 ## Business Rules
 
 1. Khách không cần tài khoản để đặt hàng
-2. Order chỉ đổi status theo chiều tiến — không đổi ngược (`done` → `making` là không hợp lệ)
-3. Không cho sửa order sau khi đã submit
-4. Product hết hàng → `is_available = false`, ẩn khỏi menu
-5. Giá hiển thị = `product.price + sum(selected option values.extra_price)`
-6. `total_amount` phải bằng sum của `(unit_price * quantity)` của tất cả items
+2. `pickup_name` là optional — nhưng nên khuyến khích nhập để tránh nhầm đồ
+3. Order chỉ đổi status theo chiều tiến — không đổi ngược
+4. Không cho sửa order sau khi đã submit
+5. Product hết hàng → `is_available = false`, ẩn khỏi menu ngay
+6. Giá hiển thị = `product.price + sum(selected option values.extra_price)`
+7. `total_amount` phải bằng `sum(unit_price × quantity)` của tất cả items
+8. `order_code` sinh bởi DB function trong transaction — không bao giờ duplicate
+9. Input người dùng (`pickup_name`, `note`) phải sanitize trước khi lưu — không cho XSS
+
+---
+
+## Empty States
+
+| Context | Hiển thị |
+|---|---|
+| Menu — không có sản phẩm available | "Hôm nay quán tạm đóng 🙏" |
+| Cart — trống | "Chưa chọn món nào" + nút quay lại menu |
+| Dashboard — không có order | "Chưa có đơn hàng hôm nay ☕" |
+| Admin — chưa có product | "Chưa có sản phẩm nào" + nút thêm mới |
+
+---
+
+## Phase 3 Preparation (Loyalty)
+
+Để Phase 3 không là breaking change:
+
+- Column `customer_ref` đã có từ Phase 1 (nullable)
+- Phase 3 chỉ populate `customer_ref` = phone number hoặc loyalty QR token
+- Không cần migrate orders table khi lên Phase 3
 
 ---
 
@@ -58,5 +93,6 @@
 | `/menu` | Khách | Không |
 | `/cart` | Khách | Không |
 | `/order-success` | Khách | Không |
+| `/login` | Owner | Không (form login) |
 | `/dashboard` | Owner | Có |
 | `/admin` | Owner | Có |
