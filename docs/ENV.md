@@ -1,35 +1,36 @@
 # Environment Variables
 
 ## Required
-- DB_HOST
-- DB_PORT
-- DB_NAME
-- DB_USER
-- DB_PASSWORD
-- JWT_SECRET
 
----
+| Variable | Where | Note |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Client + Server | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Server | Public anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only | **Không expose client-side** |
 
-## Optional
-- REDIS_URL
-- LOG_LEVEL
+## Optional (future)
+
+| Variable | Note |
+|---|---|
+| `NEXT_PUBLIC_POSTHOG_KEY` | Analytics |
+| `LOG_LEVEL` | `info` \| `debug` \| `error` |
 
 ---
 
 ## Rules
-- Không commit file .env
-- Không hardcode giá trị
+
+- Không commit file `.env` hoặc `.env.local`
+- Không hardcode giá trị trong code
+- `SUPABASE_SERVICE_ROLE_KEY` chỉ dùng trong API Routes hoặc Server Components
+- Biến `NEXT_PUBLIC_*` sẽ expose ra client bundle — không đặt secret vào đây
 
 ---
 
-## Cấu hình mẫu
-- Xem `.env.example` để copy nhanh và thay giá trị thật.
-- Giá trị gợi ý:
-  - `LOG_LEVEL=info`
-  - `DB_PORT=5432` (tuỳ DB)
-  - `DB_HOST=localhost` khi chạy local
+## Setup
 
-## Quy trình khai báo
-1. Copy `.env.example` thành `.env`.
-2. Điền giá trị thật cho tất cả biến `Required`.
-3. Kiểm tra ứng dụng đọc đúng biến trước khi commit code liên quan.
+```bash
+cp .env.example .env.local
+# điền giá trị từ Supabase project settings
+```
+
+Lấy keys từ: Supabase Dashboard → Project Settings → API
