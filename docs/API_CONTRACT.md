@@ -161,9 +161,14 @@ Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
 
 ### GET /api/orders
 
-Lấy orders hôm nay. Hỗ trợ filter theo status.
+Lấy orders hôm nay. Hỗ trợ filter theo status và cursor-based pagination.
 
-**Query params**: `?status=new` (optional — `new` | `making` | `done` | `cancelled`)
+**Query params**:
+- `?status=new` — optional, filter: `new` | `making` | `done` | `cancelled`
+- `?limit=50` — optional, default 50, max 100
+- `?cursor=<uuid>` — optional, UUID v7 của order cuối cùng trong page trước (time-ordered)
+
+> Cursor-based pagination dùng UUID v7 (time-ordered) — hiệu quả hơn offset, không bị duplicate khi có order mới trong lúc phân trang.
 
 **Response 200**
 ```json
@@ -177,6 +182,7 @@ Lấy orders hôm nay. Hỗ trợ filter theo status.
       "pickup_name": "Minh",
       "note": "Ít đá",
       "created_at": "2025-01-01T10:00:00Z",
+      "updated_at": "2025-01-01T10:05:00Z",
       "items": [
         {
           "product_name": "Cà Phê Sữa",
@@ -189,7 +195,11 @@ Lấy orders hôm nay. Hỗ trợ filter theo status.
         }
       ]
     }
-  ]
+  ],
+  "pagination": {
+    "has_more": false,
+    "next_cursor": null
+  }
 }
 ```
 

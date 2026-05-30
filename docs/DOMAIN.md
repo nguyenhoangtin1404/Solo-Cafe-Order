@@ -87,8 +87,9 @@ Hiển thị: "Khoảng 5-10 phút" (làm tròn lên range)
 
 - Khi có order `INSERT` mới từ Supabase Realtime → phát âm thanh beep
 - Dùng Web Audio API hoặc `<audio>` element
-- Âm thanh chỉ phát được sau user interaction đầu tiên (browser policy)
-- Visual fallback: badge đỏ trên tab title "🔴 Có đơn mới"
+- **Browser policy**: âm thanh chỉ phát được sau ít nhất 1 lần user interaction (click/tap)
+- **UX bắt buộc**: khi owner mở dashboard lần đầu, hiện banner "Nhấn để bật thông báo âm thanh 🔔" — sau khi click mới enable sound
+- Visual fallback luôn bật: badge đỏ trên tab title `(1) Solo Cafe` và highlight card mới
 
 ---
 

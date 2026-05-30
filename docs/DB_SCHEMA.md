@@ -77,7 +77,7 @@ UPDATE <table> SET deleted_at = now() WHERE id = $1
 | id | uuid | PK, DEFAULT uuid_generate_v7() |
 | product_id | uuid | FK → products.id |
 | name | varchar | e.g. "Size", "Topping" |
-| type | varchar | 'select' hoặc 'multi' |
+| type | varchar | CHECK: 'select' hoặc 'multi' |
 | deleted_at | timestamptz | NULL = active, soft delete |
 
 ---
@@ -106,6 +106,7 @@ UPDATE <table> SET deleted_at = now() WHERE id = $1
 | note | text | ghi chú toàn đơn |
 | customer_ref | varchar | nullable, Phase 3 |
 | created_at | timestamptz | DEFAULT now() |
+| updated_at | timestamptz | DEFAULT now(), tự cập nhật khi có thay đổi |
 
 > Orders không có `deleted_at` — dùng `status = 'cancelled'` thay thế. Không xóa order.
 
@@ -120,10 +121,14 @@ DECLARE
   last_num     int;
   new_num      int;
   new_letter   text;
+  vn_today     date;
 BEGIN
+  -- Dùng timezone nhất quán cho cả filter lẫn so sánh
+  vn_today := (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+
   SELECT order_code INTO last_code
   FROM orders
-  WHERE DATE(created_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = CURRENT_DATE
+  WHERE (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = vn_today
   ORDER BY created_at DESC
   LIMIT 1
   FOR UPDATE SKIP LOCKED;
@@ -191,18 +196,33 @@ new → cancelled
 UNIQUE (orders.order_code)
 CHECK  (products.price > 0)
 CHECK  (order_items.quantity > 0)
+CHECK  (product_options.type IN ('select', 'multi'))
 
 -- Performance indexes
 INDEX (orders.status)
 INDEX (orders.created_at)
+INDEX (orders.updated_at)
 INDEX (products.category_id)
 INDEX (products.is_available)
 
 -- Soft delete indexes (partial index — chỉ index active records)
-INDEX (products.id)       WHERE deleted_at IS NULL
-INDEX (categories.id)     WHERE deleted_at IS NULL
+INDEX (products.id)              WHERE deleted_at IS NULL
+INDEX (categories.id)            WHERE deleted_at IS NULL
 INDEX (product_options.id)       WHERE deleted_at IS NULL
 INDEX (product_option_values.id) WHERE deleted_at IS NULL
+
+-- Trigger tự cập nhật updated_at trên orders
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER orders_updated_at
+  BEFORE UPDATE ON orders
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 ```
 
 ---

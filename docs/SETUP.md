@@ -77,7 +77,19 @@ npm run dev
 
 ---
 
-## Checklist trước khi chạy
+## Bước 6 — Upgrade Supabase Pro (trước khi launch thật)
+
+> ⚠️ **Quan trọng**: Supabase free tier tự động **pause project sau 7 ngày không active**.
+> Dashboard sẽ không nhận order nếu project bị pause.
+
+1. Supabase Dashboard → Settings → Billing → Upgrade to Pro (~$25/tháng)
+2. Tắt auto-pause: Settings → General → **Disable project pausing**
+
+Thực hiện ngay trước ngày launch, không cần trong dev.
+
+---
+
+## Checklist trước khi chạy (dev)
 
 - [ ] Supabase project created
 - [ ] Owner account created (Supabase Auth → Users)
@@ -85,4 +97,13 @@ npm run dev
 - [ ] `.env.local` điền đủ 5 biến
 - [ ] `npm run dev` chạy không lỗi
 - [ ] Supabase Storage bucket `product-images` tạo xong
-- [ ] DB schema chạy migration xong (`supabase db push` hoặc paste SQL vào Editor)
+- [ ] DB schema + migrations chạy xong
+
+## Checklist trước khi launch (production)
+
+- [ ] Supabase upgraded to Pro
+- [ ] Auto-pause đã tắt
+- [ ] Vercel production deployment hoạt động
+- [ ] Smoke test trên mobile thật (iOS Safari + Android Chrome)
+- [ ] Owner account test login/logout
+- [ ] Thử submit 1 order end-to-end

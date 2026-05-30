@@ -125,6 +125,7 @@ pickup_name varchar             -- nullable, tên khách lấy đồ
 note text                       -- ghi chú toàn đơn
 customer_ref varchar            -- nullable, dành cho Phase 3
 created_at timestamp
+updated_at timestamp            -- auto-update via trigger
 
 -- order_items
 id uuid PK, order_id uuid FK, product_id uuid FK (soft ref),
