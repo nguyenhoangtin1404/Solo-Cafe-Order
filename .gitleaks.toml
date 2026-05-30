@@ -1,0 +1,10 @@
+# Gitleaks configuration
+# Tài liệu: https://github.com/gitleaks/gitleaks#configuration
+
+[allowlist]
+  description = "False positives trong CI setup"
+  regexes = [
+    # Placeholder cho Supabase anon key (commit 01a9b72) — không phải JWT thật.
+    # Format JWT chuẩn cần 3 segment; chuỗi này chỉ có 2 và kết thúc bằng ".placeholder".
+    '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.placeholder''',
+  ]
