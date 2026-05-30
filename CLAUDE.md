@@ -129,7 +129,9 @@ created_at timestamp
 -- order_items
 id uuid PK, order_id uuid FK, product_id uuid FK (soft ref),
 product_name varchar (snapshot), quantity int > 0,
-unit_price int (snapshot VND), note text
+unit_price int (snapshot VND),
+selected_options jsonb (snapshot: [{option_name, value_name, extra_price}]),
+note text
 ```
 
 ## Architecture

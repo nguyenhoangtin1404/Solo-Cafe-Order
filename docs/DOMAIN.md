@@ -32,13 +32,19 @@
 - Clear cart sau khi submit order thành công
 - Nếu product bị tắt giữa chừng → hiện thông báo, remove item khỏi cart
 
+### Category
+
+- Owner quản lý categories: thêm, sửa tên, đổi thứ tự, xóa
+- **Chỉ xóa được category khi không còn product nào** — tránh orphan products
+- `sort_order` quyết định thứ tự hiển thị trên menu
+
 ### Owner (Admin)
 
 - **1 account cố định** — tạo sẵn trên Supabase Dashboard (email + password)
 - Không có trang signup — owner chỉ dùng `/login`
 - Có quyền đổi trạng thái order
 - Có quyền bật/tắt `is_available` của product
-- Có quyền thêm/sửa/xóa product và upload ảnh lên Supabase Storage
+- Có quyền thêm/sửa/xóa product, category, và upload ảnh lên Supabase Storage
 - Xem realtime dashboard với âm thanh thông báo khi có order mới
 
 ---
@@ -56,6 +62,9 @@
 9. `total_amount = sum(unit_price × quantity)` của tất cả items, tính server-side
 10. `order_code` sinh bởi DB function trong transaction — không bao giờ duplicate
 11. Input người dùng (`pickup_name`, `note`) phải sanitize trước khi lưu — không cho XSS
+12. `order_items.selected_options` lưu snapshot options dạng JSON — owner biết pha size gì, topping gì
+13. Category chỉ xóa được khi không còn product — tránh orphan data
+14. **Cancel security**: `order_code` format `A001–Z999` có ~25,000 codes/ngày — đủ an toàn cho quán nhỏ. Nếu cần bảo mật cao hơn (Phase 2+): thêm `cancel_token` UUID riêng
 
 ---
 

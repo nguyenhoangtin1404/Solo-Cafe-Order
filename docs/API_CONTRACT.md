@@ -3,6 +3,9 @@
 > Base path: `/api`
 > Content-Type: `application/json`
 > Error format: `{ "code": "ERROR_CODE", "message": "..." }`
+>
+> **Server-side policy**: Tất cả API Routes dùng `SUPABASE_SERVICE_ROLE_KEY` để bypass RLS.
+> Auth check (session) được thực hiện trong code, không phụ thuộc vào RLS.
 
 ---
 
@@ -67,7 +70,7 @@ Submit đơn hàng mới từ khách.
       "product_id": "uuid",
       "quantity": 2,
       "note": "Nhiều đường",
-      "selected_option_value_ids": ["uuid-size-L"]
+      "selected_option_value_ids": ["uuid-size-L", "uuid-topping-tran-chau"]
     }
   ]
 }
@@ -85,13 +88,13 @@ Submit đơn hàng mới từ khách.
       "product_name": "Cà Phê Sữa",
       "quantity": 2,
       "unit_price": 45000,
-      "selected_options": ["Size L"]
+      "selected_options": [
+        { "option_name": "Size", "value_name": "L", "extra_price": 5000 }
+      ]
     }
   ]
 }
 ```
-
-- `wait_estimate`: ước tính thời gian chờ dựa trên số order đang pending × 3 phút/đơn
 
 **Errors**
 - `400 VALIDATION_ERROR`
@@ -118,7 +121,10 @@ Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
       "product_name": "Cà Phê Sữa",
       "quantity": 2,
       "unit_price": 45000,
-      "note": "Nhiều đường"
+      "note": "Nhiều đường",
+      "selected_options": [
+        { "option_name": "Size", "value_name": "L", "extra_price": 5000 }
+      ]
     }
   ]
 }
@@ -131,7 +137,9 @@ Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
 
 ### POST /api/orders/:code/cancel
 
-Khách tự cancel order. Chỉ được khi status = `new`.
+Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
+
+> ⚠️ **Security note**: `order_code` format `A001`–`Z999` (~25,000 codes/ngày) có thể bị brute-force. Risk thấp với quán nhỏ (attacker cancel order người khác không có lợi gì). Nếu cần bảo mật cao hơn ở Phase 2: thêm `cancel_token` random UUID vào orders.
 
 **Request**: body rỗng
 
@@ -146,14 +154,10 @@ Khách tự cancel order. Chỉ được khi status = `new`.
 
 ---
 
-## Protected Endpoints (cần Owner auth)
+## Protected Endpoints — Orders (cần Owner auth)
 
 > Session cookie via Supabase Auth. Middleware check server-side.
 > Không có session → `401 UNAUTHORIZED`
->
-> **Owner account**: 1 account cố định, tạo trên Supabase Dashboard. Không có signup.
-
----
 
 ### GET /api/orders
 
@@ -178,7 +182,10 @@ Lấy orders hôm nay. Hỗ trợ filter theo status.
           "product_name": "Cà Phê Sữa",
           "quantity": 2,
           "unit_price": 45000,
-          "note": "Nhiều đường"
+          "note": "Nhiều đường",
+          "selected_options": [
+            { "option_name": "Size", "value_name": "L", "extra_price": 5000 }
+          ]
         }
       ]
     }
@@ -186,42 +193,39 @@ Lấy orders hôm nay. Hỗ trợ filter theo status.
 }
 ```
 
----
-
 ### PATCH /api/orders/:id/status
 
-Đổi trạng thái order. Flow: `new → making → done` hoặc `new → cancelled`.
+Flow: `new → making → done` hoặc `new → cancelled`.
 
-**Request**
-```json
-{ "status": "making" }
-```
+**Request**: `{ "status": "making" }`
 
-**Response 200**
-```json
-{ "id": "uuid", "status": "making" }
-```
+**Response 200**: `{ "id": "uuid", "status": "making" }`
 
-**Errors**
-- `404 ORDER_NOT_FOUND`
-- `422 INVALID_STATUS_TRANSITION`
-- `401 UNAUTHORIZED`
+**Errors**: `404 ORDER_NOT_FOUND`, `422 INVALID_STATUS_TRANSITION`, `401 UNAUTHORIZED`
 
 ---
 
-### PATCH /api/products/:id/availability
+## Protected Endpoints — Products (cần Owner auth)
 
-**Request**
-```json
-{ "is_available": false }
-```
+### GET /api/products
+
+Lấy tất cả products (kể cả `is_available = false`) cho admin panel.
 
 **Response 200**
 ```json
-{ "id": "uuid", "is_available": false }
+{
+  "products": [
+    {
+      "id": "uuid",
+      "category_id": "uuid",
+      "name": "Cà Phê Sữa",
+      "price": 35000,
+      "image_url": "https://...",
+      "is_available": true
+    }
+  ]
+}
 ```
-
----
 
 ### POST /api/products
 
@@ -240,17 +244,77 @@ Lấy orders hôm nay. Hỗ trợ filter theo status.
 
 **Errors**: `400 VALIDATION_ERROR`, `404 CATEGORY_NOT_FOUND`, `401 UNAUTHORIZED`
 
----
-
 ### PATCH /api/products/:id
 
-Partial update. All fields optional.
+Partial update — tất cả fields optional.
 
-**Request**: `{ "name": "...", "price": 35000, "image_url": "..." }`
+**Request**: `{ "name": "...", "price": 35000, "image_url": "...", "description": "..." }`
 
 **Response 200**: Updated product object.
 
+**Errors**: `404 PRODUCT_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### PATCH /api/products/:id/availability
+
+**Request**: `{ "is_available": false }`
+
+**Response 200**: `{ "id": "uuid", "is_available": false }`
+
+### DELETE /api/products/:id
+
+Xóa sản phẩm. Nếu product đã có trong orders → xóa mềm (`is_available = false`) thay vì xóa cứng để bảo toàn snapshot.
+
+**Response 200**: `{ "id": "uuid", "deleted": true }`
+
+**Errors**: `404 PRODUCT_NOT_FOUND`, `401 UNAUTHORIZED`
+
 ---
+
+## Protected Endpoints — Categories (cần Owner auth)
+
+### GET /api/categories
+
+Lấy tất cả categories, có kèm số lượng products.
+
+**Response 200**
+```json
+{
+  "categories": [
+    { "id": "uuid", "name": "Cà Phê", "sort_order": 1, "product_count": 5 }
+  ]
+}
+```
+
+### POST /api/categories
+
+**Request**: `{ "name": "Trà Sữa", "sort_order": 3 }`
+
+**Response 201**: `{ "id": "uuid", "name": "Trà Sữa", "sort_order": 3 }`
+
+**Errors**: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`
+
+### PATCH /api/categories/:id
+
+**Request**: `{ "name": "...", "sort_order": 2 }`
+
+**Response 200**: Updated category object.
+
+**Errors**: `404 CATEGORY_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### DELETE /api/categories/:id
+
+Chỉ xóa được nếu category không có product nào.
+
+**Response 200**: `{ "id": "uuid", "deleted": true }`
+
+**Errors**
+- `404 CATEGORY_NOT_FOUND`
+- `422 CATEGORY_HAS_PRODUCTS` — còn product trong category, không thể xóa
+- `401 UNAUTHORIZED`
+
+---
+
+## Protected Endpoints — Upload
 
 ### POST /api/upload/product-image
 
@@ -259,10 +323,7 @@ Upload ảnh lên Supabase Storage.
 **Request**: `multipart/form-data`, field `file`
 - Format: JPG, PNG, WebP — max 2MB
 
-**Response 201**
-```json
-{ "url": "https://project.supabase.co/storage/v1/object/public/product-images/..." }
-```
+**Response 201**: `{ "url": "https://project.supabase.co/storage/v1/object/public/product-images/..." }`
 
 **Errors**: `400 VALIDATION_ERROR` (sai format / quá size), `401 UNAUTHORIZED`
 
@@ -271,5 +332,6 @@ Upload ảnh lên Supabase Storage.
 ## Notes
 
 - Client không bao giờ gửi price — server tự tính từ DB
-- `GET /api/orders/:code` và `POST /api/orders/:code/cancel` là public — dùng `order_code` làm token
+- Tất cả API Routes dùng `service_role_key` — không phụ thuộc RLS cho logic auth
+- `GET /api/orders/:code` và `POST /api/orders/:code/cancel` là public — dùng `order_code` làm identifier
 - Thêm endpoint mới phải spec đầy đủ trước khi code

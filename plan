@@ -291,23 +291,24 @@ Khách scan QR và gửi order được. Owner nhận realtime và quản lý me
 ```
 Tuần 1:
   #1  Setup Next.js + TailwindCSS + Supabase + shadcn/ui
-  #2  DB schema + migrations + seed
+  #2  DB schema + migrations + seed (~10 sản phẩm mẫu)
   #3  Owner auth (Supabase Auth login page)
   #4  Middleware bảo vệ /dashboard và /admin
 
 Tuần 2:
   #5  Menu page (public, mobile-first)
-  #6  Product card + detail modal
-  #7  Cart logic (localStorage)
-  #8  Submit order API (POST /api/orders)
-  #9  Order success screen
+  #6  Product card + detail modal + options
+  #7  Cart logic (localStorage, validate availability khi submit)
+  #8  Submit order API (POST /api/orders + rate limiting + wait estimate)
+  #9  Order success screen (order_code, pickup_name, items, wait_estimate)
+  #10 Order tracking page /order/[code] (realtime + cancel)
 
 Tuần 3:
-  #10 Realtime dashboard (owner)
-  #11 Order status update (PATCH /api/orders/:id/status)
-  #12 Basic admin panel (list + toggle availability + add/edit product)
-  #13 Rate limiting trên POST /api/orders
-  #14 Deploy to Vercel + smoke test
+  #11 Realtime dashboard (owner, âm thanh, filter tabs)
+  #12 Order status update (PATCH /api/orders/:id/status)
+  #13 Basic admin panel (product + category CRUD, toggle, upload ảnh)
+  #14 Deploy to Vercel + staging
+  #15 Smoke test + fix bugs
 ```
 
 ### Acceptance Criteria (Phase 1 Done)
@@ -444,13 +445,14 @@ $$ LANGUAGE plpgsql;
 ## order_items
 
 ```sql
-id              uuid    PK
-order_id        uuid    FK → orders.id
-product_id      uuid    FK → products.id  -- soft ref
-product_name    varchar -- snapshot
-quantity        int     -- NOT NULL, > 0
-unit_price      int     -- snapshot VND
-note            text
+id                uuid    PK
+order_id          uuid    FK → orders.id
+product_id        uuid    FK → products.id  -- soft ref
+product_name      varchar -- snapshot
+quantity          int     -- NOT NULL, > 0
+unit_price        int     -- snapshot VND (gồm cả extra_price của options)
+selected_options  jsonb   -- snapshot: [{"option_name":"Size","value_name":"L","extra_price":5000}]
+note              text
 ```
 
 ---
@@ -511,13 +513,14 @@ Customer scan QR
 - `/menu` — menu page, category tabs, product cards
 - Product detail modal — ảnh, mô tả, options
 - `/cart` — items, note, `pickup_name` input, submit
-- `/order-success` — order_code, pickup_name, items, total
+- `/order-success` — order_code, pickup_name, items, total, wait_estimate
+- `/order/[code]` — tracking page: status realtime + nút cancel
 
 ## Owner
 
 - `/login` — Supabase Auth
-- `/dashboard` — realtime order queue
-- `/admin` — product management
+- `/dashboard` — realtime order queue, filter tabs, âm thanh
+- `/admin` — product + category management
 
 ---
 
@@ -578,6 +581,8 @@ TC-08: order_code > 999 trong ngày → logic roll-over đúng
 # 16. Environment Variables
 
 ```env
+NEXT_PUBLIC_APP_URL=https://your-cafe.vercel.app
+
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
