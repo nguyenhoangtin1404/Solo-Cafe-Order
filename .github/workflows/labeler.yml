@@ -1,0 +1,71 @@
+name: PR Labeler
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  label:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const LABEL_MAP = {
+              feat:     { name: 'feature',       color: '0075ca', description: 'New feature' },
+              fix:      { name: 'bug',            color: 'd73a4a', description: 'Bug fix' },
+              docs:     { name: 'documentation',  color: '0075ca', description: 'Documentation only' },
+              style:    { name: 'style',          color: 'e4e669', description: 'Style / formatting' },
+              refactor: { name: 'refactor',       color: 'a2eeef', description: 'Code refactoring' },
+              perf:     { name: 'performance',    color: '0052cc', description: 'Performance improvement' },
+              test:     { name: 'test',           color: '0e8a16', description: 'Tests only' },
+              build:    { name: 'build',          color: 'e4e669', description: 'Build system' },
+              ci:       { name: 'ci',             color: 'fef2c0', description: 'CI configuration' },
+              chore:    { name: 'chore',          color: 'cfd3d7', description: 'Chores / maintenance' },
+              revert:   { name: 'revert',         color: 'd93f0b', description: 'Reverts a previous commit' },
+            };
+
+            async function ensureLabel(label) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description,
+                });
+              } catch (e) {
+                if (e.status !== 422) throw e; // 422 = label already exists
+              }
+            }
+
+            const title = context.payload.pull_request.title;
+            const match = title.match(/^(\w+)(\(.+\))?(!)?:/);
+
+            if (!match) {
+              console.log('PR title không theo Conventional Commits — bỏ qua label');
+              return;
+            }
+
+            const type = match[1];
+            const labelConfig = LABEL_MAP[type];
+
+            if (!labelConfig) {
+              console.log(`Type "${type}" không được map — bỏ qua label`);
+              return;
+            }
+
+            await ensureLabel(labelConfig);
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: [labelConfig.name],
+            });
+
+            console.log(`Label "${labelConfig.name}" đã được thêm vào PR #${context.payload.pull_request.number}`);
