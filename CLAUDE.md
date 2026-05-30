@@ -90,8 +90,12 @@ supabase/
 
 ### Security
 - `POST /api/orders` có rate limit: 10 req/phút/IP (Upstash)
-- Server validate lại `unit_price` với DB — không trust client price (`PRICE_MISMATCH`)
+- **Client không gửi price** — server tự tính `unit_price` từ DB (`product.price + sum(option extra_price)`)
 - Sanitize `pickup_name` và `note` — không cho XSS
+
+### Owner Account
+- **1 account cố định** — tạo sẵn trên Supabase Dashboard, không có trang signup
+- Owner chỉ dùng `/login` (email + password)
 
 ## Database Schema (đầy đủ)
 
@@ -167,7 +171,7 @@ Xem `.env.example`. Không hardcode. Không commit `.env.local`.
 
 ## Error Codes
 
-`VALIDATION_ERROR` | `ORDER_NOT_FOUND` | `PRODUCT_NOT_FOUND` | `CATEGORY_NOT_FOUND` | `PRODUCT_UNAVAILABLE` | `INVALID_STATUS_TRANSITION` | `PRICE_MISMATCH` | `UNAUTHORIZED` | `FORBIDDEN` | `RATE_LIMITED` | `INTERNAL_ERROR`
+`VALIDATION_ERROR` | `ORDER_NOT_FOUND` | `PRODUCT_NOT_FOUND` | `CATEGORY_NOT_FOUND` | `PRODUCT_UNAVAILABLE` | `INVALID_STATUS_TRANSITION` | `UNAUTHORIZED` | `FORBIDDEN` | `RATE_LIMITED` | `INTERNAL_ERROR`
 
 ## Development Commands
 

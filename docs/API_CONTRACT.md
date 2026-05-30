@@ -45,7 +45,7 @@ Lấy toàn bộ menu, nhóm theo category. Chỉ trả về sản phẩm `is_av
 }
 ```
 
-**Empty case**: Trả về `categories: []` nếu không có sản phẩm available.
+**Empty case**: `categories: []` nếu không có sản phẩm available.
 
 ---
 
@@ -53,7 +53,9 @@ Lấy toàn bộ menu, nhóm theo category. Chỉ trả về sản phẩm `is_av
 
 Submit đơn hàng mới từ khách.
 
-**Rate limit**: 10 requests / phút / IP. Vượt → `429 Too Many Requests`.
+**Rate limit**: 10 requests / phút / IP (Upstash). Vượt → `429 Too Many Requests`.
+
+> **Price policy**: Client **không gửi giá**. Server tự tra DB để tính `unit_price` và `extra_price` cho từng item. Không thể tamper giá từ client.
 
 **Request**
 ```json
@@ -64,32 +66,37 @@ Submit đơn hàng mới từ khách.
     {
       "product_id": "uuid",
       "quantity": 2,
-      "unit_price": 40000,
       "note": "Nhiều đường",
-      "selected_options": [
-        { "option_value_id": "uuid" }
-      ]
+      "selected_option_value_ids": ["uuid-size-L"]
     }
   ]
 }
 ```
 
 - `pickup_name`: optional, max 50 ký tự, sanitize XSS
-- `note`: optional, max 200 ký tự
+- `note`: optional, max 200 ký tự, sanitize XSS
 - `items`: bắt buộc, không rỗng
-- `unit_price`: client gửi lên, server **phải validate** lại với DB price
+- `selected_option_value_ids`: list UUID của option values được chọn (có thể rỗng)
+- **Không có `unit_price` trong request** — server tự tính
+
+**Server tính giá như sau:**
+```
+unit_price = product.price + sum(extra_price của các option_value được chọn)
+total_amount = sum(unit_price × quantity) của tất cả items
+```
 
 **Response 201**
 ```json
 {
   "order_code": "A001",
   "pickup_name": "Minh",
-  "total_amount": 80000,
+  "total_amount": 90000,
   "items": [
     {
       "product_name": "Cà Phê Sữa",
       "quantity": 2,
-      "unit_price": 40000
+      "unit_price": 45000,
+      "selected_options": ["Size L"]
     }
   ]
 }
@@ -99,15 +106,17 @@ Submit đơn hàng mới từ khách.
 - `400 VALIDATION_ERROR` — thiếu items, quantity ≤ 0, pickup_name > 50 ký tự
 - `422 PRODUCT_UNAVAILABLE` — sản phẩm đã tắt (`is_available = false`)
 - `422 PRODUCT_NOT_FOUND` — product_id không tồn tại
-- `422 PRICE_MISMATCH` — unit_price client gửi khác DB (tampered)
 - `429` — rate limit exceeded
 
 ---
 
 ## Protected Endpoints (cần Owner auth)
 
-> Session cookie via Supabase Auth. Middleware check server-side.
-> Nếu không có session: `401 UNAUTHORIZED`
+> Supabase Auth session cookie. Middleware check server-side.
+> Không có session → `401 UNAUTHORIZED`
+>
+> **Owner account**: 1 account cố định, tạo sẵn trên Supabase Dashboard.
+> Không có trang signup — owner chỉ dùng `/login`.
 
 ---
 
@@ -125,7 +134,7 @@ Lấy danh sách order hôm nay, mới nhất trước.
       "id": "uuid",
       "order_code": "A001",
       "status": "new",
-      "total_amount": 80000,
+      "total_amount": 90000,
       "pickup_name": "Minh",
       "note": "Ít đá",
       "created_at": "2025-01-01T10:00:00Z",
@@ -133,7 +142,7 @@ Lấy danh sách order hôm nay, mới nhất trước.
         {
           "product_name": "Cà Phê Sữa",
           "quantity": 2,
-          "unit_price": 40000,
+          "unit_price": 45000,
           "note": "Nhiều đường"
         }
       ]
@@ -167,7 +176,7 @@ Lấy danh sách order hôm nay, mới nhất trước.
 
 ### PATCH /api/products/:id/availability
 
-Bật/tắt sản phẩm. Cập nhật ngay, menu public filter theo `is_available`.
+Bật/tắt sản phẩm. Menu public cập nhật ngay.
 
 **Request**
 ```json
@@ -200,6 +209,8 @@ Thêm sản phẩm mới.
 }
 ```
 
+> `image_url`: upload lên Supabase Storage trước, sau đó gửi URL ở đây.
+
 **Response 201**
 ```json
 { "id": "uuid", "name": "Bạc Xỉu", "price": 30000, "is_available": true }
@@ -225,8 +236,29 @@ Sửa thông tin sản phẩm (partial update).
 
 ---
 
+### POST /api/upload/product-image
+
+Upload ảnh sản phẩm lên Supabase Storage. Trả về URL để dùng khi tạo/sửa product.
+
+**Request**: `multipart/form-data`, field `file`
+
+**Validation**:
+- Format: JPG, PNG, WebP
+- Max size: 2MB
+
+**Response 201**
+```json
+{ "url": "https://your-project.supabase.co/storage/v1/object/public/product-images/..." }
+```
+
+**Errors**
+- `400 VALIDATION_ERROR` — sai format hoặc > 2MB
+- `401 UNAUTHORIZED`
+
+---
+
 ## Notes
 
 - Thêm endpoint mới phải có spec đầy đủ: method, path, request/response schema, validation, auth, error codes
-- Server luôn validate lại `unit_price` với DB — không trust client price
+- Client không bao giờ gửi price — server tự tính từ DB
 - Không tự giả định behavior nếu chưa có spec

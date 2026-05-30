@@ -9,7 +9,7 @@
 - `is_available = false` → ẩn khỏi menu khách, không thể thêm vào cart
 - Có thể có nhiều options (Size, Topping...)
 - Mỗi option có nhiều values, mỗi value có thể có `extra_price`
-- Image: JPG/PNG/WebP, max 2MB
+- Image: JPG/PNG/WebP, max 2MB, lưu trên Supabase Storage
 
 ### Order
 
@@ -34,10 +34,11 @@
 
 ### Owner (Admin)
 
-- 1 Supabase Auth account cho owner
+- **1 account cố định** — tạo sẵn trên Supabase Dashboard (email + password)
+- Không có trang signup — owner chỉ dùng `/login`
 - Có quyền đổi trạng thái order
 - Có quyền bật/tắt `is_available` của product
-- Có quyền thêm/sửa/xóa product và upload ảnh
+- Có quyền thêm/sửa/xóa product và upload ảnh lên Supabase Storage
 - Xem realtime dashboard
 
 ---
@@ -49,8 +50,8 @@
 3. Order chỉ đổi status theo chiều tiến — không đổi ngược
 4. Không cho sửa order sau khi đã submit
 5. Product hết hàng → `is_available = false`, ẩn khỏi menu ngay
-6. Giá hiển thị = `product.price + sum(selected option values.extra_price)`
-7. `total_amount` phải bằng `sum(unit_price × quantity)` của tất cả items
+6. **Giá do server tính, không tin client**: `unit_price = product.price + sum(selected option_value.extra_price)`. Client chỉ gửi `product_id` + `selected_option_value_ids`, không gửi price
+7. `total_amount = sum(unit_price × quantity)` của tất cả items, tính server-side
 8. `order_code` sinh bởi DB function trong transaction — không bao giờ duplicate
 9. Input người dùng (`pickup_name`, `note`) phải sanitize trước khi lưu — không cho XSS
 
