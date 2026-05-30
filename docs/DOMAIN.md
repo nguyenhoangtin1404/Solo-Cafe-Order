@@ -93,16 +93,25 @@ Hiển thị: "Khoảng 5-10 phút" (làm tròn lên range)
 
 ---
 
-## Dashboard Filter
+## Dashboard Pagination Strategy
 
-Owner xem orders theo tab:
+| Tab | Filter | Loading | Realtime |
+|---|---|---|---|
+| Đang chờ | `status=new` | Load all — không pagination | ✅ Watch INSERT/UPDATE |
+| Đang làm | `status=making` | Load all — không pagination | ✅ Watch UPDATE |
+| Xong | `status=done,cancelled` | Infinite scroll — 30 items/lần | ❌ Không cần |
+| Tất cả | _(no filter)_ | Infinite scroll — 30 items/lần | ❌ Không cần |
 
-| Tab | Filter |
-|---|---|
-| Tất cả | Tất cả orders hôm nay |
-| Đang chờ | status = `new` |
-| Đang làm | status = `making` |
-| Xong | status = `done` hoặc `cancelled` |
+**Tại sao "Đang chờ" và "Đang làm" load all:**
+Owner cần thấy toàn bộ pending orders ngay lập tức — không thể bỏ sót order vì chưa scroll. Một quán cafe hiếm khi có > 15 orders pending cùng lúc nên load all là an toàn.
+
+**Tại sao "Xong" dùng infinite scroll:**
+Tích lũy cả ngày (50–200 orders), chỉ dùng để tra cứu lại — không cần xem tất cả cùng lúc.
+
+**Realtime chỉ watch "Đang chờ" và "Đang làm":**
+- `new` INSERT → thêm vào đầu tab Đang chờ + phát âm thanh
+- `making` UPDATE → chuyển card từ Đang chờ sang Đang làm
+- `done/cancelled` UPDATE → remove khỏi Đang làm (không cần sync sang tab Xong real-time)
 
 ---
 

@@ -161,16 +161,25 @@ Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
 
 ### GET /api/orders
 
-Lấy orders hôm nay. Hỗ trợ filter theo status và cursor-based pagination.
+Lấy orders hôm nay. Behaviour khác nhau tùy `status`:
 
 **Query params**:
-- `?status=new` — optional, filter: `new` | `making` | `done` | `cancelled`
-- `?limit=50` — optional, default 50, max 100
-- `?cursor=<uuid>` — optional, UUID v7 của order cuối cùng trong page trước (time-ordered)
+- `?status=` — `new` | `making` | `done` | `cancelled` | _(bỏ trống = tất cả)_
+- `?limit=30` — chỉ áp dụng khi `status=done/cancelled` hoặc không có status. Default 30, max 100
+- `?cursor=<uuid>` — UUID v7 của order cuối cùng trong page trước (infinite scroll)
 
-> Cursor-based pagination dùng UUID v7 (time-ordered) — hiệu quả hơn offset, không bị duplicate khi có order mới trong lúc phân trang.
+**Loading strategy theo status:**
 
-**Response 200**
+| status | Pagination | Lý do |
+|---|---|---|
+| `new` | Load all, không cursor | Owner phải thấy hết pending orders |
+| `making` | Load all, không cursor | Tương tự — không được bỏ sót |
+| `done` / `cancelled` | Cursor-based, 30/lần | Chỉ tra cứu, có thể accumulate lớn |
+| _(không có)_ | Cursor-based, 30/lần | Tất cả orders hôm nay |
+
+> Cursor-based dùng UUID v7 (time-ordered) — không bị duplicate khi có order mới trong lúc user đang scroll.
+
+**Response 200 — status=new hoặc making (no pagination)**
 ```json
 {
   "orders": [
@@ -182,7 +191,7 @@ Lấy orders hôm nay. Hỗ trợ filter theo status và cursor-based pagination
       "pickup_name": "Minh",
       "note": "Ít đá",
       "created_at": "2025-01-01T10:00:00Z",
-      "updated_at": "2025-01-01T10:05:00Z",
+      "updated_at": "2025-01-01T10:00:00Z",
       "items": [
         {
           "product_name": "Cà Phê Sữa",
@@ -195,10 +204,17 @@ Lấy orders hôm nay. Hỗ trợ filter theo status và cursor-based pagination
         }
       ]
     }
-  ],
+  ]
+}
+```
+
+**Response 200 — status=done hoặc không có status (có pagination)**
+```json
+{
+  "orders": [...],
   "pagination": {
-    "has_more": false,
-    "next_cursor": null
+    "has_more": true,
+    "next_cursor": "uuid-of-last-item"
   }
 }
 ```
