@@ -4,14 +4,53 @@
 
 ---
 
+## Conventions
+
+### UUID v7
+
+Tất cả Primary Keys dùng **UUID v7** — time-ordered, tốt hơn UUID v4 cho index performance.
+
+```sql
+-- Enable extension (1 lần duy nhất trong migration đầu tiên)
+CREATE EXTENSION IF NOT EXISTS pg_uuidv7;
+
+-- Dùng làm default cho tất cả PK
+id uuid DEFAULT uuid_generate_v7() PRIMARY KEY
+```
+
+> UUID v7 encode timestamp vào prefix → rows insert theo thứ tự thời gian → B-tree index ít bị fragmentation hơn UUID v4 random.
+
+### Soft Delete
+
+**Tất cả delete đều là soft delete** — không bao giờ hard delete.
+
+```sql
+deleted_at timestamptz DEFAULT NULL
+-- NULL   = record đang active
+-- non-NULL = record đã bị xóa (timestamp lúc xóa)
+```
+
+**Query luôn filter:**
+```sql
+WHERE deleted_at IS NULL
+```
+
+**Khi "xóa":**
+```sql
+UPDATE <table> SET deleted_at = now() WHERE id = $1
+```
+
+---
+
 ## categories
 
 | Column | Type | Note |
 |---|---|---|
-| id | uuid | PK, default gen_random_uuid() |
+| id | uuid | PK, DEFAULT uuid_generate_v7() |
 | name | varchar | not null |
 | sort_order | int | for display ordering |
-| created_at | timestamp | default now() |
+| created_at | timestamptz | DEFAULT now() |
+| deleted_at | timestamptz | NULL = active, soft delete |
 
 ---
 
@@ -19,14 +58,15 @@
 
 | Column | Type | Note |
 |---|---|---|
-| id | uuid | PK |
+| id | uuid | PK, DEFAULT uuid_generate_v7() |
 | category_id | uuid | FK → categories.id |
 | name | varchar | not null |
 | description | text | |
-| price | int | VND, NOT NULL, > 0, không dùng float |
+| price | int | VND, NOT NULL, > 0 |
 | image_url | varchar | Supabase Storage URL |
 | is_available | boolean | DEFAULT true |
-| created_at | timestamp | default now() |
+| created_at | timestamptz | DEFAULT now() |
+| deleted_at | timestamptz | NULL = active, soft delete |
 
 ---
 
@@ -34,10 +74,11 @@
 
 | Column | Type | Note |
 |---|---|---|
-| id | uuid | PK |
+| id | uuid | PK, DEFAULT uuid_generate_v7() |
 | product_id | uuid | FK → products.id |
 | name | varchar | e.g. "Size", "Topping" |
 | type | varchar | 'select' hoặc 'multi' |
+| deleted_at | timestamptz | NULL = active, soft delete |
 
 ---
 
@@ -45,10 +86,11 @@
 
 | Column | Type | Note |
 |---|---|---|
-| id | uuid | PK |
+| id | uuid | PK, DEFAULT uuid_generate_v7() |
 | option_id | uuid | FK → product_options.id |
 | name | varchar | e.g. "M", "L", "XL" |
 | extra_price | int | DEFAULT 0, VND |
+| deleted_at | timestamptz | NULL = active, soft delete |
 
 ---
 
@@ -56,22 +98,20 @@
 
 | Column | Type | Note |
 |---|---|---|
-| id | uuid | PK |
+| id | uuid | PK, DEFAULT uuid_generate_v7() |
 | order_code | varchar | UNIQUE, sinh bởi DB function, reset hàng ngày |
 | status | varchar | new \| making \| done \| cancelled |
-| total_amount | int | VND, snapshot tại lúc submit, không tính lại |
-| pickup_name | varchar | nullable — tên khách lấy đồ (owner gọi tên này) |
+| total_amount | int | VND, snapshot tại lúc submit |
+| pickup_name | varchar | nullable |
 | note | text | ghi chú toàn đơn |
-| customer_ref | varchar | nullable — dành cho Phase 3 (phone / QR token) |
-| created_at | timestamp | default now() |
+| customer_ref | varchar | nullable, Phase 3 |
+| created_at | timestamptz | DEFAULT now() |
+
+> Orders không có `deleted_at` — dùng `status = 'cancelled'` thay thế. Không xóa order.
 
 ### order_code Generation
 
-`order_code` **không được sinh trong application code** — phải dùng DB function để tránh race condition.
-
 ```sql
--- Format: A001 → A999 → B001 → ... (reset theo ngày)
--- Gọi: SELECT generate_order_code() trong transaction tạo order
 CREATE OR REPLACE FUNCTION generate_order_code()
 RETURNS varchar AS $$
 DECLARE
@@ -83,7 +123,7 @@ DECLARE
 BEGIN
   SELECT order_code INTO last_code
   FROM orders
-  WHERE DATE(created_at) = CURRENT_DATE
+  WHERE DATE(created_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = CURRENT_DATE
   ORDER BY created_at DESC
   LIMIT 1
   FOR UPDATE SKIP LOCKED;
@@ -100,7 +140,7 @@ BEGIN
     new_letter := last_letter;
   ELSE
     new_num    := 1;
-    new_letter := CHR(ASCII(last_letter) + 1); -- A→B, B→C...
+    new_letter := CHR(ASCII(last_letter) + 1);
   END IF;
 
   RETURN new_letter || LPAD(new_num::text, 3, '0');
@@ -108,7 +148,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-> ⚠️ Gọi function này **bên trong transaction** khi tạo order để đảm bảo atomicity.
+> ⚠️ Gọi trong transaction khi tạo order. Reset theo timezone `Asia/Ho_Chi_Minh`.
 
 ### Status Flow
 
@@ -117,24 +157,22 @@ new → making → done
 new → cancelled
 ```
 
-- Chỉ cancel được khi status = `new`
-- Không đổi status ngược (done → making là invalid)
-- Không sửa giá sau khi đã submit
-
 ---
 
 ## order_items
 
 | Column | Type | Note |
 |---|---|---|
-| id | uuid | PK |
+| id | uuid | PK, DEFAULT uuid_generate_v7() |
 | order_id | uuid | FK → orders.id |
 | product_id | uuid | FK → products.id (soft ref) |
-| product_name | varchar | snapshot tên tại lúc order |
+| product_name | varchar | snapshot |
 | quantity | int | NOT NULL, > 0 |
-| unit_price | int | snapshot giá tại lúc order (bao gồm extra_price của options) |
-| selected_options | jsonb | snapshot options được chọn — xem format bên dưới |
-| note | text | ghi chú từng món |
+| unit_price | int | snapshot VND (gồm extra_price options) |
+| selected_options | jsonb | snapshot options — xem format bên dưới |
+| note | text | |
+
+> `order_items` không soft delete — xóa order thì update status = 'cancelled', items giữ nguyên để audit.
 
 ### selected_options Format
 
@@ -145,12 +183,6 @@ new → cancelled
 ]
 ```
 
-- Snapshot tại lúc order — bất biến dù option sau bị đổi tên/xóa
-- `extra_price` lưu để đối chiếu, không tính lại
-- Empty array `[]` nếu không chọn option nào
-
-> `product_name`, `unit_price`, `selected_options` là snapshot hoàn toàn bất biến.
-
 ---
 
 ## Constraints & Indexes
@@ -159,10 +191,18 @@ new → cancelled
 UNIQUE (orders.order_code)
 CHECK  (products.price > 0)
 CHECK  (order_items.quantity > 0)
-INDEX  (orders.status)
-INDEX  (orders.created_at)
-INDEX  (products.category_id)
-INDEX  (products.is_available)
+
+-- Performance indexes
+INDEX (orders.status)
+INDEX (orders.created_at)
+INDEX (products.category_id)
+INDEX (products.is_available)
+
+-- Soft delete indexes (partial index — chỉ index active records)
+INDEX (products.id)       WHERE deleted_at IS NULL
+INDEX (categories.id)     WHERE deleted_at IS NULL
+INDEX (product_options.id)       WHERE deleted_at IS NULL
+INDEX (product_option_values.id) WHERE deleted_at IS NULL
 ```
 
 ---
@@ -171,44 +211,40 @@ INDEX  (products.is_available)
 
 ### Nguyên tắc
 
-- **Client-side** (browser gọi Supabase trực tiếp): bị RLS giới hạn
-- **Server-side** (Next.js API Routes dùng `service_role_key`): bypass RLS hoàn toàn
+- **Client-side**: bị RLS giới hạn
+- **Server-side API Routes**: dùng `service_role_key` bypass RLS hoàn toàn
+- RLS filter `deleted_at IS NULL` để bảo vệ khi client truy cập trực tiếp
 
-> Tất cả data access trong project này đi qua API Routes server-side. RLS là lớp bảo vệ phòng khi có misconfiguration, không phải primary auth logic.
-
-### Policies (cho client-side safety)
+### Policies
 
 | Table | anon | authenticated (owner) |
 |---|---|---|
-| categories | SELECT | ALL |
-| products | SELECT (is_available=true) | ALL |
-| product_options | SELECT | ALL |
-| product_option_values | SELECT | ALL |
+| categories | SELECT WHERE deleted_at IS NULL | ALL |
+| products | SELECT WHERE is_available=true AND deleted_at IS NULL | ALL |
+| product_options | SELECT WHERE deleted_at IS NULL | ALL |
+| product_option_values | SELECT WHERE deleted_at IS NULL | ALL |
 | orders | INSERT | ALL |
 | order_items | INSERT | ALL |
 
 ### API Routes dùng service_role cho
 
-- `GET /api/orders/:code` — đọc order theo order_code (public tracking)
-- `POST /api/orders/:code/cancel` — update status (public cancel)
-- `GET /api/orders` — đọc tất cả orders hôm nay (protected, owner)
-- `PATCH /api/orders/:id/status` — update status (protected, owner)
+- Public tracking: `GET /api/orders/:code`, `POST /api/orders/:code/cancel`
+- Owner reads/writes: tất cả protected endpoints
 
 ---
 
 ## Image Upload Rules
 
-- Format: JPG, PNG, WebP
-- Max size: 2MB per image
-- Resize server-side nếu > 1200px
+- Format: JPG, PNG, WebP — max 2MB
 - Path: `product-images/{product_id}/{timestamp}.webp`
 
 ---
 
 ## Migration Rules
 
-- Không xóa cột đang có data — migration only
-- AI không được tự thay đổi schema mà không có spec
-- Giá tiền luôn là `int` (VND), không dùng `decimal`/`float`
-- Thêm column mới phải có DEFAULT hoặc nullable
+- **Không hard delete** — luôn dùng soft delete (`deleted_at = now()`)
+- Không xóa cột đang có data
+- AI không tự thay đổi schema mà không có spec
+- Giá tiền luôn là `int` (VND)
 - Mỗi migration là 1 file riêng trong `supabase/migrations/`
+- Migration đầu tiên phải `CREATE EXTENSION IF NOT EXISTS pg_uuidv7`

@@ -262,9 +262,13 @@ Partial update — tất cả fields optional.
 
 ### DELETE /api/products/:id
 
-Xóa sản phẩm. Nếu product đã có trong orders → xóa mềm (`is_available = false`) thay vì xóa cứng để bảo toàn snapshot.
+Soft delete sản phẩm — set `deleted_at = now()`. Không bao giờ hard delete.
 
-**Response 200**: `{ "id": "uuid", "deleted": true }`
+- Product bị soft delete sẽ ẩn khỏi menu và admin panel
+- Snapshot trong `order_items` vẫn còn nguyên (bảo toàn lịch sử)
+- Có thể restore sau này nếu cần
+
+**Response 200**: `{ "id": "uuid", "deleted_at": "2025-01-01T10:00:00Z" }`
 
 **Errors**: `404 PRODUCT_NOT_FOUND`, `401 UNAUTHORIZED`
 
@@ -303,13 +307,15 @@ Lấy tất cả categories, có kèm số lượng products.
 
 ### DELETE /api/categories/:id
 
-Chỉ xóa được nếu category không có product nào.
+Soft delete category — set `deleted_at = now()`. Không bao giờ hard delete.
 
-**Response 200**: `{ "id": "uuid", "deleted": true }`
+Chỉ soft delete được nếu category không có active product (`deleted_at IS NULL`).
+
+**Response 200**: `{ "id": "uuid", "deleted_at": "2025-01-01T10:00:00Z" }`
 
 **Errors**
 - `404 CATEGORY_NOT_FOUND`
-- `422 CATEGORY_HAS_PRODUCTS` — còn product trong category, không thể xóa
+- `422 CATEGORY_HAS_PRODUCTS` — còn active product trong category
 - `401 UNAUTHORIZED`
 
 ---

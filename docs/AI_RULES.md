@@ -57,6 +57,9 @@
 - Không copy code bên ngoài chưa kiểm soát
 - Không commit secret hoặc `.env`
 - Không tự thay đổi DB schema
+- **Không dùng `DELETE` SQL** — luôn soft delete (`UPDATE SET deleted_at = now()`)
+- **Không dùng `gen_random_uuid()`** — luôn dùng `uuid_generate_v7()`
+- Không quên `WHERE deleted_at IS NULL` trong queries trả về active records
 
 ---
 

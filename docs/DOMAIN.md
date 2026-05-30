@@ -35,7 +35,7 @@
 ### Category
 
 - Owner quản lý categories: thêm, sửa tên, đổi thứ tự, xóa
-- **Chỉ xóa được category khi không còn product nào** — tránh orphan products
+- **Chỉ soft delete được category khi không còn active product nào** — tránh orphan products
 - `sort_order` quyết định thứ tự hiển thị trên menu
 
 ### Owner (Admin)
@@ -143,6 +143,20 @@ Sau khi submit, khách có thể vào `/order/[code]` để xem trạng thái re
 - Không cần migrate orders table khi lên Phase 3
 
 ---
+
+## Soft Delete Rules
+
+- **Tất cả delete đều là soft delete** — set `deleted_at = now()`, không bao giờ DELETE SQL
+- Queries luôn filter `WHERE deleted_at IS NULL` để loại bỏ soft-deleted records
+- `orders` không có `deleted_at` — dùng `status = 'cancelled'` thay thế
+- `order_items` không soft delete — giữ nguyên để bảo toàn lịch sử order
+- Soft-deleted records có thể restore bằng cách set `deleted_at = NULL`
+
+## UUID v7
+
+- Tất cả Primary Keys dùng UUID v7 (`uuid_generate_v7()`)
+- Time-ordered → index performance tốt hơn UUID v4 random
+- Cần enable extension `pg_uuidv7` trong migration đầu tiên
 
 ## Domain Principles
 

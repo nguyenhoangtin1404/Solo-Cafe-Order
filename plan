@@ -377,57 +377,64 @@ Tăng trải nghiệm và viral.
 
 # 10. Database Design
 
+> **Conventions**: Tất cả PK dùng UUID v7 (`uuid_generate_v7()`). Tất cả delete là soft delete (`deleted_at timestamptz`).
+
 ## categories
 
 ```sql
-id            uuid        PK
+id            uuid        PK DEFAULT uuid_generate_v7()
 name          varchar     NOT NULL
 sort_order    int
-created_at    timestamp   DEFAULT now()
+created_at    timestamptz DEFAULT now()
+deleted_at    timestamptz DEFAULT NULL
 ```
 
 ## products
 
 ```sql
-id            uuid        PK
+id            uuid        PK DEFAULT uuid_generate_v7()
 category_id   uuid        FK → categories.id
 name          varchar     NOT NULL
 description   text
 price         int         -- VND, NOT NULL, > 0
 image_url     varchar
 is_available  boolean     DEFAULT true
-created_at    timestamp   DEFAULT now()
+created_at    timestamptz DEFAULT now()
+deleted_at    timestamptz DEFAULT NULL
 ```
 
 ## product_options
 
 ```sql
-id            uuid        PK
+id            uuid        PK DEFAULT uuid_generate_v7()
 product_id    uuid        FK → products.id
 name          varchar     -- "Size", "Topping"
 type          varchar     -- 'select' | 'multi'
+deleted_at    timestamptz DEFAULT NULL
 ```
 
 ## product_option_values
 
 ```sql
-id            uuid        PK
+id            uuid        PK DEFAULT uuid_generate_v7()
 option_id     uuid        FK → product_options.id
 name          varchar     -- "M", "L", "XL"
 extra_price   int         DEFAULT 0
+deleted_at    timestamptz DEFAULT NULL
 ```
 
 ## orders
 
 ```sql
-id            uuid        PK
-order_code    varchar     UNIQUE  -- sinh bởi DB function, reset hàng ngày: A001..A999
+id            uuid        PK DEFAULT uuid_generate_v7()
+order_code    varchar     UNIQUE  -- sinh bởi DB function, reset hàng ngày
 status        varchar     -- new | making | done | cancelled
 total_amount  int         -- VND, snapshot lúc submit
 pickup_name   varchar     -- tên khách lấy đồ (optional)
 note          text        -- ghi chú toàn đơn
-customer_ref  varchar     -- nullable, dùng từ Phase 3 (phone hoặc QR token)
-created_at    timestamp   DEFAULT now()
+customer_ref  varchar     -- nullable, Phase 3
+created_at    timestamptz DEFAULT now()
+-- Không có deleted_at — dùng status='cancelled' thay thế
 ```
 
 ### order_code Generation
@@ -445,7 +452,7 @@ $$ LANGUAGE plpgsql;
 ## order_items
 
 ```sql
-id                uuid    PK
+id                uuid    PK DEFAULT uuid_generate_v7()
 order_id          uuid    FK → orders.id
 product_id        uuid    FK → products.id  -- soft ref
 product_name      varchar -- snapshot
@@ -453,6 +460,7 @@ quantity          int     -- NOT NULL, > 0
 unit_price        int     -- snapshot VND (gồm cả extra_price của options)
 selected_options  jsonb   -- snapshot: [{"option_name":"Size","value_name":"L","extra_price":5000}]
 note              text
+-- Không có deleted_at — không xóa items, xóa thì cancel cả order
 ```
 
 ---

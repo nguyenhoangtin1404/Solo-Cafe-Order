@@ -172,6 +172,9 @@ Xem `.env.example`. Không hardcode. Không commit `.env.local`.
 - Không hardcode config, không biến global
 - Mobile-first UI (tap targets ≥ 44px)
 - Sanitize user input (`pickup_name`, `note`) trước khi lưu
+- **Không bao giờ hard delete** — luôn soft delete (`deleted_at = now()`)
+- **Tất cả PK dùng UUID v7** (`uuid_generate_v7()`) — không dùng `gen_random_uuid()`
+- Queries luôn filter `WHERE deleted_at IS NULL` trừ khi cần lấy deleted records
 
 ## Error Codes
 
