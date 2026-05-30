@@ -4,6 +4,7 @@
 
 | Variable | Where | Note |
 |---|---|---|
+| `NEXT_PUBLIC_APP_URL` | Client + Server | Domain của app — dùng để generate QR code |
 | `NEXT_PUBLIC_SUPABASE_URL` | Client + Server | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Server | Public anon key (safe to expose) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only | **KHÔNG expose client-side** |

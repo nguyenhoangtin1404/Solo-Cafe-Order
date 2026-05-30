@@ -53,9 +53,9 @@ Lấy toàn bộ menu, nhóm theo category. Chỉ trả về sản phẩm `is_av
 
 Submit đơn hàng mới từ khách.
 
-**Rate limit**: 10 requests / phút / IP (Upstash). Vượt → `429 Too Many Requests`.
+**Rate limit**: 10 requests / phút / IP (Upstash). Vượt → `429`.
 
-> **Price policy**: Client **không gửi giá**. Server tự tra DB để tính `unit_price` và `extra_price` cho từng item. Không thể tamper giá từ client.
+> **Price policy**: Client không gửi giá. Server tự tính từ DB.
 
 **Request**
 ```json
@@ -73,24 +73,13 @@ Submit đơn hàng mới từ khách.
 }
 ```
 
-- `pickup_name`: optional, max 50 ký tự, sanitize XSS
-- `note`: optional, max 200 ký tự, sanitize XSS
-- `items`: bắt buộc, không rỗng
-- `selected_option_value_ids`: list UUID của option values được chọn (có thể rỗng)
-- **Không có `unit_price` trong request** — server tự tính
-
-**Server tính giá như sau:**
-```
-unit_price = product.price + sum(extra_price của các option_value được chọn)
-total_amount = sum(unit_price × quantity) của tất cả items
-```
-
 **Response 201**
 ```json
 {
   "order_code": "A001",
   "pickup_name": "Minh",
   "total_amount": 90000,
+  "wait_estimate": "5-10 phút",
   "items": [
     {
       "product_name": "Cà Phê Sữa",
@@ -102,29 +91,75 @@ total_amount = sum(unit_price × quantity) của tất cả items
 }
 ```
 
+- `wait_estimate`: ước tính thời gian chờ dựa trên số order đang pending × 3 phút/đơn
+
 **Errors**
-- `400 VALIDATION_ERROR` — thiếu items, quantity ≤ 0, pickup_name > 50 ký tự
-- `422 PRODUCT_UNAVAILABLE` — sản phẩm đã tắt (`is_available = false`)
-- `422 PRODUCT_NOT_FOUND` — product_id không tồn tại
-- `429` — rate limit exceeded
+- `400 VALIDATION_ERROR`
+- `422 PRODUCT_UNAVAILABLE`
+- `422 PRODUCT_NOT_FOUND`
+- `429` — rate limit
+
+---
+
+### GET /api/orders/:code
+
+Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
+
+**Response 200**
+```json
+{
+  "order_code": "A001",
+  "status": "making",
+  "pickup_name": "Minh",
+  "total_amount": 90000,
+  "created_at": "2025-01-01T10:00:00Z",
+  "items": [
+    {
+      "product_name": "Cà Phê Sữa",
+      "quantity": 2,
+      "unit_price": 45000,
+      "note": "Nhiều đường"
+    }
+  ]
+}
+```
+
+**Errors**
+- `404 ORDER_NOT_FOUND`
+
+---
+
+### POST /api/orders/:code/cancel
+
+Khách tự cancel order. Chỉ được khi status = `new`.
+
+**Request**: body rỗng
+
+**Response 200**
+```json
+{ "order_code": "A001", "status": "cancelled" }
+```
+
+**Errors**
+- `404 ORDER_NOT_FOUND`
+- `422 INVALID_STATUS_TRANSITION` — status không còn là `new`
 
 ---
 
 ## Protected Endpoints (cần Owner auth)
 
-> Supabase Auth session cookie. Middleware check server-side.
+> Session cookie via Supabase Auth. Middleware check server-side.
 > Không có session → `401 UNAUTHORIZED`
 >
-> **Owner account**: 1 account cố định, tạo sẵn trên Supabase Dashboard.
-> Không có trang signup — owner chỉ dùng `/login`.
+> **Owner account**: 1 account cố định, tạo trên Supabase Dashboard. Không có signup.
 
 ---
 
 ### GET /api/orders
 
-Lấy danh sách order hôm nay, mới nhất trước.
+Lấy orders hôm nay. Hỗ trợ filter theo status.
 
-**Query params**: `?status=new` (optional filter by status)
+**Query params**: `?status=new` (optional — `new` | `making` | `done` | `cancelled`)
 
 **Response 200**
 ```json
@@ -155,7 +190,7 @@ Lấy danh sách order hôm nay, mới nhất trước.
 
 ### PATCH /api/orders/:id/status
 
-Đổi trạng thái order. Phải đúng flow: `new → making → done` hoặc `new → cancelled`.
+Đổi trạng thái order. Flow: `new → making → done` hoặc `new → cancelled`.
 
 **Request**
 ```json
@@ -176,8 +211,6 @@ Lấy danh sách order hôm nay, mới nhất trước.
 
 ### PATCH /api/products/:id/availability
 
-Bật/tắt sản phẩm. Menu public cập nhật ngay.
-
 **Request**
 ```json
 { "is_available": false }
@@ -188,15 +221,9 @@ Bật/tắt sản phẩm. Menu public cập nhật ngay.
 { "id": "uuid", "is_available": false }
 ```
 
-**Errors**
-- `404 PRODUCT_NOT_FOUND`
-- `401 UNAUTHORIZED`
-
 ---
 
 ### POST /api/products
-
-Thêm sản phẩm mới.
 
 **Request**
 ```json
@@ -209,28 +236,17 @@ Thêm sản phẩm mới.
 }
 ```
 
-> `image_url`: upload lên Supabase Storage trước, sau đó gửi URL ở đây.
+**Response 201**: Created product object.
 
-**Response 201**
-```json
-{ "id": "uuid", "name": "Bạc Xỉu", "price": 30000, "is_available": true }
-```
-
-**Errors**
-- `400 VALIDATION_ERROR`
-- `404 CATEGORY_NOT_FOUND`
-- `401 UNAUTHORIZED`
+**Errors**: `400 VALIDATION_ERROR`, `404 CATEGORY_NOT_FOUND`, `401 UNAUTHORIZED`
 
 ---
 
 ### PATCH /api/products/:id
 
-Sửa thông tin sản phẩm (partial update).
+Partial update. All fields optional.
 
-**Request** (tất cả fields optional)
-```json
-{ "name": "...", "price": 35000, "description": "...", "image_url": "..." }
-```
+**Request**: `{ "name": "...", "price": 35000, "image_url": "..." }`
 
 **Response 200**: Updated product object.
 
@@ -238,27 +254,22 @@ Sửa thông tin sản phẩm (partial update).
 
 ### POST /api/upload/product-image
 
-Upload ảnh sản phẩm lên Supabase Storage. Trả về URL để dùng khi tạo/sửa product.
+Upload ảnh lên Supabase Storage.
 
 **Request**: `multipart/form-data`, field `file`
-
-**Validation**:
-- Format: JPG, PNG, WebP
-- Max size: 2MB
+- Format: JPG, PNG, WebP — max 2MB
 
 **Response 201**
 ```json
-{ "url": "https://your-project.supabase.co/storage/v1/object/public/product-images/..." }
+{ "url": "https://project.supabase.co/storage/v1/object/public/product-images/..." }
 ```
 
-**Errors**
-- `400 VALIDATION_ERROR` — sai format hoặc > 2MB
-- `401 UNAUTHORIZED`
+**Errors**: `400 VALIDATION_ERROR` (sai format / quá size), `401 UNAUTHORIZED`
 
 ---
 
 ## Notes
 
-- Thêm endpoint mới phải có spec đầy đủ: method, path, request/response schema, validation, auth, error codes
 - Client không bao giờ gửi price — server tự tính từ DB
-- Không tự giả định behavior nếu chưa có spec
+- `GET /api/orders/:code` và `POST /api/orders/:code/cancel` là public — dùng `order_code` làm token
+- Thêm endpoint mới phải spec đầy đủ trước khi code

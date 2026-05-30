@@ -26,6 +26,7 @@ app/
   menu/page.tsx          # Public: QR menu khách xem
   cart/page.tsx          # Public: giỏ hàng
   order-success/page.tsx # Public: màn hình sau gửi order
+  order/[code]/page.tsx  # Public: tracking page — xem status realtime + cancel
   login/page.tsx         # Owner: đăng nhập
   dashboard/page.tsx     # Owner: realtime queue
   admin/page.tsx         # Owner: quản lý menu
@@ -65,12 +66,13 @@ supabase/
 
 ### Order
 - Status flow: `new` → `making` → `done` | `cancelled`
-- **Chỉ được cancel khi status = `new`**
+- **Cancel khi status = `new`** — cả owner lẫn khách đều cancel được (khách dùng order_code)
 - Không sửa giá sau khi order đã submitted
 - `order_code` sinh bởi **DB function** (không sinh trong app code — tránh race condition)
-- Format order_code: `A001`...`A999` → `B001`..., reset hàng ngày
+- Format hiển thị: `A001`...`A999` → `B001`..., reset hàng ngày (không có `#`)
 - `pickup_name` (nullable): tên khách để owner gọi khi xong đồ
 - `customer_ref` (nullable): dành cho Phase 3 loyalty — đã có sẵn trong schema
+- `wait_estimate`: tính khi submit — số pending orders × 3 phút, hiển thị dạng range
 
 ### Product
 - `is_available = false` → ẩn khỏi menu khách
@@ -189,11 +191,12 @@ npm run typecheck  # TypeScript check
 - [ ] Owner auth + middleware bảo vệ route
 - [ ] Menu page + product modal (public)
 - [ ] Cart logic + validate availability khi submit
-- [ ] Submit order API (với rate limit + price validation)
-- [ ] Order success screen (order_code, pickup_name, items)
-- [ ] Realtime dashboard (owner, reconnect khi mất mạng)
+- [ ] Submit order API (với rate limit + wait_estimate)
+- [ ] Order success screen (order_code, pickup_name, items, wait_estimate)
+- [ ] Order tracking page /order/[code] (realtime + cancel by customer)
+- [ ] Realtime dashboard (owner, âm thanh khi order mới, filter tabs)
 - [ ] Order status update
-- [ ] Basic admin panel (list, toggle, add/edit product)
+- [ ] Basic admin panel (list, toggle, add/edit product, upload ảnh)
 - [ ] Deploy to Vercel
 
 ## Phases

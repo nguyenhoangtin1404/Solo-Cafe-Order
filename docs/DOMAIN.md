@@ -14,13 +14,13 @@
 ### Order
 
 - Sinh `order_code` bởi DB function — không sinh trong application code
-- Format: `A001`, `A002`... reset mỗi ngày. Sau A999 → B001
+- Format hiển thị: `A001`, `A002`... (không có `#`) reset mỗi ngày. Sau A999 → B001
 - Status lifecycle: `new → making → done` hoặc `new → cancelled`
-- **Chỉ cancel được khi status = `new`**
+- **Cancel được khi status = `new`** — cả owner lẫn khách đều cancel được (khách dùng order_code)
 - **Không đổi status ngược** — `done → making` là invalid
 - `total_amount` = tổng tính lúc submit, bất biến
 - `order_items` snapshot `product_name` + `unit_price` — bất biến sau khi tạo
-- `pickup_name` (nullable): tên khách để owner gọi khi xong đồ. Không bắt buộc
+- `pickup_name` (nullable): tên khách để owner gọi khi xong đồ
 - `customer_ref` (nullable): dành cho Phase 3 loyalty — phone hoặc QR token
 - Không cần customer account — khách anonymous
 
@@ -39,7 +39,7 @@
 - Có quyền đổi trạng thái order
 - Có quyền bật/tắt `is_available` của product
 - Có quyền thêm/sửa/xóa product và upload ảnh lên Supabase Storage
-- Xem realtime dashboard
+- Xem realtime dashboard với âm thanh thông báo khi có order mới
 
 ---
 
@@ -48,12 +48,63 @@
 1. Khách không cần tài khoản để đặt hàng
 2. `pickup_name` là optional — nhưng nên khuyến khích nhập để tránh nhầm đồ
 3. Order chỉ đổi status theo chiều tiến — không đổi ngược
-4. Không cho sửa order sau khi đã submit
-5. Product hết hàng → `is_available = false`, ẩn khỏi menu ngay
-6. **Giá do server tính, không tin client**: `unit_price = product.price + sum(selected option_value.extra_price)`. Client chỉ gửi `product_id` + `selected_option_value_ids`, không gửi price
-7. `total_amount = sum(unit_price × quantity)` của tất cả items, tính server-side
-8. `order_code` sinh bởi DB function trong transaction — không bao giờ duplicate
-9. Input người dùng (`pickup_name`, `note`) phải sanitize trước khi lưu — không cho XSS
+4. **Khách có thể cancel order bằng `order_code`** — chỉ khi status còn `new`
+5. Owner có thể cancel bất kỳ order nào khi status = `new`
+6. Không cho sửa items sau khi đã submit
+7. Product hết hàng → `is_available = false`, ẩn khỏi menu ngay
+8. **Giá do server tính**: `unit_price = product.price + sum(selected option_value.extra_price)`. Client chỉ gửi `product_id` + `selected_option_value_ids`, không gửi price
+9. `total_amount = sum(unit_price × quantity)` của tất cả items, tính server-side
+10. `order_code` sinh bởi DB function trong transaction — không bao giờ duplicate
+11. Input người dùng (`pickup_name`, `note`) phải sanitize trước khi lưu — không cho XSS
+
+---
+
+## Estimated Wait Time
+
+Hiển thị trên order success screen để khách biết chờ bao lâu.
+
+**Cách tính**: đếm số order đang `new` + `making` trước order hiện tại × thời gian trung bình 1 đồ (mặc định 3 phút).
+
+```
+wait_estimate = (pending_orders_ahead) × 3 phút
+Hiển thị: "Khoảng 5-10 phút" (làm tròn lên range)
+```
+
+> Chỉ là ước tính, không cam kết. Hiển thị dạng range (e.g. "5-10 phút"), không phải số chính xác.
+
+---
+
+## Owner Notification (Dashboard)
+
+- Khi có order `INSERT` mới từ Supabase Realtime → phát âm thanh beep
+- Dùng Web Audio API hoặc `<audio>` element
+- Âm thanh chỉ phát được sau user interaction đầu tiên (browser policy)
+- Visual fallback: badge đỏ trên tab title "🔴 Có đơn mới"
+
+---
+
+## Dashboard Filter
+
+Owner xem orders theo tab:
+
+| Tab | Filter |
+|---|---|
+| Tất cả | Tất cả orders hôm nay |
+| Đang chờ | status = `new` |
+| Đang làm | status = `making` |
+| Xong | status = `done` hoặc `cancelled` |
+
+---
+
+## Customer Order Tracking
+
+Sau khi submit, khách có thể vào `/order/[code]` để xem trạng thái realtime.
+
+- Hiển thị: `order_code`, `pickup_name`, status hiện tại, danh sách món
+- Realtime: subscribe Supabase channel để update status tự động
+- Nút **Cancel** hiển thị chỉ khi status = `new`
+- Khi status = `done`: hiển thị "Đồ của bạn đã xong, lấy tại quầy! 🎉"
+- Không cần auth — truy cập bằng `order_code` (unguessable đủ trong ngày)
 
 ---
 
@@ -68,9 +119,15 @@
 
 ---
 
-## Phase 3 Preparation (Loyalty)
+## QR Code
 
-Để Phase 3 không là breaking change:
+- QR trỏ đến `NEXT_PUBLIC_APP_URL/menu`
+- `NEXT_PUBLIC_APP_URL` khai báo trong env (ví dụ: `https://your-cafe.vercel.app`)
+- Generate QR image trong admin panel để owner in/share
+
+---
+
+## Phase 3 Preparation (Loyalty)
 
 - Column `customer_ref` đã có từ Phase 1 (nullable)
 - Phase 3 chỉ populate `customer_ref` = phone number hoặc loyalty QR token
@@ -94,6 +151,7 @@
 | `/menu` | Khách | Không |
 | `/cart` | Khách | Không |
 | `/order-success` | Khách | Không |
+| `/order/[code]` | Khách | Không (dùng order_code) |
 | `/login` | Owner | Không (form login) |
 | `/dashboard` | Owner | Có |
 | `/admin` | Owner | Có |
