@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#3D1C02"/>
+  <!-- Steam -->
+  <path d="M9 9 Q10.5 7 12 9" stroke="#C87941" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M14 7.5 Q16 5 18 7.5" stroke="#C87941" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M20 9 Q21.5 7 23 9" stroke="#C87941" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <!-- Rim -->
+  <rect x="5" y="12" width="20" height="3" rx="1.5" fill="#FEF3DC"/>
+  <!-- Body -->
+  <path d="M7 15 L8.5 24 Q8.5 25 10 25 L22 25 Q23.5 25 23.5 24 L25 15 Z" fill="#FEF3DC"/>
+  <!-- Handle -->
+  <path d="M24 18 Q28 18 28 21 Q28 24 24 24" stroke="#FEF3DC" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+</svg>

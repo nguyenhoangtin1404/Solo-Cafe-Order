@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Vibe Coffee — Design Tokens ─────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Brand colors (RGB for Tailwind opacity modifier compatibility) */
+    --color-espresso:  28 10 0;
+    --color-roast:     61 28 2;
+    --color-caramel:   200 121 65;
+    --color-honey:     232 160 32;
+    --color-cream:     254 243 220;
+    --color-foam:      250 250 245;
+    --color-coral:     232 84 58;
+    --color-matcha:    45 106 79;
+
+    /* Semantic tokens */
+    --color-brand:     #3D1C02;
+    --color-accent:    #C87941;
+    --color-surface:   #FEF8EF;
+
+    /* Typography */
+    --font-display:    "Playfair Display", Georgia, serif;
+    --font-sans:       "Plus Jakarta Sans", system-ui, sans-serif;
+
+    /* Spacing scale */
+    --space-tap:       44px;  /* minimum tap target */
+
+    /* Radius */
+    --radius-sm:       0.5rem;
+    --radius-md:       0.75rem;
+    --radius-lg:       1rem;
+    --radius-xl:       1.5rem;
+
+    /* Shadows */
+    --shadow-card:     0 2px 12px 0 rgba(28, 10, 0, 0.08);
+    --shadow-hover:    0 8px 32px 0 rgba(28, 10, 0, 0.14);
+  }
+}
+
+/* ─── Base Styles ─────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-vibe-200;
+  }
+
+  html {
+    @apply scroll-smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-foam text-espresso antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight text-espresso;
+  }
+
+  h1 { @apply text-4xl leading-tight; }
+  h2 { @apply text-3xl leading-snug; }
+  h3 { @apply text-2xl leading-snug; }
+
+  /* Focus ring — accessible & on-brand */
+  :focus-visible {
+    @apply outline-none ring-2 ring-vibe-600 ring-offset-2;
+  }
+
+  /* Scrollbar — minimal, branded */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-vibe-50; }
+  ::-webkit-scrollbar-thumb { @apply bg-vibe-300 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-vibe-500; }
+}
+
+/* ─── Component Utilities ─────────────────────────────────────────────── */
+@layer components {
+  /* Card — base card style */
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-vibe-100 overflow-hidden;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+           transition-all duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: var(--space-tap);
+    min-width: var(--space-tap);
+  }
+
+  .btn-primary {
+    @apply btn bg-coral text-white px-6 py-3
+           hover:bg-coral-hover active:scale-[0.98] shadow-sm;
+  }
+
+  .btn-brand {
+    @apply btn bg-vibe-950 text-cream px-6 py-3
+           hover:bg-vibe-900 active:scale-[0.98] shadow-sm;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-vibe-950 text-vibe-950 px-6 py-3
+           hover:bg-vibe-950 hover:text-cream active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply btn text-vibe-700 px-4 py-2
+           hover:bg-vibe-100 active:scale-[0.98];
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-new      { @apply badge bg-blue-100 text-blue-800; }
+  .badge-making   { @apply badge bg-amber-100 text-amber-800; }
+  .badge-done     { @apply badge bg-matcha-light text-matcha; }
+  .badge-cancelled { @apply badge bg-vibe-100 text-vibe-700; }
+
+  /* Input */
+  .input {
+    @apply w-full rounded-xl border border-vibe-200 bg-white px-4 py-3
+           text-espresso placeholder:text-vibe-400
+           focus:outline-none focus:ring-2 focus:ring-vibe-600 focus:border-transparent
+           transition-colors duration-150;
+    min-height: var(--space-tap);
+  }
+
+  /* Divider */
+  .divider {
+    @apply my-6 border-t border-vibe-100;
+  }
+
+  /* Steam animation layers */
+  .steam-1 { animation: steam 2.2s ease-in-out infinite; }
+  .steam-2 { animation: steam 2.2s ease-in-out infinite 0.35s; }
+  .steam-3 { animation: steam 2.2s ease-in-out infinite 0.7s; }
+}
+
+/* ─── Utility Extras ──────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .gradient-brand { @apply bg-vibe-gradient text-cream; }
+  .gradient-coral { @apply bg-coral-gradient text-white; }
+  .tap-target { min-height: 44px; min-width: 44px; }
+}
