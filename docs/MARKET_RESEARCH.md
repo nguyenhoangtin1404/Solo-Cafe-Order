@@ -256,6 +256,153 @@ Nếu bỏ ra **20,000,000 VND** thời gian tự build hệ thống:
 
 ---
 
+---
+
+## 7. Cơ hội mở rộng — Vibe Coffee as SaaS
+
+> Từ internal tool → platform bán cho các solo cafe khác
+
+### Moat cốt lõi
+
+Vibe Coffee có lợi thế không ai có: **thiết kế cho solo operator, không nhân viên, mọi thứ tự động**. KiotViet/CukCuk không thể pivot về đây vì họ đã quá lớn và phức tạp. Thị trường địa chỉ: **~120,000+ quán cafe nhỏ tại Việt Nam**.
+
+---
+
+### 7.1 Multi-tenancy — Nền tảng SaaS
+
+| Tính năng | Mô tả | Mức độ |
+|---|---|---|
+| **Subdomain routing** | `[ten-quan].vibecoffee.app` — mỗi quán 1 link riêng | Bắt buộc |
+| **Custom domain** | Trỏ `order.tenquan.com` về hệ thống | Pro plan |
+| **Onboarding < 5 phút** | Tạo quán → upload menu → có QR ngay | Bắt buộc |
+| **Menu template** | 50+ template menu VN phổ biến chọn 1 click | Growth hack |
+| **QR auto-generate** | QR có logo quán, xuất PDF/PNG in ngay | Bắt buộc |
+
+---
+
+### 7.2 AI Features — Điểm khác biệt tuyệt đối
+
+Không SaaS VN nào đang làm tốt điều này:
+
+| Tính năng | Mô tả |
+|---|---|
+| **AI setup menu từ ảnh** | Chụp bảng menu → AI điền tên, mô tả, giá gợi ý tự động |
+| **AI viết mô tả sản phẩm** | Upload ảnh cốc cà phê → AI tự viết copy hấp dẫn |
+| **AI daily insight** | "Hôm nay bán chạy: Cà phê sữa đá (47 ly). Cao điểm: 7–9h sáng." |
+| **AI smart wait estimate** | Học theo lịch sử thực tế từng quán, không chỉ queue × 3 phút |
+| **AI giá gợi ý** | "Quán tương tự khu vực bán Bạc xỉu 30–40k. Giá bạn: 25k — có thể tăng?" |
+| **AI busy mode** | Tự phát hiện giờ cao điểm, tự động thêm buffer vào wait estimate |
+
+---
+
+### 7.3 Operations — Tiết kiệm thời gian chủ quán
+
+| Tính năng | Mô tả |
+|---|---|
+| **One-tap sold out** | Nút đỏ to trên dashboard — hết hàng trong 2 giây |
+| **Scheduled menu** | Sản phẩm tự ẩn/hiện theo giờ (sinh tố chỉ bán 7–11h sáng) |
+| **Prep time per item** | Phin 5 phút, đá xay 2 phút → wait estimate chính xác hơn |
+| **Busy mode manual** | Chủ bật "đang bận" → wait estimate tự tăng |
+| **Holiday/closing** | Lên lịch đóng cửa, khách không order được khi quán đóng |
+| **Multi-device sync** | Điện thoại + tablet cùng nhận đơn realtime |
+| **Sound alerts tùy chỉnh** | Chọn âm thanh thông báo đơn mới |
+
+---
+
+### 7.4 Loyalty — Tạo khách quen
+
+| Tính năng | Mô tả | Ghi chú |
+|---|---|---|
+| **Digital stamp card** | Mua 9 tặng 1 — không cần app, link QR riêng | Viral tự nhiên |
+| **Points accumulation** | Mỗi đơn tích điểm, đổi voucher | `customer_ref` đã sẵn sàng trong schema |
+| **Birthday reward** | Tự động gửi voucher ngày sinh nhật khách | |
+| **VIP tier** | Khách chi > X triệu/tháng được ưu đãi riêng | |
+| **Push notification broadcast** | Chủ quán gửi: "Hôm nay có Cold Brew mới!" | |
+
+---
+
+### 7.5 Network Effect — Từ SaaS → Ecosystem
+
+| Tính năng | Mô tả | Tác động |
+|---|---|---|
+| **Tìm quán Vibe Coffee** | Directory: map + danh sách quán gần tôi | Khách nhận diện thương hiệu Vibe |
+| **"Powered by Vibe Coffee" badge** | Logo nhỏ trên menu page → link đăng ký | Viral loop: mỗi khách là quảng cáo |
+| **Customer universal profile** | 1 tài khoản theo dõi đơn ở nhiều quán | Lock-in cả 2 phía |
+| **Inter-cafe referral** | Giới thiệu 1 quán mới → free 1 tháng | Acquisition cost $0 |
+| **Vibe Coffee community** | Forum chủ quán chia sẻ kinh nghiệm, recipe | Retention |
+
+---
+
+### 7.6 Marketing Tools
+
+| Tính năng | Mô tả |
+|---|---|
+| **QR print kit** | Template table tent, sticker, poster A4 — tải PDF in ngay |
+| **Promo code** | Tạo mã giảm giá, chia sẻ Facebook/Zalo |
+| **Flash sale** | Sản phẩm giảm giá trong X giờ — countdown cho khách |
+| **Social proof** | "47 người đã order hôm nay" trên menu |
+| **Review collection** | Sau lấy đơn, khách nhận link đánh giá 1 click |
+
+---
+
+### 7.7 Revenue Model đề xuất
+
+```
+FREE (mãi mãi)
+├── 1 quán · 50 đơn/ngày · Vibe Coffee branding
+├── QR menu + ordering cơ bản
+└── Dashboard realtime
+
+STARTER — 99,000 VND/tháng
+├── Unlimited đơn
+├── Xoá Vibe Coffee branding
+├── Analytics 30 ngày
+└── Custom QR design
+
+PRO — 249,000 VND/tháng
+├── Tất cả Starter
+├── AI menu builder + AI insights
+├── Loyalty (stamp card + points)
+├── Scheduled menu + busy mode
+└── Custom domain
+
+GROWTH — 499,000 VND/tháng
+├── Tất cả Pro
+├── Multi-device (3 thiết bị)
+├── Push notification broadcast
+├── Flash sale + promo code
+└── Priority support
+```
+
+---
+
+### 7.8 Tiềm năng tài chính
+
+| Scenario | Số quán | ARPU | Doanh thu/tháng |
+|---|---|---|---|
+| Early | 1,000 quán | 99,000 VND | **99 triệu VND** (~$4,000) |
+| Growth | 1,000 quán | 249,000 VND | **249 triệu VND** (~$10,000) |
+| Scale | 5,000 quán | 149,000 VND | **745 triệu VND** (~$30,000) |
+
+Việt Nam có **~120,000+ quán cafe nhỏ** — thị trường địa chỉ rất lớn.
+
+---
+
+### 7.9 Roadmap mở rộng
+
+```
+Hiện tại  → MVP 1 quán (Phase 1 — đang build)
++3 tháng  → Multi-tenancy + onboarding < 5 phút
++6 tháng  → AI menu builder (killer feature để acquire)
++9 tháng  → Loyalty + push notification
++12 tháng → Network effect: directory + universal profile
++18 tháng → Raise hoặc bootstrap profitably
+```
+
+**Killer feature để acquire:** AI setup menu từ ảnh — solo owner không có thời gian nhập liệu. Nếu AI làm thay trong 2 phút, rào cản onboarding gần như về 0.
+
+---
+
 ## Nguồn tham khảo
 
 ### Việt Nam
