@@ -41,6 +41,14 @@ Chọn size, topping, ghi chú riêng cho từng ly — không lo bị nhầm v�
 
 ---
 
+## UI Flow Diagram
+
+![Vibe Coffee — Sơ đồ luồng giao diện](docs/ui-flow.png)
+
+> Luồng khách hàng (trái) và luồng chủ quán (phải) theo từng phase.
+
+---
+
 ## Cách hoạt động
 
 ```
