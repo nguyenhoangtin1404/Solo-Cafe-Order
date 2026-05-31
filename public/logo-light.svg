@@ -1,25 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <!-- Background circle (cream) -->
+  <!-- Light cream circle background -->
   <circle cx="60" cy="60" r="60" fill="#FEF3DC"/>
 
-  <!-- Steam wave 1 -->
-  <path d="M31 38 Q34.5 32 38 38" stroke="#C87941" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-  <!-- Steam wave 2 -->
-  <path d="M45 34 Q49.5 27 54 34" stroke="#C87941" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-  <!-- Steam wave 3 -->
-  <path d="M61 38 Q64.5 32 68 38" stroke="#C87941" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Signal / steam arcs -->
+  <path d="M35 41 Q60 22 85 41"
+        stroke="#C87941" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M41 38 Q60 23 79 38"
+        stroke="#C87941" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M48 36 Q60 26 72 36"
+        stroke="#C87941" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <circle cx="60" cy="39" r="2.5" fill="#C87941"/>
 
   <!-- Cup rim -->
-  <rect x="22" y="45" width="60" height="8" rx="4" fill="#3D1C02"/>
+  <rect x="22" y="47" width="66" height="7" rx="3.5" fill="#3D1C02"/>
 
   <!-- Cup body -->
-  <path d="M26 53 L30 85 Q30 88 34 88 L80 88 Q84 88 84 85 L88 53 Z" fill="#3D1C02"/>
+  <path d="M26 54 L30 88 Q30 91 34 91 L86 91 Q90 91 90 88 L94 54 Z" fill="#3D1C02"/>
 
   <!-- Handle -->
-  <path d="M86 62 Q98 62 98 74 Q98 86 86 86"
-        stroke="#3D1C02" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M91 64 Q104 64 104 76 Q104 88 91 88"
+        stroke="#3D1C02" stroke-width="5.5" stroke-linecap="round" fill="none"/>
 
   <!-- Coffee surface -->
-  <ellipse cx="57" cy="56" rx="25" ry="4" fill="#C87941" opacity="0.6"/>
-  <ellipse cx="57" cy="56" rx="14" ry="2" fill="#F2BF4D" opacity="0.5"/>
+  <ellipse cx="60" cy="57" rx="28" ry="4.5" fill="#C87941" opacity="0.5"/>
 </svg>

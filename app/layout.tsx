@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const playfairDisplay = Playfair_Display({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
@@ -17,23 +17,23 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: {
     template: "%s | Vibe Coffee",
-    default: "Vibe Coffee — Chill. Order. Sip.",
+    default: "Vibe Coffee — Phin. Prompt. Pickup.",
   },
-  description: "Quét QR, gọi đồ, nhận thông báo khi xong — đơn giản vậy thôi.",
+  description:
+    "Cà phê truyền thống, đặt hàng thông minh. Quét QR → chọn đồ → nhận ngay.",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.svg",
-    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "Vibe Coffee",
-    description: "Chill. Order. Sip.",
+    description: "Phin. Prompt. Pickup.",
     type: "website",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3D1C02",
+  themeColor: "#1C0A00",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -47,9 +47,9 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${playfairDisplay.variable} ${plusJakartaSans.variable}`}
+      className={`${spaceGrotesk.variable} ${plusJakartaSans.variable}`}
     >
-      <body className="min-h-screen bg-foam">{children}</body>
+      <body className="min-h-screen bg-surface">{children}</body>
     </html>
   );
 }
