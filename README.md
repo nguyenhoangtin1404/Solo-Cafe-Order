@@ -131,6 +131,18 @@ Xem hướng dẫn setup chi tiết tại [`docs/SETUP.md`](docs/SETUP.md).
 
 ---
 
+## Tài liệu
+
+| Tài liệu | Mô tả |
+|---|---|
+| [`docs/MARKET_RESEARCH.md`](docs/MARKET_RESEARCH.md) | Phân tích thị trường — so sánh 12+ công cụ, cơ hội mở rộng SaaS |
+| [`docs/SCREENS.md`](docs/SCREENS.md) | Danh sách 28 màn hình theo 4 phases |
+| [`docs/SETUP.md`](docs/SETUP.md) | Hướng dẫn setup chi tiết |
+| [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) | Đặc tả API endpoints |
+| [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md) | Schema database đầy đủ |
+
+---
+
 ## License
 
 MIT
