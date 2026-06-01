@@ -173,9 +173,12 @@ Viết migration `down` thủ công — Supabase không có built-in rollback.
 
 Sau khi deploy, kiểm tra:
 
-- [ ] `GET /api/menu` trả về data
+- [ ] `GET /api/menu` trả về data, chỉ có sản phẩm `is_available = true`
 - [ ] `/login` đăng nhập được bằng owner account
 - [ ] `/dashboard` hiển thị realtime dot xanh
-- [ ] Thêm order test → dashboard nhận được + âm thanh
-- [ ] Đổi status order → khách tracking thấy cập nhật
+- [ ] Thêm order test → dashboard nhận được + âm thanh + badge trên tab title
+- [ ] Đổi status order → khách tracking thấy cập nhật realtime
 - [ ] Upload ảnh sản phẩm trong `/admin`
+- [ ] `POST /api/orders` 11 lần từ cùng IP → lần 11 nhận 429 `RATE_LIMITED`
+- [ ] Soft delete product → vẫn hiển thị đúng trong order history cũ
+- [ ] Order code format đúng `A001`–`Z999`, không có `#`

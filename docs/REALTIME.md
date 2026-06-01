@@ -106,7 +106,7 @@ export function useOrderTracking(orderCode: string, onUpdate: (order: Order) => 
     const supabase = createBrowserClient()
 
     const channel = supabase
-      .channel(`order-${orderCode}`)
+      .channel(`order:${orderCode}`)
       .on(
         'postgres_changes',
         {

@@ -79,7 +79,7 @@ Giới hạn độ dài:
 
 Server tra DB lấy `product.price` + `sum(option_value.extra_price)` → tính `unit_price`.
 
-Nếu client gửi `price` field → server bỏ qua hoàn toàn.
+Schema validation ở API Route chỉ chấp nhận các field được phép (`product_id`, `quantity`, `selected_option_value_ids`) — field `price` không có trong schema → bị reject với `VALIDATION_ERROR` trước khi vào Service.
 
 ---
 

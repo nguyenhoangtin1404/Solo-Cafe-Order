@@ -183,6 +183,7 @@
 
 ```
 ┌─────────────────────────────┐
+│  (3) Solo Cafe — Dashboard  │  ← tab title badge khi có order mới
 │  Dashboard          🔔 bật  │  ← nút bật âm thanh (nếu chưa bật)
 ├─────────────────────────────┤
 │  [Đang chờ 3][Đang làm 1][Xong]│  ← tabs

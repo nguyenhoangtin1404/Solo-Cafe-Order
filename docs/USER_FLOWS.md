@@ -24,7 +24,7 @@
         ↓
 [/cart — xem giỏ hàng]
   - Xem danh sách items + tổng tiền
-  - Nhập tên lấy đồ (pickup_name) — optional
+  - Nhập tên lấy đồ (pickup_name) — optional nhưng UI khuyến khích ("Chúng tôi sẽ gọi tên này khi đồ xong")
   - Nhập ghi chú tổng đơn — optional
         ↓
 [Bấm "Đặt hàng"]
