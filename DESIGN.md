@@ -102,3 +102,57 @@ Thiết kế ưu tiên trải nghiệm trên điện thoại. Mọi component ph
 - **Tính chuyển động (Motion):** Sử dụng các hiệu ứng "bay vào giỏ hàng" (Fly-to-cart) và thanh tiến trình sinh động.
 - **Tính nhất quán:** Toàn bộ biểu tượng (Icons) phải đồng bộ về độ dày nét và phong cách bo góc.
 - **Không hỗ trợ Dark Mode:** App chỉ có light theme. Toàn bộ màu sắc được định nghĩa cho nền sáng.
+
+## 7. Screens Reference
+
+> Ảnh thiết kế export từ Stitch — lưu tại `docs/design-system/screens/`
+
+### Phase 1 — MVP (Khách)
+
+| Menu v1 | Menu v2 | Product Detail |
+|---|---|---|
+| ![menu_1](docs/design-system/screens/menu_1.png) | ![menu_2](docs/design-system/screens/menu_2.png) | ![product_detail](docs/design-system/screens/product_detail.png) |
+
+| Cart | Order Success | Track Order |
+|---|---|---|
+| ![cart](docs/design-system/screens/cart.png) | ![order_success](docs/design-system/screens/order_success.png) | ![track_order_1](docs/design-system/screens/track_order_1.png) |
+
+### Phase 1 — MVP (Owner)
+
+| Login | Dashboard | Order Detail |
+|---|---|---|
+| ![login](docs/design-system/screens/login.png) | ![dashboard](docs/design-system/screens/dashboard.png) | ![order_detail](docs/design-system/screens/order_detail.png) |
+
+| Product List | Product Form | Category |
+|---|---|---|
+| ![admin_product_list](docs/design-system/screens/admin_product_list.png) | ![admin_product_form](docs/design-system/screens/admin_product_form.png) | ![admin_category_list](docs/design-system/screens/admin_category_list.png) |
+
+### Phase 2 — Operations
+
+| Revenue | Order History | QR Code | Settings |
+|---|---|---|---|
+| ![revenue](docs/design-system/screens/revenue.png) | ![order_history](docs/design-system/screens/order_history.png) | ![admin_qr_code](docs/design-system/screens/admin_qr_code.png) | ![settings](docs/design-system/screens/settings.png) |
+
+### Phase 3 — Loyalty
+
+| Loyalty Dashboard | Loyalty Card | Voucher |
+|---|---|---|
+| ![loyalty_dashboard](docs/design-system/screens/loyalty_dashboard.png) | ![loyalty_card](docs/design-system/screens/loyalty_card.png) | ![voucher_management](docs/design-system/screens/voucher_management.png) |
+
+### Phase 4 — Gamification
+
+| Lucky Wheel | Secret Menu | Quiz | Leaderboard |
+|---|---|---|---|
+| ![lucky_wheel](docs/design-system/screens/lucky_wheel.png) | ![secret_menu](docs/design-system/screens/secret_menu.png) | ![quiz_game](docs/design-system/screens/quiz_game.png) | ![leaderboard](docs/design-system/screens/leaderboard.png) |
+
+### Empty States & Errors
+
+| Cart Empty | Menu Empty | 404 | Network Error | Server Error |
+|---|---|---|---|---|
+| ![cart_empty](docs/design-system/screens/cart_empty.png) | ![menu_empty](docs/design-system/screens/menu_empty.png) | ![404](docs/design-system/screens/404.png) | ![network_error](docs/design-system/screens/network_error.png) | ![server_error](docs/design-system/screens/server_error.png) |
+
+### Loading & Skeleton
+
+| Loading | Menu Skeleton | Dashboard Skeleton |
+|---|---|---|
+| ![loading](docs/design-system/screens/loading.png) | ![skeleton_menu](docs/design-system/screens/skeleton_menu.png) | ![skeleton_dashboard](docs/design-system/screens/skeleton_dashboard.png) |
