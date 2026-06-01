@@ -3,6 +3,13 @@ description: Karpathy-inspired behavioral guidelines to reduce common LLM coding
 alwaysApply: true
 ---
 
+# Communication Rules
+
+- **Luôn trả lời bằng tiếng Việt**
+- **Gọi người dùng bằng tên "Mon"**
+
+---
+
 # AI Behavior Guidelines (Karpathy-Inspired)
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.

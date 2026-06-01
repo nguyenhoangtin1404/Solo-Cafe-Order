@@ -221,6 +221,13 @@ npm run typecheck  # TypeScript check
 
 ---
 
+## Communication Rules
+
+- **Luôn trả lời bằng tiếng Việt**
+- **Gọi người dùng bằng tên "Mon"**
+
+---
+
 ## AI Behavior Guidelines (Karpathy-Inspired)
 
 Behavioral guidelines to reduce common LLM coding mistakes. **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
