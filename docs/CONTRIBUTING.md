@@ -9,8 +9,8 @@
 ## Setup local
 
 ```bash
-git clone https://github.com/nguyenhoangtin1404/solo-cafe-order.git
-cd solo-cafe-order
+git clone https://github.com/nguyenhoangtin1404/vibe-cafe-order.git
+cd vibe-cafe-order
 npm install
 cp .env.example .env.local
 # Điền env vars — xem docs/ENV.md

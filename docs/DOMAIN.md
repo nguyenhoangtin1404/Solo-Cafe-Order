@@ -108,7 +108,7 @@ Hiển thị: "Khoảng 5-10 phút" (làm tròn lên range)
 - Dùng Web Audio API hoặc `<audio>` element
 - **Browser policy**: âm thanh chỉ phát được sau ít nhất 1 lần user interaction (click/tap)
 - **UX bắt buộc**: khi owner mở dashboard lần đầu, hiện banner "Nhấn để bật thông báo âm thanh 🔔" — sau khi click mới enable sound
-- Visual fallback luôn bật: badge đỏ trên tab title `(1) Solo Cafe` và highlight card mới
+- Visual fallback luôn bật: badge đỏ trên tab title `(1) Vibe Cafe` và highlight card mới
 
 ---
 

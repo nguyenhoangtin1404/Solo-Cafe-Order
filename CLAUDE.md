@@ -1,4 +1,4 @@
-# Solo Cafe Order — Claude Context
+# Vibe Cafe Order — Claude Context
 
 ## Project Purpose
 

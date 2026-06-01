@@ -9,7 +9,7 @@
 
 ```
 ┌─────────────────────────────┐
-│  ☰  Solo Cafe          🛒 2 │  ← header: tên quán + cart badge
+│  ☰  Vibe Cafe          🛒 2 │  ← header: tên quán + cart badge
 ├─────────────────────────────┤
 │  [Cà Phê] [Trà] [Đá Xay]   │  ← category tabs (scroll ngang)
 ├─────────────────────────────┤
@@ -137,7 +137,7 @@
 ### Status: new
 ```
 ┌─────────────────────────────┐
-│  Solo Cafe                   │
+│  Vibe Cafe                   │
 ├─────────────────────────────┤
 │  Đơn hàng A001              │  ← order_code
 │  Gọi tên: Minh              │  ← pickup_name
@@ -173,7 +173,7 @@
 ```
 ┌─────────────────────────────┐
 │                              │
-│       Solo Cafe ☕           │
+│       Vibe Cafe ☕           │
 │       Đăng nhập              │
 │                              │
 │  Email                       │
@@ -195,7 +195,7 @@
 
 ```
 ┌─────────────────────────────┐
-│  (3) Solo Cafe — Dashboard  │  ← tab title badge khi có order mới
+│  (3) Vibe Cafe — Dashboard  │  ← tab title badge khi có order mới
 │  Dashboard          🔔 bật  │  ← nút bật âm thanh (nếu chưa bật)
 ├─────────────────────────────┤
 │  [Đang chờ 3][Đang làm 1][Xong]│  ← tabs

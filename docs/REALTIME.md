@@ -171,7 +171,7 @@ export function useNotificationSound() {
 **UX bắt buộc**: khi owner mở dashboard lần đầu → hiện banner "Nhấn để bật thông báo âm thanh 🔔". Sau khi click mới gọi `enable()`.
 
 **Visual fallback** luôn bật dù âm thanh chưa enable:
-- Badge số trên tab title: `(2) Solo Cafe — Dashboard`
+- Badge số trên tab title: `(2) Vibe Cafe — Dashboard`
 - Card order mới highlight (border, animation) trong 5 giây
 
 ---
