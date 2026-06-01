@@ -1,4 +1,4 @@
-# Solo Cafe Order
+# Vibe Cafe Order
 
 > Hệ thống đặt đồ uống qua QR cho quán cafe take-away — nhanh, đơn giản, không cần app.
 
@@ -8,7 +8,7 @@
 
 Giờ cao điểm, khách xếp hàng dài. Bạn vừa pha chế, vừa nhận order miệng, vừa ghi tay — dễ nhầm, dễ quên, dễ mất khách.
 
-**Solo Cafe Order** giải quyết điều đó bằng 1 tờ giấy dán QR code.
+**Vibe Cafe Order** giải quyết điều đó bằng 1 tờ giấy dán QR code.
 
 ---
 

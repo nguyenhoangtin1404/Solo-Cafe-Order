@@ -22,7 +22,26 @@
 - `order_items` snapshot `product_name` + `unit_price` — bất biến sau khi tạo
 - `pickup_name` (nullable): tên khách để owner gọi khi xong đồ
 - `customer_ref` (nullable): dành cho Phase 3 loyalty — phone hoặc QR token
+- `payment_method` (varchar): cách thanh toán — xem bảng dưới
 - Không cần customer account — khách anonymous
+
+### Payment Method
+
+| Value | Ý nghĩa | Phase |
+|---|---|---|
+| `cash` | Tiền mặt tại quầy | Phase 1 ✅ |
+| `bank_transfer` | Chuyển khoản / QR ngân hàng tĩnh | Phase 1 ✅ |
+| `momo` | Ví MoMo (cần merchant account + webhook) | Phase 2 |
+| `vnpay` | VNPAY QR (cần merchant account + webhook) | Phase 2 |
+
+**Phase 1 — cash + bank_transfer:**
+- `cash`: owner thu tiền mặt khi giao đồ, không cần xác nhận hệ thống
+- `bank_transfer`: sau khi đặt, order-success hiện QR tĩnh (số tài khoản + QR ảnh) của owner. Owner tự kiểm tra app ngân hàng và xác nhận
+
+**Phase 2 — MoMo / VNPAY:**
+- Tích hợp payment gateway thật, có webhook xác nhận tự động
+- Thêm `payment_status` (pending / paid / failed) vào orders table
+- Không block merge order khi chưa có payment_status (quán nhỏ, trust-based)
 
 ### Cart (client-side only)
 
@@ -89,7 +108,7 @@ Hiển thị: "Khoảng 5-10 phút" (làm tròn lên range)
 - Dùng Web Audio API hoặc `<audio>` element
 - **Browser policy**: âm thanh chỉ phát được sau ít nhất 1 lần user interaction (click/tap)
 - **UX bắt buộc**: khi owner mở dashboard lần đầu, hiện banner "Nhấn để bật thông báo âm thanh 🔔" — sau khi click mới enable sound
-- Visual fallback luôn bật: badge đỏ trên tab title `(1) Solo Cafe` và highlight card mới
+- Visual fallback luôn bật: badge đỏ trên tab title `(1) Vibe Cafe` và highlight card mới
 
 ---
 

@@ -47,7 +47,7 @@
 
 ## Phase 2 — Operations (~2 tuần)
 
-**Goal**: Giảm stress vận hành hàng ngày.
+**Goal**: Giảm stress vận hành hàng ngày + tích hợp thanh toán online.
 
 ### Tasks
 
@@ -56,6 +56,10 @@
 - [ ] Mobile optimization pass (Lighthouse score ≥ 90)
 - [ ] Error boundary + offline detection UI
 - [ ] `updated_at` + audit log cơ bản cho orders
+- [ ] **MoMo payment integration** — merchant account, deep link, webhook xác nhận
+- [ ] **VNPAY QR integration** — merchant account, dynamic QR, webhook xác nhận
+- [ ] Thêm `payment_status` column vào orders (pending / paid / failed)
+- [ ] Dashboard hiển thị payment_method + payment_status trên card order
 
 ### Acceptance Criteria (Phase 2 Done)
 
@@ -63,6 +67,8 @@
 - [ ] QR code in ra được / share được link
 - [ ] UI không crash khi mất mạng (hiển thị thông báo)
 - [ ] Lighthouse mobile score ≥ 90 trên `/menu`
+- [ ] Khách thanh toán qua MoMo → đơn tự cập nhật `payment_status = paid`
+- [ ] Khách thanh toán qua VNPAY QR → đơn tự cập nhật `payment_status = paid`
 
 ---
 

@@ -65,6 +65,7 @@ Submit đơn hàng mới từ khách.
 {
   "pickup_name": "Minh",
   "note": "Ít đá",
+  "payment_method": "cash",
   "items": [
     {
       "product_id": "uuid",
@@ -76,6 +77,9 @@ Submit đơn hàng mới từ khách.
 }
 ```
 
+> `payment_method`: `"cash"` (default) | `"bank_transfer"` | `"momo"` (Phase 2) | `"vnpay"` (Phase 2).
+> Phase 1 chỉ accept `cash` và `bank_transfer` — gửi giá trị khác → `400 VALIDATION_ERROR`.
+
 **Response 201**
 ```json
 {
@@ -83,6 +87,13 @@ Submit đơn hàng mới từ khách.
   "pickup_name": "Minh",
   "total_amount": 90000,
   "wait_estimate": "5-10 phút",
+  "payment_method": "bank_transfer",
+  "bank_transfer_info": {
+    "account_number": "...",
+    "account_name": "...",
+    "bank_name": "...",
+    "qr_image_url": "..."
+  },
   "items": [
     {
       "product_name": "Cà Phê Sữa",
@@ -95,6 +106,8 @@ Submit đơn hàng mới từ khách.
   ]
 }
 ```
+
+> `bank_transfer_info` chỉ có trong response khi `payment_method = "bank_transfer"`, null với các method khác.
 
 **Errors**
 - `400 VALIDATION_ERROR`

@@ -7,7 +7,7 @@ Làm theo thứ tự — mỗi bước phụ thuộc bước trước.
 ## Bước 1 — Supabase
 
 1. Tạo account tại [supabase.com](https://supabase.com)
-2. New Project → đặt tên `solo-cafe-order` → chọn region Singapore (gần VN nhất)
+2. New Project → đặt tên `vibe-cafe-order` → chọn region Singapore (gần VN nhất)
 3. Lấy keys từ **Project Settings → API**:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -60,7 +60,7 @@ npm run dev
 
 | | Supabase Project | Upstash | Vercel |
 |---|---|---|---|
-| **Staging** | Tạo project riêng tên `solo-cafe-staging` | Instance riêng | Preview Deployment (auto theo PR) |
+| **Staging** | Tạo project riêng tên `vibe-cafe-staging` | Instance riêng | Preview Deployment (auto theo PR) |
 | **Production** | Project chính | Instance chính | Production Deployment (từ `main`) |
 
 > Vercel tự tạo Preview URL cho mỗi PR — dùng làm staging, không cần setup thêm.
