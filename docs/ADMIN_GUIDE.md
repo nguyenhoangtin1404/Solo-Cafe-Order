@@ -4,7 +4,7 @@
 
 1. Mở trình duyệt → truy cập `https://your-cafe.vercel.app/dashboard`
 2. Đăng nhập bằng email + mật khẩu
-3. **Bấm banner "Bật thông báo âm thanh 🔔"** — quan trọng, nếu không bấm sẽ không có tiếng beep khi có order mới
+3. **Bấm banner "Bật thông báo âm thanh 🔔"** — trình duyệt chặn âm thanh tự động theo chính sách bảo mật, phải có ít nhất 1 lần tương tác trước khi hệ thống phát được tiếng beep
 4. Để màn hình dashboard mở trong suốt ca — không cần reload
 
 ---
