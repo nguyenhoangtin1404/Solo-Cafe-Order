@@ -104,9 +104,12 @@ UPDATE <table> SET deleted_at = now() WHERE id = $1
 | total_amount | int | VND, snapshot tại lúc submit |
 | pickup_name | varchar | nullable |
 | note | text | ghi chú toàn đơn |
+| payment_method | varchar | cash \| bank_transfer \| momo \| vnpay, DEFAULT 'cash' |
 | customer_ref | varchar | nullable, Phase 3 |
 | created_at | timestamptz | DEFAULT now() |
 | updated_at | timestamptz | DEFAULT now(), tự cập nhật khi có thay đổi |
+
+> `payment_status` (pending/paid/failed) chưa có ở Phase 1 — thêm migration ở Phase 2 khi tích hợp MoMo/VNPAY.
 
 > Orders không có `deleted_at` — dùng `status = 'cancelled'` thay thế. Không xóa order.
 

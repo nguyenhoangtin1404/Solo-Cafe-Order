@@ -84,6 +84,10 @@
 │  Ghi chú cho quán            │
 │  [Ít đá toàn bộ___________] │
 ├─────────────────────────────┤
+│  Thanh toán                  │
+│  (•) Tiền mặt tại quầy      │  ← default
+│  ( ) Chuyển khoản / QR      │
+├─────────────────────────────┤
 │  Tạm tính          95,000đ  │
 │                              │
 │  [   Đặt hàng — 95,000đ   ] │  ← CTA
@@ -112,6 +116,14 @@
 │  Bạc Xỉu × 2                │
 │                              │
 │  Tổng cộng       95,000đ    │
+│                              │
+│  ┌─────────────────────┐    │  ← chỉ hiện khi payment_method = bank_transfer
+│  │ 💳 Chuyển khoản      │    │
+│  │ MB Bank — 1234567890 │    │
+│  │ Nguyễn Văn A         │    │
+│  │ Nội dung: A001       │    │
+│  │     [QR image]       │    │
+│  └─────────────────────┘    │
 │                              │
 │  [ Theo dõi đơn hàng →  ]   │  ← link /order/[code]
 │  [ Đặt thêm                ]│
