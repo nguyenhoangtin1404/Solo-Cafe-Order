@@ -33,7 +33,8 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              // unsafe-eval chỉ cần trong dev (Next.js fast refresh)
+              // unsafe-eval chỉ cần trong dev (Next.js fast refresh); production dùng unsafe-inline sẵn
+              // TODO: migrate sang nonce-based CSP để bỏ unsafe-inline
               isDev
                 ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
                 : "script-src 'self' 'unsafe-inline'",
@@ -42,6 +43,9 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "font-src 'self'",
               "frame-ancestors 'none'",
+              // base-uri không được cover bởi default-src trong bất kỳ browser nào
+              "base-uri 'self'",
+              "object-src 'none'",
             ].join("; "),
           },
         ],

@@ -2,6 +2,11 @@
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function isSafeRedirect(pathname: string): boolean {
+  // Chỉ cho phép redirect về internal path, chặn open redirect
+  return pathname.startsWith("/") && !pathname.startsWith("//");
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -28,6 +33,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Gọi getUser() để middleware refresh session cookie nếu cần
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -38,18 +44,27 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
+    const next = request.nextUrl.pathname;
     url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
-    const redirectResponse = NextResponse.redirect(url);
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
+    // Chỉ set ?next= nếu pathname là internal path (chặn open redirect)
+    if (isSafeRedirect(next)) {
+      url.searchParams.set("next", next);
+    }
+    // Trả về supabaseResponse với Location header thay vì tạo redirectResponse mới
+    // để giữ nguyên cookie attributes từ session refresh
+    supabaseResponse.headers.set("Location", url.toString());
+    return new NextResponse(null, {
+      status: 307,
+      headers: supabaseResponse.headers,
     });
-    return redirectResponse;
   }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  // Chạy middleware trên tất cả routes (trừ static files) để session luôn được refresh
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
