@@ -4,6 +4,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
   throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
 }
 const supabaseHostname = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
+const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
   images: {
@@ -32,7 +33,10 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              // unsafe-eval chỉ cần trong dev (Next.js fast refresh)
+              isDev
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+                : "script-src 'self' 'unsafe-inline'",
               `img-src 'self' data: https://${supabaseHostname}`,
               `connect-src 'self' https://${supabaseHostname} wss://${supabaseHostname}`,
               "style-src 'self' 'unsafe-inline'",

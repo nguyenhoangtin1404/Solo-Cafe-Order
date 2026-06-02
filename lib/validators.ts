@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { MAX_NOTE_LENGTH, MAX_PICKUP_NAME_LENGTH } from "./constants";
 
 export const orderItemSchema = z.object({
@@ -24,12 +24,12 @@ export const submitOrderSchema = z.object({
   pickupName: z
     .string()
     .transform((s) => s.trim())
-    .pipe(z.string().max(MAX_PICKUP_NAME_LENGTH))
+    .pipe(z.string().min(1).max(MAX_PICKUP_NAME_LENGTH))
     .nullish(),
   note: z
     .string()
     .transform((s) => s.trim())
-    .pipe(z.string().max(MAX_NOTE_LENGTH))
+    .pipe(z.string().min(1).max(MAX_NOTE_LENGTH))
     .nullish(),
   items: z.array(orderItemSchema).min(1).max(50),
 });
