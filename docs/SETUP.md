@@ -49,6 +49,23 @@ npm run dev
 
 ---
 
+## Cloud Agent Setup (Cursor)
+
+Để cloud agent mới chạy `npm run lint` / `npm run typecheck` ngay mà không fail vì thiếu `node_modules`:
+
+- Repo đã có script `ensure:deps` và được hook vào:
+  - `prelint`
+  - `pretypecheck`
+- Với agent fresh, lần chạy lint/typecheck đầu tiên sẽ tự động cài dependencies bằng `npm install`.
+
+Nếu muốn tối ưu hơn (không chờ lần chạy đầu), chạy Env Setup Agent tại <https://cursor.com/onboard> với prompt:
+
+```text
+Analyze this Next.js repo and update cloud agent environment so npm dependencies are preinstalled on startup (npm install), then verify npm run lint and npm run typecheck run without manual setup.
+```
+
+---
+
 ## Bước 4 — Vercel Deployment
 
 1. Tạo account tại [vercel.com](https://vercel.com)
