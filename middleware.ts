@@ -2,9 +2,14 @@
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-function isSafeRedirect(pathname: string): boolean {
-  // Chỉ cho phép redirect về internal path, chặn open redirect
-  return pathname.startsWith("/") && !pathname.startsWith("//");
+/**
+ * Validate ?next= param trước khi redirect sau login.
+ * GỌI HÀM NÀY Ở LOGIN PAGE khi đọc searchParams.get("next") — không chỉ ở đây.
+ * Chặn open redirect: chỉ accept internal path bắt đầu bằng "/" và không phải "//".
+ */
+export function isSafeRedirect(value: string | null | undefined): value is string {
+  if (!value) return false;
+  return value.startsWith("/") && !value.startsWith("//");
 }
 
 export async function middleware(request: NextRequest) {
@@ -33,30 +38,43 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Gọi getUser() để middleware refresh session cookie nếu cần
+  // getUser() refresh session cookie nếu cần — phải gọi trước bất kỳ redirect nào
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/admin");
+  const pathname = request.nextUrl.pathname;
 
-  if (isProtected && !user) {
+  // Unauthenticated: redirect về /login với ?next= để sau login quay lại đúng trang
+  if (
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) &&
+    !user
+  ) {
     const url = request.nextUrl.clone();
-    const next = request.nextUrl.pathname;
     url.pathname = "/login";
-    // Chỉ set ?next= nếu pathname là internal path (chặn open redirect)
-    if (isSafeRedirect(next)) {
-      url.searchParams.set("next", next);
+    if (isSafeRedirect(pathname)) {
+      url.searchParams.set("next", pathname);
     }
-    // Trả về supabaseResponse với Location header thay vì tạo redirectResponse mới
-    // để giữ nguyên cookie attributes từ session refresh
     supabaseResponse.headers.set("Location", url.toString());
     return new NextResponse(null, {
       status: 307,
       headers: supabaseResponse.headers,
     });
+  }
+
+  // Authenticated nhưng không có role admin: chặn /admin
+  // user_metadata.role được set bởi service role khi tạo tài khoản admin
+  if (pathname.startsWith("/admin") && user) {
+    const role = user.user_metadata?.role as string | undefined;
+    if (role !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      supabaseResponse.headers.set("Location", url.toString());
+      return new NextResponse(null, {
+        status: 307,
+        headers: supabaseResponse.headers,
+      });
+    }
   }
 
   return supabaseResponse;

@@ -1,4 +1,4 @@
-export interface Category {
+﻿export interface Category {
   id: string;
   name: string;
   sort_order: number;
@@ -20,6 +20,7 @@ export interface ProductOption {
   values: ProductOptionValue[];
 }
 
+// Dùng khi fetch danh sách sản phẩm mà chưa join options (menu listing, search)
 export interface Product {
   id: string;
   category_id: string;
@@ -29,5 +30,9 @@ export interface Product {
   image_url: string | null;
   is_available: boolean;
   created_at: string;
-  options?: ProductOption[];
 }
+
+// Dùng khi fetch chi tiết sản phẩm với join options (product detail page, cart add)
+export type ProductWithOptions = Product & {
+  options: ProductOption[];
+};

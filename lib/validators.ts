@@ -1,12 +1,14 @@
 ﻿import { z } from "zod";
 import { MAX_NOTE_LENGTH, MAX_PICKUP_NAME_LENGTH } from "./constants";
 
+// Optional string field: absent/null/empty-after-trim đều coerce về null cho DB
+// Non-empty string sau trim phải có ít nhất 1 ký tự và không vượt max
 const trimmedOptionalString = (max: number) =>
   z
     .string()
-    .transform((s) => s.trim())
-    .pipe(z.string().min(1).max(max))
     .optional()
+    .transform((v) => (v === undefined ? undefined : v.trim() || undefined))
+    .pipe(z.string().min(1).max(max).optional())
     .transform((v) => v ?? null);
 
 export const orderItemSchema = z.object({
@@ -26,7 +28,7 @@ export const orderItemSchema = z.object({
 
 export const submitOrderSchema = z.object({
   // Server phải KHÔNG dùng giá từ client — luôn resolve price từ DB khi insert order
-  // null = khách không nhập tên (anonymous order)
+  // null = khách không nhập (anonymous order / no note)
   pickupName: trimmedOptionalString(MAX_PICKUP_NAME_LENGTH),
   note: trimmedOptionalString(MAX_NOTE_LENGTH),
   items: z.array(orderItemSchema).min(1).max(50),

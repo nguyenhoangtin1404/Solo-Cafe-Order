@@ -1,9 +1,19 @@
-import type { OrderStatus } from "@/lib/constants";
+﻿import type { OrderStatus } from "@/lib/constants";
 
+// DB-facing: shape trả về từ Supabase khi join order_items với options
 export interface SelectedOption {
   option_name: string;
   value_name: string;
   extra_price: number;
+}
+
+// Cart-facing: lưu cả ID (để submit) lẫn display fields (để render)
+export interface CartSelectedOption {
+  optionId: string;
+  valueId: string;
+  optionName: string;
+  valueName: string;
+  extraPrice: number;
 }
 
 export interface OrderItem {
@@ -27,7 +37,7 @@ export interface Order {
   customer_ref: string | null;
   created_at: string;
   updated_at: string;
-  items?: OrderItem[];
+  items: OrderItem[]; // luôn populated khi fetch — dùng Partial<Order> nếu chưa join
 }
 
 export interface CartItem {
@@ -35,6 +45,6 @@ export interface CartItem {
   productName: string;
   quantity: number;
   unitPrice: number;
-  selectedOptions: SelectedOption[];
-  note?: string;
+  selectedOptions: CartSelectedOption[]; // default [] khi không có options
+  note: string | null; // null = không có note, consistent với validator output và DB
 }
