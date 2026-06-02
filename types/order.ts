@@ -1,4 +1,4 @@
-﻿import type { OrderStatus } from "@/lib/constants";
+﻿import type { OrderStatus, PaymentMethod } from "@/lib/constants";
 
 // DB-facing: shape trả về từ Supabase khi join order_items với options
 export interface SelectedOption {
@@ -31,6 +31,7 @@ export interface Order {
   id: string;
   order_code: string;
   status: OrderStatus;
+  payment_method: PaymentMethod;
   total_amount: number;
   pickup_name: string | null;
   note: string | null;

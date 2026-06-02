@@ -7,17 +7,27 @@ export function isSafeRedirect(value: string | null | undefined): value is strin
   return value.startsWith("/") && !value.startsWith("//");
 }
 
+function requireEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY"): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 function makeRedirect(url: URL, supabaseResponse: NextResponse): NextResponse {
   const redirectResponse = NextResponse.redirect(url);
-  supabaseResponse.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value));
+  supabaseResponse.cookies
+    .getAll()
+    .forEach((c) => redirectResponse.cookies.set(c.name, c.value, c));
   return redirectResponse;
 }
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
