@@ -13,20 +13,24 @@ export const orderItemSchema = z.object({
     )
     .optional()
     .default([]),
-  note: z.string().max(MAX_NOTE_LENGTH).optional(),
+  note: z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().max(MAX_NOTE_LENGTH))
+    .optional(),
 });
 
 export const submitOrderSchema = z.object({
   pickupName: z
     .string()
-    .max(MAX_PICKUP_NAME_LENGTH)
     .transform((s) => s.trim())
-    .optional(),
+    .pipe(z.string().max(MAX_PICKUP_NAME_LENGTH))
+    .nullish(),
   note: z
     .string()
-    .max(MAX_NOTE_LENGTH)
     .transform((s) => s.trim())
-    .optional(),
+    .pipe(z.string().max(MAX_NOTE_LENGTH))
+    .nullish(),
   items: z.array(orderItemSchema).min(1).max(50),
 });
 
