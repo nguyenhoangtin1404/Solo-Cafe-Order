@@ -1,103 +1,146 @@
-# Roadmap
+# Roadmap — Solo Cafe Order
 
 ---
 
-## Phase 1 — QR Menu MVP (~3 tuần)
+## Phase 1 — QR Menu MVP (~3–4 tuần solo dev)
 
-**Goal**: Khách scan QR → gửi order → xem tracking → owner nhận realtime → quản lý menu cơ bản.
+### Critical Path
 
-### Tasks
+```
+#1 → #2 → #35 → #10 → #13 → #14 → #21 → #22   (customer submit flow)
+#3 → #4 → #12 → #13                               (DB → orders)
+#4 → #36 → #24a → #24b                            (Realtime — risk cao nhất)
+#33 → #34                                          (smoke test → deploy)
+```
 
-**Tuần 1 — Foundation**
-- [ ] #1 Setup Next.js + TailwindCSS + Supabase + shadcn/ui
-- [ ] #2 DB schema + migrations + seed data (~10 sản phẩm mẫu)
-- [ ] #3 Owner auth — Supabase Auth login page (`/login`)
-- [ ] #4 Middleware bảo vệ `/dashboard` và `/admin` (dùng `@supabase/ssr`)
+> **Rule cho solo dev:** Làm theo critical path trước. Parallel streams chỉ khi đang chờ (test chạy, build, review). Đừng context-switch quá nhiều trong 1 ngày.
 
-**Tuần 2 — Customer Flow**
-- [ ] #5 Menu page (public, mobile-first, category tabs)
-- [ ] #6 Product card + detail modal + options
-- [ ] #7 Cart logic (localStorage, validate availability khi submit)
-- [ ] #8 Submit order API (`POST /api/orders` + rate limiting + wait estimate)
-- [ ] #9 Order success screen (order_code, pickup_name, items, wait_estimate)
-- [ ] #10 Order tracking page `/order/[code]` (realtime status + cancel button)
+---
 
-**Tuần 3 — Owner Flow + Polish**
-- [ ] #11 Realtime dashboard (Supabase Realtime, âm thanh khi order mới, tab filter)
-- [ ] #12 Order status update (`PATCH /api/orders/:id/status`)
-- [ ] #13 Basic admin panel (list products, toggle availability, add/edit product, upload ảnh)
-- [ ] #14 Deploy to Vercel + staging environment
-- [ ] #15 Smoke test + fix bugs
+### Week 1 — Foundation (M1)
 
-### Acceptance Criteria (Phase 1 Done)
+**Mục tiêu cuối tuần:** DB migrate xong, API `/menu` trả data, owner login được.
 
-- [ ] Khách scan QR → gửi order thành công < 60 giây
-- [ ] Order success screen hiển thị `wait_estimate` đúng theo queue
-- [ ] Khách vào `/order/[code]` xem được status realtime
-- [ ] Khách cancel được order khi status = `new`
-- [ ] Dashboard nhận order mới realtime < 2 giây + phát âm thanh
-- [ ] Dashboard filter đúng theo tab (Đang chờ / Đang làm / Xong)
-- [ ] Owner đổi được status `new → making → done`
-- [ ] Owner bật/tắt món từ admin panel, menu cập nhật ngay
-- [ ] 2 đơn submit đồng thời → không duplicate `order_code`
-- [ ] Rate limit > 10 req/phút → 429
-- [ ] Hoạt động trên iOS Safari + Android Chrome
+| Ngày | Focus | Issues |
+|---|---|---|
+| **Day 1** | Project setup + DB schema products | #1 scaffolding, #3 migration categories/products, #6 Storage bucket |
+| **Day 2** | DB schema orders + Supabase client | #4 migration orders + order_code fn + trigger, #2 Supabase client + sanitize |
+| **Day 3** | DB policies + seed + types | #5 RLS policies, #7 seed data, #36 Realtime publication, #8 types + Zod |
+| **Day 4** | Auth + service role + small setup | #9 auth + middleware, #35 service role client, #40 bank env vars, #30 PWA manifest, #31 error pages, #32 redirect |
+| **Day 5** | Product layer + API menu | #10 product repo + service, #11 GET /api/menu |
+
+**M1 Checkpoint:**
+- [ ] `npm run dev` chạy
+- [ ] `GET /api/menu` trả categories + products (test bằng curl)
+- [ ] `/login` → redirect `/dashboard` (owner account đã tạo trên Supabase)
+- [ ] `/dashboard` không auth → redirect `/login`
+
+---
+
+### Week 2 — Core Order Loop Backend (M2 backend)
+
+**Mục tiêu cuối tuần:** Toàn bộ API orders hoạt động, Realtime đã validate.
+
+| Ngày | Focus | Issues |
+|---|---|---|
+| **Day 6** | ⚡ Realtime spike + Order repo | **#24a Realtime spike** (làm TRƯỚC — risk cao nhất), #12 order repository |
+| **Day 7** | Order service (business logic nặng nhất) | #13 order service (submitOrder, cancelOrder, updateStatus, wait_estimate) |
+| **Day 8** | Submit + Status APIs | #14 POST /api/orders (rate limit + bank_transfer_info), #15 PATCH status, #16 POST cancel |
+| **Day 9** | Tracking + Dashboard APIs + Tests | #17 GET /api/orders/[code], #18 GET /api/orders (owner + pagination), #37 Jest unit tests |
+| **Day 10** | Custom hooks | #19 useCart + useOrderQueue + useOrderTracking |
+
+**M2-backend Checkpoint:**
+- [ ] `POST /api/orders` → 201 với order_code + wait_estimate string
+- [ ] `POST /api/orders` lần 11/phút → 429 RATE_LIMITED
+- [ ] Supabase Dashboard: insert order → console log event trong < 2 giây (#24a spike pass)
+- [ ] `npm test` → OrderService tests pass
+
+---
+
+### Week 3 — Frontend + Admin + Ship (M2 frontend + M3)
+
+**Mục tiêu cuối tuần:** App live trên Vercel, full flow từ QR đến dashboard.
+
+| Ngày | Focus | Issues |
+|---|---|---|
+| **Day 11** | Menu page | #20 Menu page (CategoryTabs, MenuCard, ProductModal + options) |
+| **Day 12** | Cart + Order success | #21 Cart page (submit + payment_method radio), #22 Order success screen |
+| **Day 13** | Tracking + Dashboard | #23 Order tracking page (realtime + cancel), #24b Dashboard full (OrderCard + Realtime) |
+| **Day 14** | Dashboard UX + Loading states | #25 Sound + filter tabs + title badge, #26 Loading/empty/error states |
+| **Day 15** | Admin product | #27 Admin list + availability toggle, #28 Add/edit product |
+| **Day 16** | Admin options + image | #38 Options management, #29 Image upload |
+| **Day 17** | Admin category + smoke test | #39 Category admin, #33 Smoke test checklist |
+| **Day 18** | Deploy | #34 Deploy to Vercel + env setup |
+
+**M3 / Done Checkpoint:**
+- [ ] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
+- [ ] Dashboard nhận order mới realtime < 2 giây + sound
+- [ ] Owner cập nhật status → tracking page khách cập nhật ngay
+- [ ] Upload ảnh product, toggle availability hoạt động
+- [ ] `npm run build` clean, Lighthouse PWA ≥ 80
+- [ ] App live trên Vercel
+
+---
+
+### Parallel Streams (làm khi chờ)
+
+| Khi đang chờ... | Có thể làm song song |
+|---|---|
+| Build / test chạy | Viết seed data, viết Zod schemas |
+| #13 order service (nặng) | #30 PWA manifest, #31 error pages, #32 redirect |
+| Backend M2 xong | #19 custom hooks (không cần API sẵn) |
+| #24b dashboard UI | #25 sound (Web Audio API, không cần API) |
+
+---
+
+### Risk Register
+
+| Risk | Mức | Mitigation |
+|---|---|---|
+| Supabase Realtime không hoạt động | 🔴 Cao | **#24a spike ngay Day 6** — phát hiện sớm, còn thời gian xoay xở |
+| `generate_order_code()` race condition | 🟡 Trung | Test concurrent Day 2 khi viết migration |
+| options management phức tạp hơn tưởng | 🟡 Trung | #38 để cuối M3, không ảnh hưởng core flow |
+| Payment bank_transfer UX phức tạp | 🟡 Trung | #40 + #14 làm cùng nhau Day 8 |
+| 3 tuần không đủ | 🟡 Trung | Nếu trễ: bỏ #38 (options admin) + #39 (category admin), ship với toggle + add basic |
+
+---
+
+### Nếu bị trễ — Fallback Scope
+
+Thứ tự có thể defer sang Phase 2 mà không ảnh hưởng core flow:
+
+```
+#38 Options management       → quản lý options thủ công trên Supabase Dashboard
+#39 Category admin           → thêm category thủ công
+#29 Image upload             → dùng URL ảnh từ ngoài tạm thời
+#25 Sound notification       → dashboard vẫn dùng được, chỉ thiếu sound
+#37 Jest unit tests          → test thủ công qua smoke checklist #33
+```
 
 ---
 
 ## Phase 2 — Operations (~2 tuần)
 
-**Goal**: Giảm stress vận hành hàng ngày + tích hợp thanh toán online.
-
-### Tasks
-
-- [ ] Daily revenue summary (tổng doanh thu hôm nay trên dashboard)
-- [ ] Print / share QR code (generate từ `NEXT_PUBLIC_APP_URL/menu`)
-- [ ] Mobile optimization pass (Lighthouse score ≥ 90)
-- [ ] Error boundary + offline detection UI
-- [ ] `updated_at` + audit log cơ bản cho orders
-- [ ] **MoMo payment integration** — merchant account, deep link, webhook xác nhận
-- [ ] **VNPAY QR integration** — merchant account, dynamic QR, webhook xác nhận
-- [ ] Thêm `payment_status` column vào orders (pending / paid / failed)
-- [ ] Dashboard hiển thị payment_method + payment_status trên card order
-
-### Acceptance Criteria (Phase 2 Done)
-
-- [ ] Owner xem doanh thu hôm nay trên dashboard
-- [ ] QR code in ra được / share được link
-- [ ] UI không crash khi mất mạng (hiển thị thông báo)
-- [ ] Lighthouse mobile score ≥ 90 trên `/menu`
-- [ ] Khách thanh toán qua MoMo → đơn tự cập nhật `payment_status = paid`
-- [ ] Khách thanh toán qua VNPAY QR → đơn tự cập nhật `payment_status = paid`
-
----
+- Daily revenue summary trên dashboard
+- Print / share QR code
+- Mobile optimization (Lighthouse ≥ 90)
+- MoMo / VNPAY integration + `payment_status`
+- `cancel_token` cho cancel endpoint (thay brute-force order_code)
+- Offline detection UI
 
 ## Phase 3 — Loyalty (~3 tuần)
 
-**Goal**: Tăng retention khách hàng.
+> `customer_ref` đã sẵn từ Phase 1 schema — không breaking change.
 
-> **Note**: `customer_ref` có sẵn từ Phase 1 (nullable). Phase 3 chỉ populate — không breaking change.
-
-### Tasks
-
-- [ ] Customer soft identity (phone number optional khi order)
-- [ ] Point system (earn points per order)
-- [ ] Voucher / discount code
-- [ ] Buy X get Y
-- [ ] Customer order history (tra cứu qua phone)
-
----
+- Customer soft identity (phone number optional)
+- Point system, voucher, buy X get Y
+- Customer order history
 
 ## Phase 4 — Gamification (~2 tuần)
 
-**Goal**: Tăng trải nghiệm và viral.
-
-### Tasks
-
-- [ ] Lucky wheel sau khi order thành công
-- [ ] Secret menu (unlock bằng code)
-- [ ] Reward animation
-- [ ] Mini game after order
+- Lucky wheel sau order
+- Secret menu (unlock bằng code)
+- Mini game
 
 ---
 
@@ -106,7 +149,7 @@
 ```
 Native mobile app
 Multi-store / multi-tenant
-Inventory management phức tạp
+Inventory management
 Offline sync
 Staff management
 Full accounting / ERP
