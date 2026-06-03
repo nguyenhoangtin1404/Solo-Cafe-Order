@@ -30,6 +30,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // Cannot import from lib/supabase/server.ts — that file uses next/headers (Node.js only).
+  // Middleware runs on Edge Runtime so the client must be initialized inline.
   let supabaseResponse = NextResponse.next({ request });
   const supabase = createServerClient(
     requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
