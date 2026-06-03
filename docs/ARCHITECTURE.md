@@ -23,7 +23,7 @@ Next.js API Route  ← Controller layer
   ↓
 Service            ← Business logic
   ↓
-lib/supabase.ts    ← Repository / DB access
+lib/supabase/      ← Supabase clients (browser + server)
   ↓
 Supabase (PostgreSQL)
 ```
