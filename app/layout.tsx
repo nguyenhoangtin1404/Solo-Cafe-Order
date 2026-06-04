@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -8,9 +8,33 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://vibe-cafe.vercel.app";
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+};
+
 export const metadata: Metadata = {
   title: "Vibe Cafe",
-  description: "Order your favorite drinks",
+  description: "Đặt đồ uống yêu thích tại Vibe Cafe — nhanh, dễ, không cần app",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Vibe Cafe",
+  },
+  openGraph: {
+    title: "Vibe Cafe",
+    description: "Scan QR, chọn đồ, đặt ngay — không cần app",
+    url: appUrl,
+    siteName: "Vibe Cafe",
+    locale: "vi_VN",
+    type: "website",
+  },
+  icons: {
+    apple: "/icons/icon-192.png",
+  },
 };
 
 export default function RootLayout({
