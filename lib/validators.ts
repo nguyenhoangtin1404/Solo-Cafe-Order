@@ -35,3 +35,19 @@ export const submitOrderSchema = z.object({
 });
 
 export type SubmitOrderInput = z.infer<typeof submitOrderSchema>;
+
+export const updateStatusSchema = z.object({
+  status: z.enum(["making", "done", "cancelled"]),
+});
+export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+
+// Validate URL path param — A001…Z999 format
+export const cancelOrderSchema = z.object({
+  order_code: z.string().regex(/^[A-Z]\d{3}$/, "Invalid order code format"),
+});
+
+export const selectedOptionSchema = z.object({
+  option_id: z.string().uuid(),
+  // select: exactly 1 value; multi: 0 or more — enforced at service layer
+  value_ids: z.array(z.string().uuid()),
+});
