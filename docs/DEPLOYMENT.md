@@ -59,31 +59,13 @@ Dashboard → Database → Replication → bật `INSERT` + `UPDATE` cho bảng 
 
 ### 6. Supabase — Storage bucket
 
-Dashboard → Storage → New bucket:
+Bucket `product-images` và toàn bộ policies được tạo **tự động** qua migration
+`20260604000003_storage_product_images.sql` — không cần thao tác thủ công trên Dashboard.
 
-- Name: `product-images`
-- Public: **Yes** (ảnh menu cần public URL)
+Migration cấu hình: public read, 2 MB limit, jpeg/png/webp, write chỉ cho `app_metadata.role = 'admin'`.
 
-Thêm policy:
-
-```sql
--- Cho phép public đọc ảnh
-CREATE POLICY "public_read_images"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'product-images');
-
--- Chỉ owner (authenticated) mới upload
-CREATE POLICY "owner_upload_images"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'product-images');
-
--- Chỉ owner mới xóa
-CREATE POLICY "owner_delete_images"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'product-images');
-```
+> Đảm bảo owner account đã được set `app_metadata: { role: "admin" }` trên Supabase Dashboard
+> (Authentication → Users → chọn user → Edit → App Metadata) trước khi test upload.
 
 ### 7. Upstash — Tạo Redis
 

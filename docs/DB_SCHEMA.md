@@ -265,6 +265,31 @@ CREATE TRIGGER orders_updated_at
 
 ---
 
+## Supabase Storage
+
+### Bucket: `product-images`
+
+| Setting             | Value                                    |
+| ------------------- | ---------------------------------------- |
+| Public              | `true` — URL load được không cần auth    |
+| File size limit     | 2 097 152 bytes (2 MB)                   |
+| Allowed MIME types  | `image/jpeg`, `image/png`, `image/webp`  |
+
+### Policies (`storage.objects`)
+
+| Policy                          | Role            | Operation | Condition                               |
+| ------------------------------- | --------------- | --------- | --------------------------------------- |
+| `public_read_product_images`    | `anon`          | SELECT    | `bucket_id = 'product-images'`          |
+| `owner_read_product_images`     | `authenticated` | SELECT    | bucket + `app_metadata.role = 'admin'`  |
+| `owner_insert_product_images`   | `authenticated` | INSERT    | bucket + `app_metadata.role = 'admin'`  |
+| `owner_update_product_images`   | `authenticated` | UPDATE    | bucket + `app_metadata.role = 'admin'`  |
+| `owner_delete_product_images`   | `authenticated` | DELETE    | bucket + `app_metadata.role = 'admin'`  |
+
+> Upload không có auth hoặc không phải admin → **403 Forbidden**.  
+> File > 2MB → bị reject tại storage level.
+
+---
+
 ## Migration Rules
 
 - **Không hard delete** — luôn dùng soft delete (`deleted_at = now()`)
