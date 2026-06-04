@@ -11,48 +11,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  typecheck:
-    name: TypeScript
+  checks:
+    name: Format / TypeScript / ESLint
     runs-on: ubuntu-latest
-    if: hashFiles('package.json') != ''
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
 
-      - run: npm run typecheck
+      - name: Format (Prettier)
+        run: npm run format:check
 
-  lint:
-    name: ESLint
-    runs-on: ubuntu-latest
-    if: hashFiles('package.json') != ''
-    steps:
-      - uses: actions/checkout@v4
+      - name: TypeScript
+        run: npm run typecheck
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run lint
+      - name: ESLint
+        run: npm run lint
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    if: hashFiles('package.json') != ''
+    needs: [checks]
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci

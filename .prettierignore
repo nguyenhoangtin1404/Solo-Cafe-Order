@@ -1,3 +1,7 @@
 .next
 node_modules
 public
+# Docs are handwritten markdown — not enforced by Prettier
+docs
+# Claude Code internal worktrees
+.claude

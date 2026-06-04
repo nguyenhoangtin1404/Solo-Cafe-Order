@@ -14,30 +14,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install gitleaks
-        run: |
-          GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | jq -r '.tag_name' | sed 's/v//')
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-            | tar -xz -C /tmp gitleaks
-          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
-
-      - name: Scan secrets (PR — chỉ scan commits mới trong PR)
-        if: github.event_name == 'pull_request'
-        run: |
-          gitleaks detect --source . \
-            --log-opts "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" \
-            --redact --exit-code 1
-
-      - name: Scan secrets (push — chỉ scan commits mới)
-        if: github.event_name == 'push'
-        run: |
-          BASE="${{ github.event.before }}"
-          HEAD="${{ github.event.after }}"
-          if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
-            # Branch mới tạo — scan toàn bộ repo
-            gitleaks detect --source . --redact --exit-code 1
-          else
-            gitleaks detect --source . \
-              --log-opts "${BASE}..${HEAD}" \
-              --redact --exit-code 1
-          fi
+      # gitleaks-action@v2 scan scope (matches the old manual script behavior):
+      #   pull_request → scans only commits in the PR (base..head)
+      #   push (existing branch) → scans only new commits (before..after)
+      #   push (new branch, before=0000…) → falls back to full-repo scan,
+      #     same as the old script's "Branch mới tạo — scan toàn bộ repo" path.
+      # .gitleaks.toml allowlist applies to all modes.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
