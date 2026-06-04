@@ -1,0 +1,111 @@
+"use client";
+
+import { useCallback, useSyncExternalStore } from "react";
+import type { CartItem, CartSelectedOption } from "@/types/order";
+
+const CART_KEY = "vibe_cafe_cart";
+const CART_STORAGE_EVENT = "vibe_cafe_cart_change";
+
+function itemKey(
+  productId: string,
+  options: CartSelectedOption[],
+  note: string | null
+): string {
+  const sorted = [...options].sort((a, b) =>
+    a.valueId.localeCompare(b.valueId)
+  );
+  return `${productId}:${sorted.map((o) => o.valueId).join(",")}:${note ?? ""}`;
+}
+
+function readCart(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(CART_KEY);
+    return stored ? (JSON.parse(stored) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCart(items: CartItem[]): void {
+  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  window.dispatchEvent(new Event(CART_STORAGE_EVENT));
+}
+
+function subscribeCart(onStoreChange: () => void): () => void {
+  const onChange = () => onStoreChange();
+  window.addEventListener("storage", onChange);
+  window.addEventListener(CART_STORAGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(CART_STORAGE_EVENT, onChange);
+  };
+}
+
+function getServerCartSnapshot(): CartItem[] {
+  return [];
+}
+
+export function useCart() {
+  const items = useSyncExternalStore(
+    subscribeCart,
+    readCart,
+    getServerCartSnapshot
+  );
+
+  const updateItems = useCallback(
+    (updater: (prev: CartItem[]) => CartItem[]) => {
+      writeCart(updater(readCart()));
+    },
+    []
+  );
+
+  const addItem = useCallback(
+    (item: CartItem) => {
+      const key = itemKey(item.productId, item.selectedOptions, item.note);
+      updateItems((prev) => {
+        const idx = prev.findIndex(
+          (i) => itemKey(i.productId, i.selectedOptions, i.note) === key
+        );
+        if (idx !== -1) {
+          return prev.map((i, index) =>
+            index === idx ? { ...i, quantity: i.quantity + item.quantity } : i
+          );
+        }
+        return [...prev, item];
+      });
+    },
+    [updateItems]
+  );
+
+  const removeItem = useCallback(
+    (index: number) => {
+      updateItems((prev) => prev.filter((_, i) => i !== index));
+    },
+    [updateItems]
+  );
+
+  const updateQuantity = useCallback(
+    (index: number, quantity: number) => {
+      if (quantity <= 0) {
+        updateItems((prev) => prev.filter((_, i) => i !== index));
+        return;
+      }
+      updateItems((prev) =>
+        prev.map((item, i) => (i === index ? { ...item, quantity } : item))
+      );
+    },
+    [updateItems]
+  );
+
+  const clear = useCallback(() => {
+    localStorage.removeItem(CART_KEY);
+    window.dispatchEvent(new Event(CART_STORAGE_EVENT));
+  }, []);
+
+  const total = items.reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  );
+
+  return { items, addItem, removeItem, updateQuantity, clear, total };
+}

@@ -11,15 +11,20 @@ import {
 const trimmedOptionalString = (max: number) =>
   z
     .string()
+    .nullable()
     .optional()
-    .transform((v) => (v === undefined ? undefined : v.trim() || undefined))
+    .transform((v) =>
+      v == null || v === undefined ? undefined : v.trim() || undefined
+    )
     .pipe(z.string().min(1).max(max).optional())
     .transform((v) => v ?? null);
 
 export const orderItemSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
-  selected_option_value_ids: z.array(z.string().uuid()).optional().default([]),
+  selected_option_value_ids: z
+    .preprocess((val) => (val == null ? [] : val), z.array(z.string().uuid()))
+    .default([]),
   note: trimmedOptionalString(MAX_ITEM_NOTE_LENGTH),
 });
 
