@@ -8,16 +8,16 @@ Triết lý: **Tiny but delightful** — không build POS enterprise, chỉ cầ
 
 ## Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | Next.js (App Router) + TypeScript + TailwindCSS + shadcn/ui |
-| Backend | Next.js API Routes |
-| Database | PostgreSQL via Supabase |
-| Realtime | Supabase Realtime |
-| Storage | Supabase Storage |
-| Auth | Supabase Auth |
-| Rate Limiting | Upstash Redis + @upstash/ratelimit |
-| Deploy | Vercel |
+| Layer         | Tech                                                        |
+| ------------- | ----------------------------------------------------------- |
+| Frontend      | Next.js (App Router) + TypeScript + TailwindCSS + shadcn/ui |
+| Backend       | Next.js API Routes                                          |
+| Database      | PostgreSQL via Supabase                                     |
+| Realtime      | Supabase Realtime                                           |
+| Storage       | Supabase Storage                                            |
+| Auth          | Supabase Auth                                               |
+| Rate Limiting | Upstash Redis + @upstash/ratelimit                          |
+| Deploy        | Vercel                                                      |
 
 ## Repository Structure
 
@@ -65,6 +65,7 @@ supabase/
 ## Domain Rules — PHẢI BIẾT
 
 ### Order
+
 - Status flow: `new` → `making` → `done` | `cancelled`
 - **Cancel khi status = `new`** — cả owner lẫn khách đều cancel được (khách dùng order_code)
 - Không sửa giá sau khi order đã submitted
@@ -75,27 +76,32 @@ supabase/
 - `wait_estimate`: tính khi submit — số pending orders × 3 phút, hiển thị dạng range
 
 ### Product
+
 - `is_available = false` → ẩn khỏi menu khách
 - Giá luôn là VND (integer > 0, không dùng float)
 - Có thể có options (size, topping) với `extra_price`
 - Image: JPG/PNG/WebP, max 2MB
 
 ### Cart
+
 - Chỉ tồn tại client-side (localStorage)
 - **Validate lại `is_available` khi submit** — không trust cart state
 - Clear cart sau khi submit thành công
 
 ### Auth
+
 - Khách **không cần login**
 - Chỉ owner cần auth để vào `/dashboard` và `/admin`
 - Route guard qua `middleware.ts` + `@supabase/ssr`
 
 ### Security
+
 - `POST /api/orders` có rate limit: 10 req/phút/IP (Upstash)
 - **Client không gửi price** — server tự tính `unit_price` từ DB (`product.price + sum(option extra_price)`)
 - Sanitize `pickup_name` và `note` — không cho XSS
 
 ### Owner Account
+
 - **1 account cố định** — tạo sẵn trên Supabase Dashboard, không có trang signup
 - Owner chỉ dùng `/login` (email + password)
 
@@ -237,6 +243,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. **Tradeoff:** These 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
@@ -259,12 +266,14 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it — don't delete it.
 
 When your changes create orphans:
+
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
@@ -275,11 +284,13 @@ The test: Every changed line should trace directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
+
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
 For multi-step tasks, state a brief plan:
+
 ```
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]

@@ -68,14 +68,14 @@ Chọn size, topping, ghi chú riêng cho từng ly — không lo bị nhầm v�
 
 ## Tính năng chính
 
-| Tính năng | Mô tả |
-|---|---|
-| 📱 Menu QR | Khách xem menu, chọn size/topping, gửi order — không cần app |
-| ⚡ Realtime Dashboard | Đơn hàng mới hiện ngay, có âm thanh thông báo |
-| 🔍 Order Tracking | Khách theo dõi trạng thái đơn hàng realtime |
-| 🎛️ Quản lý menu | Bật/tắt món, đổi giá, upload ảnh từ điện thoại |
-| 🕐 Ước tính thời gian | Khách biết chờ bao lâu dựa trên queue thực tế |
-| ❌ Tự cancel | Khách huỷ được đơn trước khi chủ quán bắt đầu pha |
+| Tính năng             | Mô tả                                                        |
+| --------------------- | ------------------------------------------------------------ |
+| 📱 Menu QR            | Khách xem menu, chọn size/topping, gửi order — không cần app |
+| ⚡ Realtime Dashboard | Đơn hàng mới hiện ngay, có âm thanh thông báo                |
+| 🔍 Order Tracking     | Khách theo dõi trạng thái đơn hàng realtime                  |
+| 🎛️ Quản lý menu       | Bật/tắt món, đổi giá, upload ảnh từ điện thoại               |
+| 🕐 Ước tính thời gian | Khách biết chờ bao lâu dựa trên queue thực tế                |
+| ❌ Tự cancel          | Khách huỷ được đơn trước khi chủ quán bắt đầu pha            |
 
 ---
 
@@ -109,16 +109,16 @@ Xem hướng dẫn setup chi tiết tại [`docs/SETUP.md`](docs/SETUP.md).
 
 ## Tech Stack
 
-| | |
-|---|---|
-| Frontend | Next.js · TypeScript · TailwindCSS · shadcn/ui |
-| Backend | Next.js API Routes |
-| Database | PostgreSQL (Supabase) |
-| Realtime | Supabase Realtime |
-| Auth | Supabase Auth |
-| Storage | Supabase Storage |
-| Rate Limiting | Upstash Redis |
-| Deploy | Vercel |
+|               |                                                |
+| ------------- | ---------------------------------------------- |
+| Frontend      | Next.js · TypeScript · TailwindCSS · shadcn/ui |
+| Backend       | Next.js API Routes                             |
+| Database      | PostgreSQL (Supabase)                          |
+| Realtime      | Supabase Realtime                              |
+| Auth          | Supabase Auth                                  |
+| Storage       | Supabase Storage                               |
+| Rate Limiting | Upstash Redis                                  |
+| Deploy        | Vercel                                         |
 
 ---
 
@@ -133,13 +133,13 @@ Xem hướng dẫn setup chi tiết tại [`docs/SETUP.md`](docs/SETUP.md).
 
 ## Tài liệu
 
-| Tài liệu | Mô tả |
-|---|---|
+| Tài liệu                                             | Mô tả                                                           |
+| ---------------------------------------------------- | --------------------------------------------------------------- |
 | [`docs/MARKET_RESEARCH.md`](docs/MARKET_RESEARCH.md) | Phân tích thị trường — so sánh 12+ công cụ, cơ hội mở rộng SaaS |
-| [`docs/SCREENS.md`](docs/SCREENS.md) | Danh sách 28 màn hình theo 4 phases |
-| [`docs/SETUP.md`](docs/SETUP.md) | Hướng dẫn setup chi tiết |
-| [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) | Đặc tả API endpoints |
-| [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md) | Schema database đầy đủ |
+| [`docs/SCREENS.md`](docs/SCREENS.md)                 | Danh sách 28 màn hình theo 4 phases                             |
+| [`docs/SETUP.md`](docs/SETUP.md)                     | Hướng dẫn setup chi tiết                                        |
+| [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)       | Đặc tả API endpoints                                            |
+| [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md)             | Schema database đầy đủ                                          |
 
 ---
 

@@ -19,9 +19,7 @@ const trimmedOptionalString = (max: number) =>
 export const orderItemSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
-  selected_option_value_ids: z.array(z.string().uuid())
-    .optional()
-    .default([]),
+  selected_option_value_ids: z.array(z.string().uuid()).optional().default([]),
   note: trimmedOptionalString(MAX_ITEM_NOTE_LENGTH),
 });
 

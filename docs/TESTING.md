@@ -8,11 +8,11 @@ Test những gì dễ sai, bỏ qua những gì hiển nhiên. Ưu tiên: **Serv
 
 ## Stack
 
-| Layer | Tool |
-|---|---|
-| Unit (Service, Utils) | Jest + ts-jest |
+| Layer                    | Tool                                |
+| ------------------------ | ----------------------------------- |
+| Unit (Service, Utils)    | Jest + ts-jest                      |
 | Integration (API Routes) | Jest + `next/test` hoặc `supertest` |
-| E2E | Playwright (Phase 2+) |
+| E2E                      | Playwright (Phase 2+)               |
 
 ```bash
 npm install --save-dev jest ts-jest @types/jest
@@ -46,32 +46,35 @@ Mock repository layer, không mock service.
 
 ```typescript
 // __tests__/services/order.service.test.ts
-import { OrderService } from '@/lib/services/order.service'
-import { OrderRepository } from '@/lib/repositories/order.repository'
-import { ProductRepository } from '@/lib/repositories/product.repository'
+import { OrderService } from "@/lib/services/order.service";
+import { OrderRepository } from "@/lib/repositories/order.repository";
+import { ProductRepository } from "@/lib/repositories/product.repository";
 
-jest.mock('@/lib/repositories/order.repository')
-jest.mock('@/lib/repositories/product.repository')
+jest.mock("@/lib/repositories/order.repository");
+jest.mock("@/lib/repositories/product.repository");
 
-describe('OrderService.submitOrder', () => {
-  it('throws PRODUCT_UNAVAILABLE nếu product bị tắt', async () => {
-    ;(ProductRepository.prototype.checkAvailability as jest.Mock)
-      .mockResolvedValue([{ id: 'p1', is_available: false }])
+describe("OrderService.submitOrder", () => {
+  it("throws PRODUCT_UNAVAILABLE nếu product bị tắt", async () => {
+    (
+      ProductRepository.prototype.checkAvailability as jest.Mock
+    ).mockResolvedValue([{ id: "p1", is_available: false }]);
 
     await expect(
-      new OrderService().submitOrder({ items: [{ product_id: 'p1', quantity: 1 }] })
-    ).rejects.toMatchObject({ code: 'PRODUCT_UNAVAILABLE' })
-  })
+      new OrderService().submitOrder({
+        items: [{ product_id: "p1", quantity: 1 }],
+      })
+    ).rejects.toMatchObject({ code: "PRODUCT_UNAVAILABLE" });
+  });
 
-  it('tính đúng total_amount từ product price + option extra_price', async () => {
+  it("tính đúng total_amount từ product price + option extra_price", async () => {
     // setup mocks...
     // assert total_amount = sum(unit_price × quantity)
-  })
+  });
 
-  it('không cho phép price từ client — server tự tính unit_price', async () => {
+  it("không cho phép price từ client — server tự tính unit_price", async () => {
     // client gửi price → service bỏ qua, dùng DB price
-  })
-})
+  });
+});
 ```
 
 ### Cases cần test cho OrderService
@@ -101,25 +104,25 @@ Test HTTP contract: status code, response shape, error codes.
 
 ```typescript
 // __tests__/api/orders.test.ts
-import { POST } from '@/app/api/orders/route'
-import { NextRequest } from 'next/server'
+import { POST } from "@/app/api/orders/route";
+import { NextRequest } from "next/server";
 
-describe('POST /api/orders', () => {
-  it('400 nếu items rỗng', async () => {
-    const req = new NextRequest('http://localhost/api/orders', {
-      method: 'POST',
+describe("POST /api/orders", () => {
+  it("400 nếu items rỗng", async () => {
+    const req = new NextRequest("http://localhost/api/orders", {
+      method: "POST",
       body: JSON.stringify({ items: [] }),
-    })
-    const res = await POST(req)
-    expect(res.status).toBe(400)
-    const body = await res.json()
-    expect(body.code).toBe('VALIDATION_ERROR')
-  })
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.code).toBe("VALIDATION_ERROR");
+  });
 
-  it('201 với payload hợp lệ', async () => {
+  it("201 với payload hợp lệ", async () => {
     // mock service layer
-  })
-})
+  });
+});
 ```
 
 ### Cases cần test cho API
@@ -166,6 +169,7 @@ npm test -- --ci          # CI mode (no watch)
 Tests chạy tự động trên mỗi PR qua GitHub Actions (xem `.github/workflows/ci.yml`).
 
 Pipeline:
+
 1. `npm run lint`
 2. `npm run typecheck`
 3. `npm test -- --ci`

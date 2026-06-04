@@ -4,10 +4,10 @@
 
 Supabase Realtime dùng PostgreSQL `LISTEN/NOTIFY` qua WebSocket. Project này dùng cho 2 use case:
 
-| Channel | Người dùng | Mục đích |
-|---|---|---|
-| `orders` | Owner (Dashboard) | Nhận order mới, cập nhật trạng thái |
-| `order:[order_code]` | Khách (Order Tracking) | Theo dõi trạng thái đơn của mình |
+| Channel              | Người dùng             | Mục đích                            |
+| -------------------- | ---------------------- | ----------------------------------- |
+| `orders`             | Owner (Dashboard)      | Nhận order mới, cập nhật trạng thái |
+| `order:[order_code]` | Khách (Order Tracking) | Theo dõi trạng thái đơn của mình    |
 
 ---
 
@@ -53,41 +53,46 @@ USING (true);
 
 ```typescript
 // hooks/useOrderQueue.ts
-import { useEffect } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
-import type { Order } from '@/types/order'
+import { useEffect } from "react";
+import { createBrowserClient } from "@/lib/supabase";
+import type { Order } from "@/types/order";
 
-export function useOrderQueue(onNewOrder: (order: Order) => void, onUpdate: (order: Order) => void) {
+export function useOrderQueue(
+  onNewOrder: (order: Order) => void,
+  onUpdate: (order: Order) => void
+) {
   useEffect(() => {
-    const supabase = createBrowserClient()
+    const supabase = createBrowserClient();
 
     const channel = supabase
-      .channel('orders-dashboard')
+      .channel("orders-dashboard")
       .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'orders' },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders" },
         (payload) => onNewOrder(payload.new as Order)
       )
       .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
         (payload) => onUpdate(payload.new as Order)
       )
-      .subscribe()
+      .subscribe();
 
-    return () => { supabase.removeChannel(channel) }
-  }, [onNewOrder, onUpdate])
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [onNewOrder, onUpdate]);
 }
 ```
 
 ### Xử lý event trên Dashboard
 
-| Event | Action |
-|---|---|
-| `INSERT` (status=new) | Thêm card vào đầu tab "Đang chờ" + phát âm thanh beep |
-| `UPDATE` (new→making) | Chuyển card từ "Đang chờ" → "Đang làm" |
-| `UPDATE` (making→done) | Xóa card khỏi "Đang làm" (không real-time sync sang tab "Xong") |
-| `UPDATE` (any→cancelled) | Xóa card khỏi tab hiện tại |
+| Event                    | Action                                                          |
+| ------------------------ | --------------------------------------------------------------- |
+| `INSERT` (status=new)    | Thêm card vào đầu tab "Đang chờ" + phát âm thanh beep           |
+| `UPDATE` (new→making)    | Chuyển card từ "Đang chờ" → "Đang làm"                          |
+| `UPDATE` (making→done)   | Xóa card khỏi "Đang làm" (không real-time sync sang tab "Xong") |
+| `UPDATE` (any→cancelled) | Xóa card khỏi tab hiện tại                                      |
 
 ---
 
@@ -97,41 +102,46 @@ export function useOrderQueue(onNewOrder: (order: Order) => void, onUpdate: (ord
 
 ```typescript
 // hooks/useOrderTracking.ts
-import { useEffect } from 'react'
-import { createBrowserClient } from '@/lib/supabase'
-import type { Order } from '@/types/order'
+import { useEffect } from "react";
+import { createBrowserClient } from "@/lib/supabase";
+import type { Order } from "@/types/order";
 
-export function useOrderTracking(orderCode: string, onUpdate: (order: Order) => void) {
+export function useOrderTracking(
+  orderCode: string,
+  onUpdate: (order: Order) => void
+) {
   useEffect(() => {
-    const supabase = createBrowserClient()
+    const supabase = createBrowserClient();
 
     const channel = supabase
       .channel(`order:${orderCode}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders',
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
           filter: `order_code=eq.${orderCode}`,
         },
         (payload) => onUpdate(payload.new as Order)
       )
-      .subscribe()
+      .subscribe();
 
-    return () => { supabase.removeChannel(channel) }
-  }, [orderCode, onUpdate])
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderCode, onUpdate]);
 }
 ```
 
 ### UI theo status
 
-| Status | Hiển thị |
-|---|---|
-| `new` | "Đang chờ xác nhận ⏳" + nút Cancel |
-| `making` | "Đang pha chế ☕" (nút Cancel ẩn) |
-| `done` | "Đồ của bạn xong rồi! Lấy tại quầy 🎉" |
-| `cancelled` | "Đơn hàng đã bị huỷ" |
+| Status      | Hiển thị                               |
+| ----------- | -------------------------------------- |
+| `new`       | "Đang chờ xác nhận ⏳" + nút Cancel    |
+| `making`    | "Đang pha chế ☕" (nút Cancel ẩn)      |
+| `done`      | "Đồ của bạn xong rồi! Lấy tại quầy 🎉" |
+| `cancelled` | "Đơn hàng đã bị huỷ"                   |
 
 ---
 
@@ -142,35 +152,36 @@ export function useOrderTracking(orderCode: string, onUpdate: (order: Order) => 
 ```typescript
 // hooks/useNotificationSound.ts
 export function useNotificationSound() {
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const enabledRef = useRef(false)
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const enabledRef = useRef(false);
 
   const enable = () => {
-    audioCtxRef.current = new AudioContext()
-    enabledRef.current = true
-  }
+    audioCtxRef.current = new AudioContext();
+    enabledRef.current = true;
+  };
 
   const beep = () => {
-    if (!enabledRef.current || !audioCtxRef.current) return
-    const ctx = audioCtxRef.current
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.frequency.value = 880
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.5)
-  }
+    if (!enabledRef.current || !audioCtxRef.current) return;
+    const ctx = audioCtxRef.current;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  };
 
-  return { enable, beep }
+  return { enable, beep };
 }
 ```
 
 **UX bắt buộc**: khi owner mở dashboard lần đầu → hiện banner "Nhấn để bật thông báo âm thanh 🔔". Sau khi click mới gọi `enable()`.
 
 **Visual fallback** luôn bật dù âm thanh chưa enable:
+
 - Badge số trên tab title: `(2) Vibe Cafe — Dashboard`
 - Card order mới highlight (border, animation) trong 5 giây
 
@@ -181,8 +192,8 @@ export function useNotificationSound() {
 Supabase Realtime tự reconnect khi mất mạng. Nên show UI indicator:
 
 ```typescript
-channel.on('system', { event: 'connected' }, () => setConnected(true))
-channel.on('system', { event: 'disconnected' }, () => setConnected(false))
+channel.on("system", { event: "connected" }, () => setConnected(true));
+channel.on("system", { event: "disconnected" }, () => setConnected(false));
 ```
 
 Hiển thị dot xanh/đỏ nhỏ ở góc dashboard để owner biết realtime đang hoạt động.

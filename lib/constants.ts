@@ -12,7 +12,8 @@ export const PAYMENT_METHOD = {
   BANK_TRANSFER: "bank_transfer",
 } as const;
 
-export type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
+export type PaymentMethod =
+  (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
 
 export const WAIT_MINUTES_PER_ORDER = 3;
 export const MAX_ORDER_NOTE_LENGTH = 500;

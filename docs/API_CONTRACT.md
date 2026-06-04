@@ -16,6 +16,7 @@
 Lấy toàn bộ menu, nhóm theo category. Chỉ trả về sản phẩm `is_available = true`.
 
 **Response 200**
+
 ```json
 {
   "categories": [
@@ -61,6 +62,7 @@ Submit đơn hàng mới từ khách.
 > **Price policy**: Client không gửi giá. Server tự tính từ DB.
 
 **Request**
+
 ```json
 {
   "pickup_name": "Minh",
@@ -81,6 +83,7 @@ Submit đơn hàng mới từ khách.
 > Phase 1 chỉ accept `cash` và `bank_transfer` — gửi giá trị khác → `400 VALIDATION_ERROR`.
 
 **Response 201**
+
 ```json
 {
   "order_code": "A001",
@@ -110,6 +113,7 @@ Submit đơn hàng mới từ khách.
 > `bank_transfer_info` chỉ có trong response khi `payment_method = "bank_transfer"`, null với các method khác.
 
 **Errors**
+
 - `400 VALIDATION_ERROR`
 - `422 PRODUCT_UNAVAILABLE`
 - `422 PRODUCT_NOT_FOUND`
@@ -122,6 +126,7 @@ Submit đơn hàng mới từ khách.
 Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
 
 **Response 200**
+
 ```json
 {
   "order_code": "A001",
@@ -144,6 +149,7 @@ Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
 ```
 
 **Errors**
+
 - `404 ORDER_NOT_FOUND`
 
 ---
@@ -157,11 +163,13 @@ Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
 **Request**: body rỗng
 
 **Response 200**
+
 ```json
 { "order_code": "A001", "status": "cancelled" }
 ```
 
 **Errors**
+
 - `404 ORDER_NOT_FOUND`
 - `422 INVALID_STATUS_TRANSITION` — status không còn là `new`
 
@@ -177,22 +185,24 @@ Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
 Lấy orders hôm nay. Behaviour khác nhau tùy `status`:
 
 **Query params**:
+
 - `?status=` — `new` | `making` | `done` | `cancelled` | _(bỏ trống = tất cả)_
 - `?limit=30` — chỉ áp dụng khi `status=done/cancelled` hoặc không có status. Default 30, max 100
 - `?cursor=<uuid>` — UUID v7 của order cuối cùng trong page trước (infinite scroll)
 
 **Loading strategy theo status:**
 
-| status | Pagination | Lý do |
-|---|---|---|
-| `new` | Load all, không cursor | Owner phải thấy hết pending orders |
-| `making` | Load all, không cursor | Tương tự — không được bỏ sót |
-| `done` / `cancelled` | Cursor-based, 30/lần | Chỉ tra cứu, có thể accumulate lớn |
-| _(không có)_ | Cursor-based, 30/lần | Tất cả orders hôm nay |
+| status               | Pagination             | Lý do                              |
+| -------------------- | ---------------------- | ---------------------------------- |
+| `new`                | Load all, không cursor | Owner phải thấy hết pending orders |
+| `making`             | Load all, không cursor | Tương tự — không được bỏ sót       |
+| `done` / `cancelled` | Cursor-based, 30/lần   | Chỉ tra cứu, có thể accumulate lớn |
+| _(không có)_         | Cursor-based, 30/lần   | Tất cả orders hôm nay              |
 
 > Cursor-based dùng UUID v7 (time-ordered) — không bị duplicate khi có order mới trong lúc user đang scroll.
 
 **Response 200 — status=new hoặc making (no pagination)**
+
 ```json
 {
   "orders": [
@@ -222,6 +232,7 @@ Lấy orders hôm nay. Behaviour khác nhau tùy `status`:
 ```
 
 **Response 200 — status=done hoặc không có status (có pagination)**
+
 ```json
 {
   "orders": [...],
@@ -251,6 +262,7 @@ Flow: `new → making → done` hoặc `new → cancelled`.
 Lấy tất cả products (kể cả `is_available = false`) cho admin panel.
 
 **Response 200**
+
 ```json
 {
   "products": [
@@ -269,6 +281,7 @@ Lấy tất cả products (kể cả `is_available = false`) cho admin panel.
 ### POST /api/products
 
 **Request**
+
 ```json
 {
   "category_id": "uuid",
@@ -320,6 +333,7 @@ Soft delete sản phẩm — set `deleted_at = now()`. Không bao giờ hard del
 Lấy tất cả categories, có kèm số lượng products.
 
 **Response 200**
+
 ```json
 {
   "categories": [
@@ -353,6 +367,7 @@ Chỉ soft delete được nếu category không có active product (`deleted_at
 **Response 200**: `{ "id": "uuid", "deleted_at": "2025-01-01T10:00:00Z" }`
 
 **Errors**
+
 - `404 CATEGORY_NOT_FOUND`
 - `422 CATEGORY_HAS_PRODUCTS` — còn active product trong category
 - `401 UNAUTHORIZED`
@@ -366,6 +381,7 @@ Chỉ soft delete được nếu category không có active product (`deleted_at
 Upload ảnh lên Supabase Storage.
 
 **Request**: `multipart/form-data`, field `file`
+
 - Format: JPG, PNG, WebP — max 2MB
 
 **Response 201**: `{ "url": "https://project.supabase.co/storage/v1/object/public/product-images/..." }`

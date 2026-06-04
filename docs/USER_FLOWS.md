@@ -2,9 +2,9 @@
 
 ## Personas
 
-| Persona | Mô tả |
-|---|---|
-| **Khách** | Người mua — scan QR, chọn món, gửi order, theo dõi trạng thái |
+| Persona   | Mô tả                                                             |
+| --------- | ----------------------------------------------------------------- |
+| **Khách** | Người mua — scan QR, chọn món, gửi order, theo dõi trạng thái     |
 | **Owner** | Chủ quán — nhận order realtime, cập nhật trạng thái, quản lý menu |
 
 ---
@@ -163,11 +163,11 @@
 
 ## Edge Cases
 
-| Tình huống | Xử lý |
-|---|---|
-| Giỏ hàng trống → bấm Đặt hàng | Disable nút, hiện "Chưa chọn món nào" |
-| Submit order thất bại (network) | Toast lỗi, giữ nguyên giỏ hàng |
-| Mở /order/[code] với code không tồn tại | 404 page: "Không tìm thấy đơn hàng" |
-| Owner bị logout giữa chừng | Middleware redirect về /login |
-| Realtime mất kết nối | Hiện dot đỏ, tự reconnect, không cần reload |
-| Khách thêm product rồi product bị tắt | Vẫn giữ trong cart, validate lúc submit |
+| Tình huống                              | Xử lý                                       |
+| --------------------------------------- | ------------------------------------------- |
+| Giỏ hàng trống → bấm Đặt hàng           | Disable nút, hiện "Chưa chọn món nào"       |
+| Submit order thất bại (network)         | Toast lỗi, giữ nguyên giỏ hàng              |
+| Mở /order/[code] với code không tồn tại | 404 page: "Không tìm thấy đơn hàng"         |
+| Owner bị logout giữa chừng              | Middleware redirect về /login               |
+| Realtime mất kết nối                    | Hiện dot đỏ, tự reconnect, không cần reload |
+| Khách thêm product rồi product bị tắt   | Vẫn giữ trong cart, validate lúc submit     |

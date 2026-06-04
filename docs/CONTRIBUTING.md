@@ -43,6 +43,7 @@ Theo **Conventional Commits**. Format:
 Types hợp lệ: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
 Ví dụ:
+
 ```
 feat(order): thêm màn hình tracking realtime
 fix(cart): validate is_available khi submit

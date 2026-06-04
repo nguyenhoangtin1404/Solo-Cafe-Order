@@ -2,11 +2,11 @@
 
 ## Stack triển khai
 
-| Service | Platform |
-|---|---|
-| Frontend + API Routes | Vercel |
-| Database + Auth + Storage + Realtime | Supabase |
-| Rate Limiting | Upstash Redis |
+| Service                              | Platform      |
+| ------------------------------------ | ------------- |
+| Frontend + API Routes                | Vercel        |
+| Database + Auth + Storage + Realtime | Supabase      |
+| Rate Limiting                        | Upstash Redis |
 
 ---
 
@@ -48,6 +48,7 @@ psql "$DATABASE_URL" < supabase/seed.sql
 ### 4. Supabase — Tạo owner account
 
 Vào Supabase Dashboard → Authentication → Users → "Add user":
+
 - Email: email của owner
 - Password: mật khẩu mạnh
 - **Không có trang signup** — chỉ tạo 1 lần ở đây
@@ -59,6 +60,7 @@ Dashboard → Database → Replication → bật `INSERT` + `UPDATE` cho bảng 
 ### 6. Supabase — Storage bucket
 
 Dashboard → Storage → New bucket:
+
 - Name: `product-images`
 - Public: **Yes** (ảnh menu cần public URL)
 
@@ -105,14 +107,14 @@ Hoặc connect GitHub repo trên Vercel Dashboard → tự động deploy khi pu
 
 Vào Vercel Dashboard → Project → Settings → Environment Variables:
 
-| Key | Env |
-|---|---|
-| `NEXT_PUBLIC_APP_URL` | Production, Preview |
-| `NEXT_PUBLIC_SUPABASE_URL` | Production, Preview |
+| Key                             | Env                 |
+| ------------------------------- | ------------------- |
+| `NEXT_PUBLIC_APP_URL`           | Production, Preview |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Production, Preview |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production, Preview |
-| `SUPABASE_SERVICE_ROLE_KEY` | Production, Preview |
-| `UPSTASH_REDIS_REST_URL` | Production, Preview |
-| `UPSTASH_REDIS_REST_TOKEN` | Production, Preview |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Production, Preview |
+| `UPSTASH_REDIS_REST_URL`        | Production, Preview |
+| `UPSTASH_REDIS_REST_TOKEN`      | Production, Preview |
 
 > `NEXT_PUBLIC_APP_URL` = URL production, ví dụ `https://your-cafe.vercel.app`
 
@@ -160,9 +162,11 @@ vercel --prod
 ## Rollback
 
 ### Rollback code
+
 Vercel Dashboard → Deployments → chọn deployment cũ → "Promote to Production"
 
 ### Rollback database
+
 Viết migration `down` thủ công — Supabase không có built-in rollback.
 
 > Luôn test migration trên staging trước khi apply production.

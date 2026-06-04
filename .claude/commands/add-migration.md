@@ -50,6 +50,7 @@ CREATE POLICY "<policy_name>" ON <table_name>
    - Kiểm tra `supabase/seed.sql` có cần update không
 
 6. **Chạy migration (local)**
+
 ```bash
 supabase db reset     # reset + replay all migrations
 # hoặc
