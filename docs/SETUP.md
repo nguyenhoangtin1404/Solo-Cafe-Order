@@ -75,10 +75,10 @@ Analyze this Next.js repo and update cloud agent environment so npm dependencies
 
 ### Staging vs Production
 
-| | Supabase Project | Upstash | Vercel |
-|---|---|---|---|
-| **Staging** | Tạo project riêng tên `vibe-cafe-staging` | Instance riêng | Preview Deployment (auto theo PR) |
-| **Production** | Project chính | Instance chính | Production Deployment (từ `main`) |
+|                | Supabase Project                          | Upstash        | Vercel                            |
+| -------------- | ----------------------------------------- | -------------- | --------------------------------- |
+| **Staging**    | Tạo project riêng tên `vibe-cafe-staging` | Instance riêng | Preview Deployment (auto theo PR) |
+| **Production** | Project chính                             | Instance chính | Production Deployment (từ `main`) |
 
 > Vercel tự tạo Preview URL cho mỗi PR — dùng làm staging, không cần setup thêm.
 

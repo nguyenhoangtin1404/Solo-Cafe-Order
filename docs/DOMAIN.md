@@ -27,18 +27,20 @@
 
 ### Payment Method
 
-| Value | Ý nghĩa | Phase |
-|---|---|---|
-| `cash` | Tiền mặt tại quầy | Phase 1 ✅ |
-| `bank_transfer` | Chuyển khoản / QR ngân hàng tĩnh | Phase 1 ✅ |
-| `momo` | Ví MoMo (cần merchant account + webhook) | Phase 2 |
-| `vnpay` | VNPAY QR (cần merchant account + webhook) | Phase 2 |
+| Value           | Ý nghĩa                                   | Phase      |
+| --------------- | ----------------------------------------- | ---------- |
+| `cash`          | Tiền mặt tại quầy                         | Phase 1 ✅ |
+| `bank_transfer` | Chuyển khoản / QR ngân hàng tĩnh          | Phase 1 ✅ |
+| `momo`          | Ví MoMo (cần merchant account + webhook)  | Phase 2    |
+| `vnpay`         | VNPAY QR (cần merchant account + webhook) | Phase 2    |
 
 **Phase 1 — cash + bank_transfer:**
+
 - `cash`: owner thu tiền mặt khi giao đồ, không cần xác nhận hệ thống
 - `bank_transfer`: sau khi đặt, order-success hiện QR tĩnh (số tài khoản + QR ảnh) của owner. Owner tự kiểm tra app ngân hàng và xác nhận
 
 **Phase 2 — MoMo / VNPAY:**
+
 - Tích hợp payment gateway thật, có webhook xác nhận tự động
 - Thêm `payment_status` (pending / paid / failed) vào orders table
 - Không block merge order khi chưa có payment_status (quán nhỏ, trust-based)
@@ -114,12 +116,12 @@ Hiển thị: "Khoảng 5-10 phút" (làm tròn lên range)
 
 ## Dashboard Pagination Strategy
 
-| Tab | Filter | Loading | Realtime |
-|---|---|---|---|
-| Đang chờ | `status=new` | Load all — không pagination | ✅ Watch INSERT/UPDATE |
-| Đang làm | `status=making` | Load all — không pagination | ✅ Watch UPDATE |
-| Xong | `status=done,cancelled` | Infinite scroll — 30 items/lần | ❌ Không cần |
-| Tất cả | _(no filter)_ | Infinite scroll — 30 items/lần | ❌ Không cần |
+| Tab      | Filter                  | Loading                        | Realtime               |
+| -------- | ----------------------- | ------------------------------ | ---------------------- |
+| Đang chờ | `status=new`            | Load all — không pagination    | ✅ Watch INSERT/UPDATE |
+| Đang làm | `status=making`         | Load all — không pagination    | ✅ Watch UPDATE        |
+| Xong     | `status=done,cancelled` | Infinite scroll — 30 items/lần | ❌ Không cần           |
+| Tất cả   | _(no filter)_           | Infinite scroll — 30 items/lần | ❌ Không cần           |
 
 **Tại sao "Đang chờ" và "Đang làm" load all:**
 Owner cần thấy toàn bộ pending orders ngay lập tức — không thể bỏ sót order vì chưa scroll. Một quán cafe hiếm khi có > 15 orders pending cùng lúc nên load all là an toàn.
@@ -128,6 +130,7 @@ Owner cần thấy toàn bộ pending orders ngay lập tức — không thể b
 Tích lũy cả ngày (50–200 orders), chỉ dùng để tra cứu lại — không cần xem tất cả cùng lúc.
 
 **Realtime chỉ watch "Đang chờ" và "Đang làm":**
+
 - `new` INSERT → thêm vào đầu tab Đang chờ + phát âm thanh
 - `making` UPDATE → chuyển card từ Đang chờ sang Đang làm
 - `done/cancelled` UPDATE → remove khỏi Đang làm (không cần sync sang tab Xong real-time)
@@ -148,12 +151,12 @@ Sau khi submit, khách có thể vào `/order/[code]` để xem trạng thái re
 
 ## Empty States
 
-| Context | Hiển thị |
-|---|---|
-| Menu — không có sản phẩm available | "Hôm nay quán tạm đóng 🙏" |
-| Cart — trống | "Chưa chọn món nào" + nút quay lại menu |
-| Dashboard — không có order | "Chưa có đơn hàng hôm nay ☕" |
-| Admin — chưa có product | "Chưa có sản phẩm nào" + nút thêm mới |
+| Context                            | Hiển thị                                |
+| ---------------------------------- | --------------------------------------- |
+| Menu — không có sản phẩm available | "Hôm nay quán tạm đóng 🙏"              |
+| Cart — trống                       | "Chưa chọn món nào" + nút quay lại menu |
+| Dashboard — không có order         | "Chưa có đơn hàng hôm nay ☕"           |
+| Admin — chưa có product            | "Chưa có sản phẩm nào" + nút thêm mới   |
 
 ---
 
@@ -198,12 +201,12 @@ Sau khi submit, khách có thể vào `/order/[code]` để xem trạng thái re
 
 ## Screens & Ownership
 
-| Screen | Người dùng | Auth cần? |
-|---|---|---|
-| `/menu` | Khách | Không |
-| `/cart` | Khách | Không |
-| `/order-success` | Khách | Không |
-| `/order/[code]` | Khách | Không (dùng order_code) |
-| `/login` | Owner | Không (form login) |
-| `/dashboard` | Owner | Có |
-| `/admin` | Owner | Có |
+| Screen           | Người dùng | Auth cần?               |
+| ---------------- | ---------- | ----------------------- |
+| `/menu`          | Khách      | Không                   |
+| `/cart`          | Khách      | Không                   |
+| `/order-success` | Khách      | Không                   |
+| `/order/[code]`  | Khách      | Không (dùng order_code) |
+| `/login`         | Owner      | Không (form login)      |
+| `/dashboard`     | Owner      | Có                      |
+| `/admin`         | Owner      | Có                      |

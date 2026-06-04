@@ -13,36 +13,36 @@
 
 ## Error Codes
 
-| Code | HTTP | Meaning |
-|---|---|---|
-| `VALIDATION_ERROR` | 400 | Input không đúng format hoặc thiếu required field |
-| `PRODUCT_NOT_FOUND` | 404 | Product ID không tồn tại |
-| `ORDER_NOT_FOUND` | 404 | Order ID không tồn tại |
-| `CATEGORY_NOT_FOUND` | 404 | Category ID không tồn tại |
-| `PRODUCT_UNAVAILABLE` | 422 | Product `is_available = false` |
-| `INVALID_STATUS_TRANSITION` | 422 | Đổi status không đúng flow |
-| `CATEGORY_HAS_PRODUCTS` | 422 | Xóa category còn chứa product |
-| `PRICE_MISMATCH` | 422 | unit_price client gửi khác DB (tampered) |
-| `UNAUTHORIZED` | 401 | Chưa đăng nhập / session expired |
-| `FORBIDDEN` | 403 | Đã login nhưng không có quyền |
-| `RATE_LIMITED` | 429 | Vượt rate limit |
-| `INTERNAL_ERROR` | 500 | Lỗi server không xác định |
+| Code                        | HTTP | Meaning                                           |
+| --------------------------- | ---- | ------------------------------------------------- |
+| `VALIDATION_ERROR`          | 400  | Input không đúng format hoặc thiếu required field |
+| `PRODUCT_NOT_FOUND`         | 404  | Product ID không tồn tại                          |
+| `ORDER_NOT_FOUND`           | 404  | Order ID không tồn tại                            |
+| `CATEGORY_NOT_FOUND`        | 404  | Category ID không tồn tại                         |
+| `PRODUCT_UNAVAILABLE`       | 422  | Product `is_available = false`                    |
+| `INVALID_STATUS_TRANSITION` | 422  | Đổi status không đúng flow                        |
+| `CATEGORY_HAS_PRODUCTS`     | 422  | Xóa category còn chứa product                     |
+| `PRICE_MISMATCH`            | 422  | unit_price client gửi khác DB (tampered)          |
+| `UNAUTHORIZED`              | 401  | Chưa đăng nhập / session expired                  |
+| `FORBIDDEN`                 | 403  | Đã login nhưng không có quyền                     |
+| `RATE_LIMITED`              | 429  | Vượt rate limit                                   |
+| `INTERNAL_ERROR`            | 500  | Lỗi server không xác định                         |
 
 ---
 
 ## HTTP Status Mapping
 
-| HTTP | Meaning |
-|---|---|
-| 200 | OK |
-| 201 | Created |
-| 400 | Bad Request / Validation |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 422 | Unprocessable (business rule violation) |
-| 429 | Too Many Requests (rate limit) |
-| 500 | Internal Server Error |
+| HTTP | Meaning                                 |
+| ---- | --------------------------------------- |
+| 200  | OK                                      |
+| 201  | Created                                 |
+| 400  | Bad Request / Validation                |
+| 401  | Unauthorized                            |
+| 403  | Forbidden                               |
+| 404  | Not Found                               |
+| 422  | Unprocessable (business rule violation) |
+| 429  | Too Many Requests (rate limit)          |
+| 500  | Internal Server Error                   |
 
 ---
 

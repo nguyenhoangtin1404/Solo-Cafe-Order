@@ -31,11 +31,13 @@ deleted_at timestamptz DEFAULT NULL
 ```
 
 **Query luôn filter:**
+
 ```sql
 WHERE deleted_at IS NULL
 ```
 
 **Khi "xóa":**
+
 ```sql
 UPDATE <table> SET deleted_at = now() WHERE id = $1
 ```
@@ -44,70 +46,70 @@ UPDATE <table> SET deleted_at = now() WHERE id = $1
 
 ## categories
 
-| Column | Type | Note |
-|---|---|---|
-| id | uuid | PK, DEFAULT uuid_generate_v7() |
-| name | varchar | not null |
-| sort_order | int | for display ordering |
-| created_at | timestamptz | DEFAULT now() |
-| deleted_at | timestamptz | NULL = active, soft delete |
+| Column     | Type        | Note                           |
+| ---------- | ----------- | ------------------------------ |
+| id         | uuid        | PK, DEFAULT uuid_generate_v7() |
+| name       | varchar     | not null                       |
+| sort_order | int         | for display ordering           |
+| created_at | timestamptz | DEFAULT now()                  |
+| deleted_at | timestamptz | NULL = active, soft delete     |
 
 ---
 
 ## products
 
-| Column | Type | Note |
-|---|---|---|
-| id | uuid | PK, DEFAULT uuid_generate_v7() |
-| category_id | uuid | FK → categories.id |
-| name | varchar | not null |
-| description | text | |
-| price | int | VND, NOT NULL, > 0 |
-| image_url | varchar | Supabase Storage URL |
-| is_available | boolean | DEFAULT true |
-| created_at | timestamptz | DEFAULT now() |
-| deleted_at | timestamptz | NULL = active, soft delete |
+| Column       | Type        | Note                           |
+| ------------ | ----------- | ------------------------------ |
+| id           | uuid        | PK, DEFAULT uuid_generate_v7() |
+| category_id  | uuid        | FK → categories.id             |
+| name         | varchar     | not null                       |
+| description  | text        |                                |
+| price        | int         | VND, NOT NULL, > 0             |
+| image_url    | varchar     | Supabase Storage URL           |
+| is_available | boolean     | DEFAULT true                   |
+| created_at   | timestamptz | DEFAULT now()                  |
+| deleted_at   | timestamptz | NULL = active, soft delete     |
 
 ---
 
 ## product_options
 
-| Column | Type | Note |
-|---|---|---|
-| id | uuid | PK, DEFAULT uuid_generate_v7() |
-| product_id | uuid | FK → products.id |
-| name | varchar | e.g. "Size", "Topping" |
-| type | varchar | CHECK: 'select' hoặc 'multi' |
-| deleted_at | timestamptz | NULL = active, soft delete |
+| Column     | Type        | Note                           |
+| ---------- | ----------- | ------------------------------ |
+| id         | uuid        | PK, DEFAULT uuid_generate_v7() |
+| product_id | uuid        | FK → products.id               |
+| name       | varchar     | e.g. "Size", "Topping"         |
+| type       | varchar     | CHECK: 'select' hoặc 'multi'   |
+| deleted_at | timestamptz | NULL = active, soft delete     |
 
 ---
 
 ## product_option_values
 
-| Column | Type | Note |
-|---|---|---|
-| id | uuid | PK, DEFAULT uuid_generate_v7() |
-| option_id | uuid | FK → product_options.id |
-| name | varchar | e.g. "M", "L", "XL" |
-| extra_price | int | DEFAULT 0, VND |
-| deleted_at | timestamptz | NULL = active, soft delete |
+| Column      | Type        | Note                           |
+| ----------- | ----------- | ------------------------------ |
+| id          | uuid        | PK, DEFAULT uuid_generate_v7() |
+| option_id   | uuid        | FK → product_options.id        |
+| name        | varchar     | e.g. "M", "L", "XL"            |
+| extra_price | int         | DEFAULT 0, VND                 |
+| deleted_at  | timestamptz | NULL = active, soft delete     |
 
 ---
 
 ## orders
 
-| Column | Type | Note |
-|---|---|---|
-| id | uuid | PK, DEFAULT uuid_generate_v7() |
-| order_code | varchar | UNIQUE, sinh bởi DB function, reset hàng ngày |
-| status | varchar | new \| making \| done \| cancelled |
-| total_amount | int | VND, snapshot tại lúc submit |
-| pickup_name | varchar | nullable |
-| note | text | ghi chú toàn đơn |
-| payment_method | varchar | cash \| bank_transfer \| momo \| vnpay, DEFAULT 'cash' |
-| customer_ref | varchar | nullable, Phase 3 |
-| created_at | timestamptz | DEFAULT now() |
-| updated_at | timestamptz | DEFAULT now(), tự cập nhật khi có thay đổi |
+| Column         | Type        | Note                                                   |
+| -------------- | ----------- | ------------------------------------------------------ |
+| id             | uuid        | PK, DEFAULT uuid_generate_v7()                         |
+| order_code     | varchar     | UNIQUE, sinh bởi DB function, reset hàng ngày          |
+| status         | varchar     | new \| making \| done \| cancelled                     |
+| total_amount   | int         | VND, snapshot tại lúc submit                           |
+| pickup_name    | varchar     | nullable                                               |
+| note           | text        | ghi chú toàn đơn                                       |
+| payment_method | varchar     | cash \| bank_transfer \| momo \| vnpay, DEFAULT 'cash' |
+| customer_ref   | varchar     | nullable, Phase 3                                      |
+| created_at     | timestamptz | DEFAULT now()                                          |
+| updated_at     | timestamptz | DEFAULT now(), tự cập nhật khi có thay đổi             |
 
 > `payment_status` (pending/paid/failed) chưa có ở Phase 1 — thêm migration ở Phase 2 khi tích hợp MoMo/VNPAY.
 
@@ -169,16 +171,16 @@ new → cancelled
 
 ## order_items
 
-| Column | Type | Note |
-|---|---|---|
-| id | uuid | PK, DEFAULT uuid_generate_v7() |
-| order_id | uuid | FK → orders.id |
-| product_id | uuid | FK → products.id (soft ref) |
-| product_name | varchar | snapshot |
-| quantity | int | NOT NULL, > 0 |
-| unit_price | int | snapshot VND (gồm extra_price options) |
-| selected_options | jsonb | snapshot options — xem format bên dưới |
-| note | text | |
+| Column           | Type    | Note                                   |
+| ---------------- | ------- | -------------------------------------- |
+| id               | uuid    | PK, DEFAULT uuid_generate_v7()         |
+| order_id         | uuid    | FK → orders.id                         |
+| product_id       | uuid    | FK → products.id (soft ref)            |
+| product_name     | varchar | snapshot                               |
+| quantity         | int     | NOT NULL, > 0                          |
+| unit_price       | int     | snapshot VND (gồm extra_price options) |
+| selected_options | jsonb   | snapshot options — xem format bên dưới |
+| note             | text    |                                        |
 
 > `order_items` không soft delete — xóa order thì update status = 'cancelled', items giữ nguyên để audit.
 
@@ -240,14 +242,14 @@ CREATE TRIGGER orders_updated_at
 
 ### Policies
 
-| Table | anon | authenticated (owner) |
-|---|---|---|
-| categories | SELECT WHERE deleted_at IS NULL | ALL |
-| products | SELECT WHERE is_available=true AND deleted_at IS NULL | ALL |
-| product_options | SELECT WHERE deleted_at IS NULL | ALL |
-| product_option_values | SELECT WHERE deleted_at IS NULL | ALL |
-| orders | INSERT | ALL |
-| order_items | INSERT | ALL |
+| Table                 | anon                                                  | authenticated (owner) |
+| --------------------- | ----------------------------------------------------- | --------------------- |
+| categories            | SELECT WHERE deleted_at IS NULL                       | ALL                   |
+| products              | SELECT WHERE is_available=true AND deleted_at IS NULL | ALL                   |
+| product_options       | SELECT WHERE deleted_at IS NULL                       | ALL                   |
+| product_option_values | SELECT WHERE deleted_at IS NULL                       | ALL                   |
+| orders                | INSERT                                                | ALL                   |
+| order_items           | INSERT                                                | ALL                   |
 
 ### API Routes dùng service_role cho
 

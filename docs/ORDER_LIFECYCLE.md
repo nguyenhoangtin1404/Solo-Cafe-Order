@@ -33,29 +33,29 @@
 
 ## Trạng thái
 
-| Status | Ý nghĩa | Ai thấy |
-|---|---|---|
-| `new` | Vừa đặt, chờ xử lý | Khách: "Đang chờ xác nhận" / Owner: tab Đang chờ |
-| `making` | Owner đang pha chế | Khách: "Đang pha chế" / Owner: tab Đang làm |
-| `done` | Đồ đã xong | Khách: "Xong rồi, lấy tại quầy!" / Owner: tab Xong |
-| `cancelled` | Đơn bị huỷ | Khách: "Đơn đã bị huỷ" / Owner: tab Xong |
+| Status      | Ý nghĩa            | Ai thấy                                            |
+| ----------- | ------------------ | -------------------------------------------------- |
+| `new`       | Vừa đặt, chờ xử lý | Khách: "Đang chờ xác nhận" / Owner: tab Đang chờ   |
+| `making`    | Owner đang pha chế | Khách: "Đang pha chế" / Owner: tab Đang làm        |
+| `done`      | Đồ đã xong         | Khách: "Xong rồi, lấy tại quầy!" / Owner: tab Xong |
+| `cancelled` | Đơn bị huỷ         | Khách: "Đơn đã bị huỷ" / Owner: tab Xong           |
 
 ## Transition hợp lệ
 
-| Từ | Sang | Ai thực hiện |
-|---|---|---|
-| `new` | `making` | Owner |
-| `making` | `done` | Owner |
-| `new` | `cancelled` | Owner hoặc Khách |
+| Từ       | Sang        | Ai thực hiện     |
+| -------- | ----------- | ---------------- |
+| `new`    | `making`    | Owner            |
+| `making` | `done`      | Owner            |
+| `new`    | `cancelled` | Owner hoặc Khách |
 
 ## Transition KHÔNG hợp lệ
 
-| Transition | Lý do |
-|---|---|
-| `making` → `new` | Không đổi ngược |
+| Transition             | Lý do              |
+| ---------------------- | ------------------ |
+| `making` → `new`       | Không đổi ngược    |
 | `making` → `cancelled` | Đã bắt tay làm rồi |
-| `done` → bất kỳ | Terminal state |
-| `cancelled` → bất kỳ | Terminal state |
+| `done` → bất kỳ        | Terminal state     |
+| `cancelled` → bất kỳ   | Terminal state     |
 
 Tất cả invalid transition trả về lỗi `INVALID_STATUS_TRANSITION`.
 
@@ -65,12 +65,12 @@ Tất cả invalid transition trả về lỗi `INVALID_STATUS_TRANSITION`.
 
 Khi order được tạo, các trường sau được **snapshot** và **bất biến**:
 
-| Trường | Lý do snapshot |
-|---|---|
-| `order_items.product_name` | Product có thể bị đổi tên sau |
-| `order_items.unit_price` | Product có thể đổi giá sau |
-| `order_items.selected_options` | Options có thể bị sửa/xoá |
-| `orders.total_amount` | Tổng tiền không thay đổi sau submit |
+| Trường                         | Lý do snapshot                      |
+| ------------------------------ | ----------------------------------- |
+| `order_items.product_name`     | Product có thể bị đổi tên sau       |
+| `order_items.unit_price`       | Product có thể đổi giá sau          |
+| `order_items.selected_options` | Options có thể bị sửa/xoá           |
+| `orders.total_amount`          | Tổng tiền không thay đổi sau submit |
 
 → Lịch sử order luôn phản ánh đúng những gì khách đã đặt tại thời điểm đó.
 
@@ -110,9 +110,9 @@ Nếu không có order nào trước: "Khoảng 3-8 phút" (1 đồ đầu tiên
 
 Khách cancel bằng `order_code` — không cần token riêng ở Phase 1.
 
-| Phase | Cơ chế | Lý do |
-|---|---|---|
-| Phase 1 | Cancel bằng `order_code` | Simple, đủ an toàn (~25k codes/ngày) |
-| Phase 2+ | Thêm `cancel_token` UUID riêng | Nếu cần bảo mật cao hơn |
+| Phase    | Cơ chế                         | Lý do                                |
+| -------- | ------------------------------ | ------------------------------------ |
+| Phase 1  | Cancel bằng `order_code`       | Simple, đủ an toàn (~25k codes/ngày) |
+| Phase 2+ | Thêm `cancel_token` UUID riêng | Nếu cần bảo mật cao hơn              |
 
 Rủi ro Phase 1: người biết `order_code` của người khác có thể cancel order đó. Thực tế: codes reset mỗi ngày + format sequential → không dễ đoán trong context quán nhỏ.

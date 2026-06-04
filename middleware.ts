@@ -2,12 +2,16 @@
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export function isSafeRedirect(value: string | null | undefined): value is string {
+export function isSafeRedirect(
+  value: string | null | undefined
+): value is string {
   if (!value) return false;
   return value.startsWith("/") && !value.startsWith("//");
 }
 
-function requireEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY"): string {
+function requireEnv(
+  name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+): string {
   const value = process.env[name];
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
@@ -25,7 +29,8 @@ function makeRedirect(url: URL, supabaseResponse: NextResponse): NextResponse {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const isProtectedPath = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+  const isProtectedPath =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
   if (!isProtectedPath) {
     return NextResponse.next({ request });
   }
@@ -38,16 +43,22 @@ export async function middleware(request: NextRequest) {
     requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       cookies: {
-        getAll() { return request.cookies.getAll(); },
+        getAll() {
+          return request.cookies.getAll();
+        },
         setAll(cs: { name: string; value: string; options: CookieOptions }[]) {
           cs.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
-          cs.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+          cs.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
     }
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

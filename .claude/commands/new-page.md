@@ -43,6 +43,7 @@ export default async function <PageName>Page() {
 5. **Nếu cần API** → chạy `/new-api` riêng
 
 Sau khi tạo xong, liệt kê:
+
 - File vừa tạo
 - Components cần tạo thêm (nếu có)
 - API endpoints cần (nếu có)

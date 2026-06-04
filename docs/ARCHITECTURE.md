@@ -33,6 +33,7 @@ Supabase (PostgreSQL)
 ## Layers
 
 ### Controller — `app/api/**`
+
 - Nhận HTTP request
 - Validate input cơ bản (shape, required fields)
 - Gọi Service
@@ -40,17 +41,20 @@ Supabase (PostgreSQL)
 - **Không chứa business logic**
 
 ### Service — `lib/services/**`
+
 - Xử lý nghiệp vụ
 - Điều phối flow (e.g. submit order → create order → create items → publish event)
 - Quản lý error handling
 - **Không gọi Supabase trực tiếp**
 
 ### Repository — `lib/repositories/**`
+
 - CRUD và query database qua Supabase client
 - Không chứa logic nghiệp vụ
 - Return typed data hoặc throw lỗi cụ thể
 
 ### Types — `types/**`
+
 - Shared TypeScript types/interfaces
 - `product.ts`, `order.ts`, `customer.ts`
 - Không phụ thuộc framework

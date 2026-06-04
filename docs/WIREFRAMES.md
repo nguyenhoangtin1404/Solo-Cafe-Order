@@ -156,6 +156,7 @@ Product Modal                       /admin
 ## 5. Order Tracking — /order/[code]
 
 ### Status: new
+
 ```
 ┌─────────────────────────────┐
 │  ☕ Vibe Cafe                │
@@ -181,6 +182,7 @@ Product Modal                       /admin
 ```
 
 ### Status: done
+
 ```
 ┌─────────────────────────────┐
 │  ☕ Vibe Cafe                │
@@ -223,6 +225,7 @@ Product Modal                       /admin
 ## 7. Dashboard — /dashboard
 
 ### Tab: Đang chờ
+
 ```
 ┌─────────────────────────────┐
 │  (3) Dashboard       🔔 bật │  ← badge + nút âm thanh
@@ -249,6 +252,7 @@ Product Modal                       /admin
 ```
 
 ### Tab: Đang làm
+
 ```
 ├─────────────────────────────┤
 │ [Đang chờ 3][●Đang làm 1][Xong]│
@@ -315,6 +319,7 @@ Product Modal                       /admin
 ```
 
 ### Thêm / sửa danh mục (inline hoặc modal)
+
 ```
 ┌─────────────────────────────┐
 │  Tên danh mục *             │
@@ -605,6 +610,7 @@ Product Modal                       /admin
 ```
 
 ### Tạo / sửa voucher (modal)
+
 ```
 ┌─────────────────────────────┐
 │  Tạo Voucher           [✕]  │
@@ -834,6 +840,7 @@ Product Modal                       /admin
 ```
 
 ### Sau khi quay — Trúng thưởng
+
 ```
 ┌─────────────────────────────┐
 │                              │
@@ -878,6 +885,7 @@ Product Modal                       /admin
 ```
 
 ### Đã mở khoá
+
 ```
 ├─────────────────────────────┤
 │  ┌─────────────────────┐    │
@@ -922,6 +930,7 @@ Product Modal                       /admin
 ```
 
 ### Sau khi trả lời đúng
+
 ```
 ├─────────────────────────────┤
 │           ✅                 │
@@ -994,6 +1003,7 @@ Product Modal                       /admin
 ## S2. Empty States (các trạng thái rỗng)
 
 ### Giỏ hàng trống — /cart
+
 ```
 ┌─────────────────────────────┐
 │  ←  Giỏ hàng                │
@@ -1010,6 +1020,7 @@ Product Modal                       /admin
 ```
 
 ### Dashboard không có đơn — /dashboard
+
 ```
 ├─────────────────────────────┤
 │                              │
@@ -1022,6 +1033,7 @@ Product Modal                       /admin
 ```
 
 ### Menu trống — /menu
+
 ```
 ├─────────────────────────────┤
 │                              │
@@ -1038,6 +1050,7 @@ Product Modal                       /admin
 ## S3. Error / Offline
 
 ### Mất kết nối mạng
+
 ```
 ┌─────────────────────────────┐
 │                              │
@@ -1055,6 +1068,7 @@ Product Modal                       /admin
 ```
 
 ### Lỗi server (500)
+
 ```
 ┌─────────────────────────────┐
 │                              │
@@ -1072,6 +1086,7 @@ Product Modal                       /admin
 ```
 
 ### Realtime mất kết nối (banner)
+
 ```
 ┌─────────────────────────────┐
 │  ⚠ Đang kết nối lại...  ● │  ← top banner, auto-dismiss khi xong
@@ -1083,6 +1098,7 @@ Product Modal                       /admin
 ## S4. Loading Skeleton
 
 ### Menu skeleton
+
 ```
 ┌─────────────────────────────┐
 │  ░░░░░░░░░░░         ░░░    │  ← header shimmer
@@ -1102,6 +1118,7 @@ Product Modal                       /admin
 ```
 
 ### Dashboard skeleton
+
 ```
 ┌─────────────────────────────┐
 │  ░░░░░░░░░░░░░░░            │
