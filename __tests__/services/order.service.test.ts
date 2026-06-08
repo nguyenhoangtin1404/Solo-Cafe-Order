@@ -60,6 +60,34 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
   };
 }
 
+const SIZE_OPTION_ID = "55555555-5555-7555-8555-555555555555";
+const SIZE_SMALL_ID = "44444444-4444-7444-8444-444444444444";
+const SIZE_LARGE_ID = "44444444-4444-7444-8444-444444444445";
+const FOREIGN_VALUE_ID = "99999999-9999-7999-8999-999999999999";
+
+function makeProductWithSizeSelect(
+  values: { id: string; name: string; extra_price?: number }[]
+): ProductWithOptions {
+  return makeProduct({
+    options: [
+      {
+        id: SIZE_OPTION_ID,
+        product_id: "11111111-1111-7111-8111-111111111111",
+        name: "Size",
+        type: "select",
+        deleted_at: null,
+        values: values.map((v) => ({
+          option_id: SIZE_OPTION_ID,
+          extra_price: v.extra_price ?? 0,
+          deleted_at: null,
+          id: v.id,
+          name: v.name,
+        })),
+      },
+    ],
+  });
+}
+
 const baseSubmitInput = {
   pickup_name: null,
   note: null,
@@ -73,6 +101,18 @@ const baseSubmitInput = {
     },
   ],
 };
+
+function submitWithOptionIds(valueIds: string[]) {
+  return submitOrder({
+    ...baseSubmitInput,
+    items: [
+      {
+        ...baseSubmitInput.items[0],
+        selected_option_value_ids: valueIds,
+      },
+    ],
+  });
+}
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -170,6 +210,70 @@ describe("submitOrder", () => {
         items: [expect.objectContaining({ unit_price: 30_000 })],
       })
     );
+  });
+
+  it("throws VALIDATION_ERROR khi select option thiếu lựa chọn", async () => {
+    mockedProductRepo.findByIdsWithOptions.mockResolvedValue([
+      makeProductWithSizeSelect([{ id: SIZE_SMALL_ID, name: "Nhỏ" }]),
+    ]);
+
+    await expect(submitWithOptionIds([])).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+      message: expect.stringContaining("Size"),
+    });
+    expect(mockedOrderRepo.createOrder).not.toHaveBeenCalled();
+  });
+
+  it("throws VALIDATION_ERROR khi select option chọn 2 values", async () => {
+    mockedProductRepo.findByIdsWithOptions.mockResolvedValue([
+      makeProductWithSizeSelect([
+        { id: SIZE_SMALL_ID, name: "Nhỏ" },
+        { id: SIZE_LARGE_ID, name: "Lớn" },
+      ]),
+    ]);
+
+    await expect(
+      submitWithOptionIds([SIZE_SMALL_ID, SIZE_LARGE_ID])
+    ).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+      message: expect.stringContaining("Size"),
+    });
+  });
+
+  it("throws VALIDATION_ERROR khi value_id không thuộc product", async () => {
+    mockedProductRepo.findByIdsWithOptions.mockResolvedValue([
+      makeProductWithSizeSelect([{ id: SIZE_SMALL_ID, name: "Nhỏ" }]),
+    ]);
+
+    await expect(submitWithOptionIds([FOREIGN_VALUE_ID])).rejects.toMatchObject(
+      {
+        code: "VALIDATION_ERROR",
+        message: expect.stringContaining("Cà phê đen"),
+      }
+    );
+  });
+
+  it("throws PRODUCT_UNAVAILABLE khi select option không có values", async () => {
+    mockedProductRepo.findByIdsWithOptions.mockResolvedValue([
+      makeProduct({
+        options: [
+          {
+            id: SIZE_OPTION_ID,
+            product_id: "11111111-1111-7111-8111-111111111111",
+            name: "Size",
+            type: "select",
+            deleted_at: null,
+            values: [],
+          },
+        ],
+      }),
+    ]);
+
+    await expect(submitWithOptionIds([])).rejects.toMatchObject({
+      code: "PRODUCT_UNAVAILABLE",
+      httpStatus: 422,
+      message: expect.stringContaining("Cà phê đen"),
+    });
   });
 
   it("làm tròn wait_estimate min/max thành số nguyên", async () => {
