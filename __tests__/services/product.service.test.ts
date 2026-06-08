@@ -20,7 +20,9 @@ function makeCategory(overrides: Partial<Category> = {}): Category {
   };
 }
 
-function makeProduct(overrides: Partial<ProductWithOptions> = {}): ProductWithOptions {
+function makeProduct(
+  overrides: Partial<ProductWithOptions> = {}
+): ProductWithOptions {
   return {
     id: "prod-1111-1111-1111-111111111111",
     category_id: "cat-1111-1111-1111-111111111111",
@@ -45,7 +47,11 @@ describe("getMenuWithCategories", () => {
     const cat1 = makeCategory({ id: "cat-aaaa", name: "Cà phê" });
     const cat2 = makeCategory({ id: "cat-bbbb", name: "Trà", sort_order: 2 });
     const p1 = makeProduct({ id: "prod-aaaa", category_id: "cat-aaaa" });
-    const p2 = makeProduct({ id: "prod-bbbb", category_id: "cat-bbbb", name: "Trà đào" });
+    const p2 = makeProduct({
+      id: "prod-bbbb",
+      category_id: "cat-bbbb",
+      name: "Trà đào",
+    });
 
     mockedCategoryRepo.findAllCategories.mockResolvedValue([cat1, cat2]);
     mockedProductRepo.findAllAvailable.mockResolvedValue([p1, p2]);
