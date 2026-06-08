@@ -1,6 +1,9 @@
 import * as categoryRepo from "@/lib/repositories/category.repository";
 import * as productRepo from "@/lib/repositories/product.repository";
-import { getMenuWithCategories } from "@/lib/services/product.service";
+import {
+  getMenuWithCategories,
+  getProductWithOptions,
+} from "@/lib/services/product.service";
 import type { Category, ProductWithOptions } from "@/types/product";
 
 jest.mock("@/lib/repositories/category.repository");
@@ -106,5 +109,59 @@ describe("getMenuWithCategories", () => {
 
     expect(mockedCategoryRepo.findAllCategories).toHaveBeenCalledTimes(1);
     expect(mockedProductRepo.findAllAvailable).toHaveBeenCalledTimes(1);
+  });
+
+  it("group nhiều products vào đúng category", async () => {
+    const cat = makeCategory({ id: "cat-aaaa" });
+    const p1 = makeProduct({
+      id: "prod-a1",
+      category_id: "cat-aaaa",
+      name: "Cà phê đen",
+    });
+    const p2 = makeProduct({
+      id: "prod-a2",
+      category_id: "cat-aaaa",
+      name: "Cà phê sữa",
+    });
+    const p3 = makeProduct({
+      id: "prod-a3",
+      category_id: "cat-aaaa",
+      name: "Bạc xỉu",
+    });
+
+    mockedCategoryRepo.findAllCategories.mockResolvedValue([cat]);
+    mockedProductRepo.findAllAvailable.mockResolvedValue([p1, p2, p3]);
+
+    const result = await getMenuWithCategories();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].products).toHaveLength(3);
+    expect(result[0].products.map((p) => p.id)).toEqual([
+      "prod-a1",
+      "prod-a2",
+      "prod-a3",
+    ]);
+  });
+});
+
+describe("getProductWithOptions", () => {
+  it("trả về product khi tìm thấy", async () => {
+    const product = makeProduct({ id: "prod-aaaa" });
+    mockedProductRepo.findByIdWithOptions.mockResolvedValue(product);
+
+    const result = await getProductWithOptions("prod-aaaa");
+
+    expect(result).toEqual(product);
+    expect(mockedProductRepo.findByIdWithOptions).toHaveBeenCalledWith(
+      "prod-aaaa"
+    );
+  });
+
+  it("trả về null khi không tìm thấy", async () => {
+    mockedProductRepo.findByIdWithOptions.mockResolvedValue(null);
+
+    const result = await getProductWithOptions("prod-xxxx");
+
+    expect(result).toBeNull();
   });
 });
