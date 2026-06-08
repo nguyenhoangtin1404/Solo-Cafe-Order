@@ -3,6 +3,7 @@ import {
   MAX_ITEM_NOTE_LENGTH,
   MAX_ORDER_NOTE_LENGTH,
   MAX_PICKUP_NAME_LENGTH,
+  ORDER_STATUS,
   PAYMENT_METHOD,
 } from "./constants";
 
@@ -41,18 +42,20 @@ export const submitOrderSchema = z.object({
 
 export type SubmitOrderInput = z.infer<typeof submitOrderSchema>;
 
+// Only statuses an owner can set via the dashboard — 'new' is excluded because
+// it's the initial state (set by DB default) and cannot be manually restored.
+const OWNER_UPDATABLE_STATUSES = [
+  ORDER_STATUS.MAKING,
+  ORDER_STATUS.DONE,
+  ORDER_STATUS.CANCELLED,
+] as const;
+
 export const updateStatusSchema = z.object({
-  status: z.enum(["making", "done", "cancelled"]),
+  status: z.enum(OWNER_UPDATABLE_STATUSES),
 });
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
 // Validate URL path param — A001…Z999 format
 export const cancelOrderSchema = z.object({
   order_code: z.string().regex(/^[A-Z]\d{3}$/, "Invalid order code format"),
-});
-
-export const selectedOptionSchema = z.object({
-  option_id: z.string().uuid(),
-  // select: exactly 1 value; multi: 0 or more — enforced at service layer
-  value_ids: z.array(z.string().uuid()),
 });

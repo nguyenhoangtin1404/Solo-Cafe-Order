@@ -20,6 +20,7 @@
 | `ORDER_NOT_FOUND`           | 404  | Order ID không tồn tại                            |
 | `CATEGORY_NOT_FOUND`        | 404  | Category ID không tồn tại                         |
 | `PRODUCT_UNAVAILABLE`       | 422  | Product `is_available = false`                    |
+| `CAFE_CLOSED`               | 422  | Quán đã đóng cửa, không nhận đơn mới              |
 | `INVALID_STATUS_TRANSITION` | 422  | Đổi status không đúng flow                        |
 | `CATEGORY_HAS_PRODUCTS`     | 422  | Xóa category còn chứa product                     |
 | `PRICE_MISMATCH`            | 422  | unit_price client gửi khác DB (tampered)          |
