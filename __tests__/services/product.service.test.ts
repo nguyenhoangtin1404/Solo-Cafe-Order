@@ -98,7 +98,7 @@ describe("getMenuWithCategories", () => {
     expect(result).toEqual([]);
   });
 
-  it("gọi findAllCategories và findAllAvailable song song (cả hai đều được gọi)", async () => {
+  it("gọi cả findAllCategories và findAllAvailable", async () => {
     mockedCategoryRepo.findAllCategories.mockResolvedValue([]);
     mockedProductRepo.findAllAvailable.mockResolvedValue([]);
 
