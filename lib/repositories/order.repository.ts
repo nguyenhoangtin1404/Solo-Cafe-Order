@@ -1,7 +1,17 @@
+import { AppError } from "@/lib/errors";
 import { createAdminSupabaseClient } from "@/lib/supabase-admin";
-import { ORDER_STATUS } from "@/lib/constants";
+import { MAKING_ORDER_WEIGHT, ORDER_STATUS } from "@/lib/constants";
 import type { OrderStatus, PaymentMethod } from "@/lib/constants";
+import {
+  getPreviousDayHCMBounds,
+  getTodayHCMBounds,
+} from "@/lib/utils/timezone";
 import type { Order, SelectedOption } from "@/types/order";
+
+export {
+  getPreviousDayHCMBounds,
+  getTodayHCMBounds,
+} from "@/lib/utils/timezone";
 
 export interface CreateOrderItemData {
   product_id: string;
@@ -20,26 +30,12 @@ export interface CreateOrderData {
   items: CreateOrderItemData[];
 }
 
-// UTC boundaries of "today" in Asia/Ho_Chi_Minh (UTC+7)
-function getTodayHCMBounds(): { start: string; end: string } {
-  const HCM_OFFSET_MS = 7 * 60 * 60 * 1000;
-  const DAY_MS = 24 * 60 * 60 * 1000;
-  const hcmNow = Date.now() + HCM_OFFSET_MS;
-  const hcmMidnight = hcmNow - (hcmNow % DAY_MS);
-  return {
-    start: new Date(hcmMidnight - HCM_OFFSET_MS).toISOString(),
-    end: new Date(hcmMidnight + DAY_MS - HCM_OFFSET_MS).toISOString(),
-  };
-}
-
 const WITH_ITEMS = "*, items:order_items(*)";
 
 export async function createOrder(data: CreateOrderData): Promise<Order> {
   const supabase = createAdminSupabaseClient();
 
-  // Single RPC call: generate_order_code + INSERT orders + INSERT order_items in one transaction.
-  // An orphan order row can no longer result from a partial failure.
-  const { data: orderId, error } = await supabase.rpc("create_order", {
+  const { data: rpcResult, error } = await supabase.rpc("create_order", {
     p_pickup_name: data.pickup_name,
     p_note: data.note,
     p_payment_method: data.payment_method,
@@ -48,23 +44,50 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
   });
   if (error) throw error;
 
-  const order = await findById(orderId as string);
-  if (!order) throw new Error("Order not found after creation");
+  if (typeof rpcResult !== "string" || !rpcResult) {
+    throw new Error(
+      `create_order RPC returned unexpected result: ${JSON.stringify(rpcResult)}`
+    );
+  }
+
+  const order = await findById(rpcResult);
+  if (!order) {
+    throw new AppError(
+      "INTERNAL_ERROR",
+      "Đơn hàng đã được tạo nhưng không thể tải thông tin. Vui lòng hỏi nhân viên để biết mã đơn.",
+      500
+    );
+  }
   return order;
 }
 
-export async function findByCode(orderCode: string): Promise<Order | null> {
+async function findByCodeInBounds(
+  orderCode: string,
+  start: string,
+  end: string
+): Promise<Order | null> {
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("orders")
     .select(WITH_ITEMS)
     .eq("order_code", orderCode)
-    .order("created_at", { ascending: false })
-    .limit(1)
+    .gte("created_at", start)
+    .lt("created_at", end)
     .maybeSingle();
 
   if (error) throw error;
   return data as Order | null;
+}
+
+export async function findByCode(orderCode: string): Promise<Order | null> {
+  // Prefer today — order_code resets daily (A001 today ≠ A001 yesterday).
+  const today = getTodayHCMBounds();
+  const match = await findByCodeInBounds(orderCode, today.start, today.end);
+  if (match) return match;
+
+  // Fallback: previous HCM day — e.g. order at 21:59 still trackable after 00:02.
+  const yesterday = getPreviousDayHCMBounds();
+  return findByCodeInBounds(orderCode, yesterday.start, yesterday.end);
 }
 
 export async function findById(id: string): Promise<Order | null> {
@@ -81,18 +104,24 @@ export async function findById(id: string): Promise<Order | null> {
 
 export async function updateStatus(
   id: string,
-  status: OrderStatus
-): Promise<Order> {
+  status: OrderStatus,
+  expectedCurrentStatus: OrderStatus,
+  cancelledBy?: "customer" | "owner"
+): Promise<Order | null> {
   const supabase = createAdminSupabaseClient();
+  const updateData: { status: OrderStatus; cancelled_by?: string } = { status };
+  if (cancelledBy) updateData.cancelled_by = cancelledBy;
+
   const { data, error } = await supabase
     .from("orders")
-    .update({ status })
+    .update(updateData)
     .eq("id", id)
+    .eq("status", expectedCurrentStatus)
     .select(WITH_ITEMS)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
-  return data as Order;
+  return data as Order | null;
 }
 
 export async function listByStatus(status?: OrderStatus): Promise<Order[]> {
@@ -115,16 +144,22 @@ export async function listByStatus(status?: OrderStatus): Promise<Order[]> {
   return (data ?? []) as Order[];
 }
 
+// Returns a weighted count: NEW orders × 1.0, MAKING orders × MAKING_ORDER_WEIGHT.
+// MAKING orders are already being prepared so they contribute less to the wait estimate.
 export async function countPending(): Promise<number> {
   const supabase = createAdminSupabaseClient();
   const { start, end } = getTodayHCMBounds();
-  const { count, error } = await supabase
+  const { data, error } = await supabase
     .from("orders")
-    .select("*", { count: "exact", head: true })
+    .select("status")
     .in("status", [ORDER_STATUS.NEW, ORDER_STATUS.MAKING])
     .gte("created_at", start)
     .lt("created_at", end);
 
   if (error) throw error;
-  return count ?? 0;
+  return (data ?? []).reduce(
+    (sum, r) =>
+      sum + (r.status === ORDER_STATUS.MAKING ? MAKING_ORDER_WEIGHT : 1),
+    0
+  );
 }

@@ -36,6 +36,7 @@ export interface Order {
   pickup_name: string | null;
   note: string | null;
   customer_ref: string | null;
+  cancelled_by: "customer" | "owner" | null;
   created_at: string;
   updated_at: string;
   items: OrderItem[]; // luôn populated khi fetch — dùng Partial<Order> nếu chưa join

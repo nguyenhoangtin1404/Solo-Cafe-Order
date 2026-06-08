@@ -65,3 +65,18 @@ export async function findByIdWithOptions(
   if (!data) return null;
   return filterDeletedNested(data as unknown as RawProductRow);
 }
+
+export async function findByIdsWithOptions(
+  ids: string[]
+): Promise<ProductWithOptions[]> {
+  if (ids.length === 0) return [];
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(WITH_OPTIONS)
+    .in("id", ids)
+    .is("deleted_at", null);
+
+  if (error) throw error;
+  return (data as unknown as RawProductRow[]).map(filterDeletedNested);
+}
