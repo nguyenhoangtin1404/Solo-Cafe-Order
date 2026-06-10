@@ -2,8 +2,8 @@ import {
   getMenuWithCategories,
   type CategoryWithProducts,
 } from "@/lib/services/product.service";
-import { errorResponse } from "@/lib/errors";
-import type { ProductWithOptions } from "@/types/product";
+import { handleRouteError } from "@/lib/errors";
+import type { ProductOption, ProductWithOptions } from "@/types/product";
 
 // DTO theo docs/API_CONTRACT.md — không expose is_available, deleted_at, created_at
 type MenuOptionValueDto = {
@@ -15,7 +15,7 @@ type MenuOptionValueDto = {
 type MenuOptionDto = {
   id: string;
   name: string;
-  type: "select" | "multi";
+  type: ProductOption["type"];
   values: MenuOptionValueDto[];
 };
 
@@ -42,16 +42,24 @@ function toProductDto(product: ProductWithOptions): MenuProductDto {
     description: product.description,
     price: product.price,
     image_url: product.image_url,
-    options: product.options.map((option) => ({
-      id: option.id,
-      name: option.name,
-      type: option.type,
-      values: option.values.map((value) => ({
-        id: value.id,
-        name: value.name,
-        extra_price: value.extra_price,
+    // Option không còn value nào (đã soft delete hết) thì ẩn luôn — tránh group rỗng kẹt UI chọn món.
+    // Sort tường minh vì nested select không có ORDER BY: id là UUID v7 (thứ tự tạo),
+    // values theo extra_price tăng dần để FE default-select value rẻ nhất.
+    options: product.options
+      .filter((option) => option.values.length > 0)
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((option) => ({
+        id: option.id,
+        name: option.name,
+        type: option.type,
+        values: [...option.values]
+          .sort((a, b) => a.extra_price - b.extra_price)
+          .map((value) => ({
+            id: value.id,
+            name: value.name,
+            extra_price: value.extra_price,
+          })),
       })),
-    })),
   };
 }
 
@@ -64,11 +72,13 @@ function toCategoryDto(category: CategoryWithProducts): MenuCategoryDto {
   };
 }
 
+// Không cache (Next 16 GET handler mặc định dynamic) — chủ đích: owner toggle
+// is_available phải có hiệu lực ngay ở request kế tiếp của khách.
 export async function GET() {
   try {
     const categories = await getMenuWithCategories();
     return Response.json({ categories: categories.map(toCategoryDto) });
-  } catch {
-    return errorResponse("INTERNAL_ERROR", "Server error", 500);
+  } catch (err) {
+    return handleRouteError(err);
   }
 }
