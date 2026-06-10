@@ -56,6 +56,9 @@ describe("findAllAvailable", () => {
 
     expect(chain.eq).toHaveBeenCalledWith("is_available", true);
     expect(chain.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(chain.order).toHaveBeenCalledWith("created_at", {
+      ascending: true,
+    });
   });
 
   it("lọc options và values đã soft delete khỏi kết quả", async () => {

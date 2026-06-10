@@ -223,6 +223,51 @@ describe("GET /api/menu", () => {
     ]);
   });
 
+  it("tie-break values cùng extra_price theo id cho deterministic", async () => {
+    mockedService.getMenuWithCategories.mockResolvedValue([
+      makeCategoryWithProducts({
+        products: [
+          makeProduct({
+            options: [
+              {
+                id: "opt-1111",
+                product_id: "prod-1111-1111-1111-111111111111",
+                name: "Topping",
+                type: "multi",
+                deleted_at: null,
+                values: [
+                  {
+                    id: "val-bbbb",
+                    option_id: "opt-1111",
+                    name: "Thạch",
+                    extra_price: 5_000,
+                    deleted_at: null,
+                  },
+                  {
+                    id: "val-aaaa",
+                    option_id: "opt-1111",
+                    name: "Trân châu",
+                    extra_price: 5_000,
+                    deleted_at: null,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      }),
+    ]);
+
+    const res = await GET();
+    const body = await res.json();
+
+    expect(
+      body.categories[0].products[0].options[0].values.map(
+        (v: { id: string }) => v.id
+      )
+    ).toEqual(["val-aaaa", "val-bbbb"]);
+  });
+
   it("ẩn option không còn value nào", async () => {
     mockedService.getMenuWithCategories.mockResolvedValue([
       makeCategoryWithProducts({
