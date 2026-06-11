@@ -5,6 +5,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import type { MenuOption, MenuProduct } from "@/types/menu";
 import type { CartItem, CartSelectedOption } from "@/types/order";
+import { MAX_ITEM_NOTE_LENGTH } from "@/lib/constants";
 
 interface Props {
   product: MenuProduct;
@@ -127,13 +128,13 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Ít đường, nhiều đá..."
-              maxLength={200}
+              maxLength={MAX_ITEM_NOTE_LENGTH}
               rows={2}
               className="w-full resize-none rounded-lg border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
-            {note.length > 150 && (
+            {note.length > MAX_ITEM_NOTE_LENGTH - 50 && (
               <p className="mt-1 text-right text-xs text-muted-foreground">
-                {note.length}/200
+                {note.length}/{MAX_ITEM_NOTE_LENGTH}
               </p>
             )}
           </div>

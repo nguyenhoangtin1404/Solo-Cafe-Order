@@ -133,9 +133,10 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
         {status === ORDER_STATUS.NEW && !showConfirm && (
           <button
             onClick={() => setShowConfirm(true)}
-            className="min-h-[44px] w-full rounded-xl border border-destructive py-3 font-medium text-destructive"
+            disabled={connectionStatus !== "connected"}
+            className="min-h-[44px] w-full rounded-xl border border-destructive py-3 font-medium text-destructive disabled:opacity-40"
           >
-            Hủy đơn
+            {connectionStatus !== "connected" ? "Đang kết nối..." : "Hủy đơn"}
           </button>
         )}
 

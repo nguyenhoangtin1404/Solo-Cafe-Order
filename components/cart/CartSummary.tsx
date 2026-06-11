@@ -68,6 +68,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         toast.success(
           `Đặt hàng thành công! Mã đơn: ${data.order_code ?? ""}. Lưu lại nhé!`
         );
+        if (data.order_code) router.push(`/order/${data.order_code}`);
         return;
       }
       onClearCart();
