@@ -17,6 +17,7 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
         <p className="font-medium">{item.productName}</p>
         <button
           onClick={() => onRemove(index)}
+          aria-label="Xóa món"
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary"
         >
           <X size={14} />
@@ -37,7 +38,8 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => onUpdateQty(index, item.quantity - 1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary"
+            aria-label="Giảm số lượng"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary"
           >
             <Minus size={14} />
           </button>
@@ -46,7 +48,8 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
           </span>
           <button
             onClick={() => onUpdateQty(index, item.quantity + 1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary"
+            aria-label="Tăng số lượng"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary"
           >
             <Plus size={14} />
           </button>

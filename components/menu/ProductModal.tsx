@@ -98,6 +98,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           <h2 className="text-lg font-semibold">{product.name}</h2>
           <button
             onClick={onClose}
+            aria-label="Đóng"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary"
           >
             <X size={16} />
@@ -130,6 +131,11 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
               rows={2}
               className="w-full resize-none rounded-lg border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
+            {note.length > 150 && (
+              <p className="mt-1 text-right text-xs text-muted-foreground">
+                {note.length}/200
+              </p>
+            )}
           </div>
         </div>
 
@@ -137,6 +143,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
+              aria-label="Giảm số lượng"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
             >
               <Minus size={16} />
@@ -144,6 +151,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             <span className="w-8 text-center font-semibold">{qty}</span>
             <button
               onClick={() => setQty((q) => Math.min(99, q + 1))}
+              aria-label="Tăng số lượng"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
             >
               <Plus size={16} />
