@@ -39,7 +39,8 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
           <button
             onClick={() => onUpdateQty(index, item.quantity - 1)}
             aria-label="Giảm số lượng"
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary"
+            disabled={item.quantity <= 1}
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary disabled:opacity-40"
           >
             <Minus size={14} />
           </button>
@@ -49,7 +50,8 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
           <button
             onClick={() => onUpdateQty(index, item.quantity + 1)}
             aria-label="Tăng số lượng"
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary"
+            disabled={item.quantity >= 99}
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary disabled:opacity-40"
           >
             <Plus size={14} />
           </button>

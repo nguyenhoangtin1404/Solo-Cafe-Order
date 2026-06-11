@@ -5,7 +5,7 @@ import { checkCancelRateLimit } from "@/lib/ratelimit";
 import { ORDER_CODE_RE } from "@/lib/constants";
 
 const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export async function POST(
   req: NextRequest,
