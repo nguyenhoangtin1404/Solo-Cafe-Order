@@ -137,7 +137,7 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
           </button>
         )}
 
-        {showConfirm && (
+        {showConfirm && status === ORDER_STATUS.NEW && (
           <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4">
             <p className="font-medium text-red-700">Xác nhận hủy đơn?</p>
             <p className="text-sm text-muted-foreground">

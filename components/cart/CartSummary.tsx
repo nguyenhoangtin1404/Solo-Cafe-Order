@@ -62,7 +62,13 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         return;
       }
       const data = await res.json();
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+      } catch {
+        toast.error(
+          `Đặt hàng thành công! Mã đơn: ${(data as { order_code?: string }).order_code ?? ""}. Lưu lại nhé!`
+        );
+      }
       onClearCart();
       router.push("/order-success");
     } catch {

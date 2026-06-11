@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { MenuProduct } from "@/types/menu";
 
 interface Props {
@@ -7,19 +10,22 @@ interface Props {
 }
 
 export function MenuCard({ product, cartCount, onClick }: Props) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <button
       onClick={onClick}
       className="flex w-full items-center gap-3 rounded-xl bg-card p-3 text-left shadow-sm transition-transform active:scale-[0.98]"
     >
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {product.image_url ? (
+        {product.image_url && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image_url}
             alt={product.name}
             loading="lazy"
             className="h-full w-full object-cover"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-3xl">
@@ -40,7 +46,10 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
           {product.price.toLocaleString("vi-VN")}đ
         </p>
       </div>
-      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+      <div
+        aria-label="Thêm vào giỏ hàng"
+        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+      >
         <span className="text-xl font-bold leading-none">+</span>
         {cartCount > 0 && (
           <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
