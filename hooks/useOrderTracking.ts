@@ -29,9 +29,7 @@ export function useOrderTracking(
     if (!orderCode || !/^[A-Z]\d{3}$/.test(orderCode)) return;
 
     const supabase = createClient();
-    const filter = orderId
-      ? `id=eq.${orderId}`
-      : `order_code=eq.${orderCode}`;
+    const filter = orderId ? `id=eq.${orderId}` : `order_code=eq.${orderCode}`;
 
     const channel = supabase
       .channel(`order:${orderCode}`)
