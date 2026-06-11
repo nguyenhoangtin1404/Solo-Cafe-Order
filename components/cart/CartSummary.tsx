@@ -56,8 +56,10 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         return;
       }
       if (!res.ok) {
-        const err = (await res.json()) as { message?: string };
-        toast.error(err.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
+        const err = (await res.json().catch(() => null)) as {
+          message?: string;
+        } | null;
+        toast.error(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         return;
       }
       const data = (await res.json()) as { order_code?: string };

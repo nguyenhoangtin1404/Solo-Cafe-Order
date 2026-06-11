@@ -30,7 +30,9 @@ async function checkLimit(
     const { success, reset } = await limiter.limit(ip);
     return {
       allowed: success,
-      retryAfterSeconds: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
+      retryAfterSeconds: success
+        ? 0
+        : Math.max(0, Math.ceil((reset - Date.now()) / 1000)),
     };
   } catch {
     // Upstash unreachable — fail open to avoid blocking legitimate requests
