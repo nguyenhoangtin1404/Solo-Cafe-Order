@@ -54,8 +54,3 @@ export const updateStatusSchema = z.object({
   status: z.enum(OWNER_UPDATABLE_STATUSES),
 });
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
-
-// Validate URL path param — A001…Z999 format
-export const cancelOrderSchema = z.object({
-  order_code: z.string().regex(/^[A-Z]\d{3}$/, "Invalid order code format"),
-});
