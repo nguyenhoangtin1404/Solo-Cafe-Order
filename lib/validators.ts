@@ -54,3 +54,11 @@ export const updateStatusSchema = z.object({
   status: z.enum(OWNER_UPDATABLE_STATUSES),
 });
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+
+export const cancelBodySchema = z.object({
+  order_id: z
+    .string()
+    .uuid()
+    .transform((v) => v.toLowerCase()),
+});
+export type CancelBodyInput = z.infer<typeof cancelBodySchema>;

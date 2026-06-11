@@ -1,25 +1,34 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-function createLimiter(prefix: string, requests: number): Ratelimit | null {
+function createRedis(): Redis | null {
   if (
     !process.env.UPSTASH_REDIS_REST_URL ||
     !process.env.UPSTASH_REDIS_REST_TOKEN
   ) {
     return null;
   }
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+}
+
+function createLimiter(
+  redis: Redis,
+  prefix: string,
+  requests: number
+): Ratelimit {
   return new Ratelimit({
-    redis: new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    }),
+    redis,
     limiter: Ratelimit.slidingWindow(requests, "1 m"),
     prefix,
   });
 }
 
-const orderLimiter = createLimiter("rl:orders", 10);
-const cancelLimiter = createLimiter("rl:cancel", 5);
+const redis = createRedis();
+const orderLimiter = redis ? createLimiter(redis, "rl:orders", 10) : null;
+const cancelLimiter = redis ? createLimiter(redis, "rl:cancel", 5) : null;
 
 async function checkLimit(
   limiter: Ratelimit | null,

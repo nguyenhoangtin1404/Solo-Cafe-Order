@@ -3,9 +3,7 @@ import { errorResponse, handleRouteError } from "@/lib/errors";
 import { cancelOrder, getOrderByCode } from "@/lib/services/order.service";
 import { checkCancelRateLimit } from "@/lib/ratelimit";
 import { ORDER_CODE_RE } from "@/lib/constants";
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+import { cancelBodySchema } from "@/lib/validators";
 
 export async function POST(
   req: NextRequest,
@@ -29,10 +27,11 @@ export async function POST(
     }
 
     const body = await req.json().catch(() => null);
-    const orderId = typeof body?.order_id === "string" ? body.order_id : null;
-    if (!orderId || !UUID_RE.test(orderId)) {
+    const parsed = cancelBodySchema.safeParse(body);
+    if (!parsed.success) {
       return errorResponse("VALIDATION_ERROR", "order_id không hợp lệ.", 400);
     }
+    const { order_id: orderId } = parsed.data;
 
     const existing = await getOrderByCode(code);
     if (existing.id !== orderId) {
