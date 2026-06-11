@@ -6,7 +6,9 @@ import type { ProductWithOptions } from "@/types/product";
 export const dynamic = "force-dynamic";
 
 function hasNoEmptySelectOption(p: ProductWithOptions): boolean {
-  return !p.options.some((opt) => opt.type === "select" && opt.values.length === 0);
+  return !p.options.some(
+    (opt) => opt.type === "select" && opt.values.length === 0
+  );
 }
 
 function toMenuProduct(p: ProductWithOptions): MenuProduct {
