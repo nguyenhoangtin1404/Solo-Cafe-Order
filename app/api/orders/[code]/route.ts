@@ -1,9 +1,8 @@
 import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { getOrderByCode } from "@/lib/services/order.service";
+import { ORDER_CODE_RE } from "@/lib/constants";
 import type { OrderItem } from "@/types/order";
-
-const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 
 function toItemDto(item: OrderItem) {
   return {
