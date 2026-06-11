@@ -34,7 +34,8 @@ async function checkLimit(
   limiter: Ratelimit | null,
   ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
-  if (!limiter || ip === "unknown") return { allowed: true, retryAfterSeconds: 0 };
+  if (!limiter || ip === "unknown")
+    return { allowed: true, retryAfterSeconds: 0 };
   try {
     const { success, reset } = await limiter.limit(ip);
     return {
