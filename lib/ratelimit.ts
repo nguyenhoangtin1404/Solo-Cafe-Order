@@ -1,7 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-function createLimiter(): Ratelimit | null {
+function createLimiter(prefix: string, requests: number): Ratelimit | null {
   if (
     !process.env.UPSTASH_REDIS_REST_URL ||
     !process.env.UPSTASH_REDIS_REST_TOKEN
@@ -13,14 +13,16 @@ function createLimiter(): Ratelimit | null {
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     }),
-    limiter: Ratelimit.slidingWindow(10, "1 m"),
-    prefix: "rl:orders",
+    limiter: Ratelimit.slidingWindow(requests, "1 m"),
+    prefix,
   });
 }
 
-const limiter = createLimiter();
+const orderLimiter = createLimiter("rl:orders", 10);
+const cancelLimiter = createLimiter("rl:cancel", 5);
 
-export async function checkOrderRateLimit(
+async function checkLimit(
+  limiter: Ratelimit | null,
   ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   if (!limiter) return { allowed: true, retryAfterSeconds: 0 };
@@ -31,7 +33,19 @@ export async function checkOrderRateLimit(
       retryAfterSeconds: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
     };
   } catch {
-    // Upstash unreachable — fail open to avoid blocking legitimate orders
+    // Upstash unreachable — fail open to avoid blocking legitimate requests
     return { allowed: true, retryAfterSeconds: 0 };
   }
+}
+
+export function checkOrderRateLimit(
+  ip: string
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  return checkLimit(orderLimiter, ip);
+}
+
+export function checkCancelRateLimit(
+  ip: string
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  return checkLimit(cancelLimiter, ip);
 }

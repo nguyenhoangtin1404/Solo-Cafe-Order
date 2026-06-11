@@ -3,6 +3,7 @@ import {
   MAX_ITEM_NOTE_LENGTH,
   MAX_ORDER_NOTE_LENGTH,
   MAX_PICKUP_NAME_LENGTH,
+  ORDER_CODE_RE,
   ORDER_STATUS,
   PAYMENT_METHOD,
 } from "./constants";
@@ -57,5 +58,5 @@ export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
 // Validate URL path param — A001…Z999 format
 export const cancelOrderSchema = z.object({
-  order_code: z.string().regex(/^[A-Z]\d{3}$/, "Invalid order code format"),
+  order_code: z.string().regex(ORDER_CODE_RE, "Invalid order code format"),
 });

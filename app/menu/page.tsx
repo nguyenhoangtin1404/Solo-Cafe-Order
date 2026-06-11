@@ -5,8 +5,8 @@ import type { ProductWithOptions } from "@/types/product";
 
 export const dynamic = "force-dynamic";
 
-function hasNoEmptySelectOption(p: ProductWithOptions): boolean {
-  return !p.options.some((opt) => opt.type === "select" && opt.values.length === 0);
+function hasNoEmptyOption(p: ProductWithOptions): boolean {
+  return p.options.every((opt) => opt.values.length > 0);
 }
 
 function toMenuProduct(p: ProductWithOptions): MenuProduct {
@@ -44,7 +44,7 @@ export default async function MenuPage() {
     id: cat.id,
     name: cat.name,
     sort_order: cat.sort_order,
-    products: cat.products.filter(hasNoEmptySelectOption).map(toMenuProduct),
+    products: cat.products.filter(hasNoEmptyOption).map(toMenuProduct),
   }));
 
   if (categories.length === 0) {
