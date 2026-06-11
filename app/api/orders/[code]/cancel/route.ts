@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
-import { cancelOrder, getOrderByCode } from "@/lib/services/order.service";
+import { cancelOrder } from "@/lib/services/order.service";
 import { checkCancelRateLimit } from "@/lib/ratelimit";
 import { ORDER_CODE_RE } from "@/lib/constants";
 import { cancelBodySchema } from "@/lib/validators";
@@ -33,12 +33,7 @@ export async function POST(
     }
     const { order_id: orderId } = parsed.data;
 
-    const existing = await getOrderByCode(code);
-    if (existing.id !== orderId) {
-      return errorResponse("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
-    }
-
-    const order = await cancelOrder(code, "customer");
+    const order = await cancelOrder(code, "customer", orderId);
     return Response.json({
       order_code: order.order_code,
       status: order.status,
