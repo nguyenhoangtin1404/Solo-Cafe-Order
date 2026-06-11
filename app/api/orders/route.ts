@@ -111,19 +111,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const bank_transfer_info =
-      parsed.data.payment_method === PAYMENT_METHOD.BANK_TRANSFER
-        ? getBankTransferInfo()
-        : null;
-    if (
-      parsed.data.payment_method === PAYMENT_METHOD.BANK_TRANSFER &&
-      bank_transfer_info === null
-    ) {
-      return errorResponse(
-        "INTERNAL_ERROR",
-        "Thông tin chuyển khoản chưa được cấu hình. Vui lòng chọn thanh toán tiền mặt.",
-        500
-      );
+    let bank_transfer_info = null;
+    if (parsed.data.payment_method === PAYMENT_METHOD.BANK_TRANSFER) {
+      bank_transfer_info = getBankTransferInfo();
+      if (bank_transfer_info === null) {
+        return errorResponse(
+          "INTERNAL_ERROR",
+          "Thông tin chuyển khoản chưa được cấu hình. Vui lòng chọn thanh toán tiền mặt.",
+          500
+        );
+      }
     }
 
     const { order, wait_estimate } = await submitOrder(parsed.data);

@@ -129,6 +129,7 @@ Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
 
 ```json
 {
+  "id": "uuid",
   "order_code": "A001",
   "status": "making",
   "pickup_name": "Minh",
@@ -147,6 +148,8 @@ Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
   ]
 }
 ```
+
+> `id` là UUID của đơn hàng — dùng làm `order_id` khi cancel.
 
 **Errors**
 
