@@ -31,7 +31,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (items.length === 0 || pickupNameTooLong) return;
+    if (loading || items.length === 0 || pickupNameTooLong) return;
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {

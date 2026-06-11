@@ -41,7 +41,10 @@ export default function CartPage() {
       <div className="flex-1 space-y-3 px-4 py-4">
         {cart.items.map((item, idx) => (
           <CartItem
-            key={idx}
+            key={`${item.productId}:${[...item.selectedOptions]
+              .sort((a, b) => a.valueId.localeCompare(b.valueId))
+              .map((o) => o.valueId)
+              .join(",")}:${item.note ?? ""}`}
             item={item}
             index={idx}
             onUpdateQty={cart.updateQuantity}
