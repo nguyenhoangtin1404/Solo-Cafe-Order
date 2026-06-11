@@ -164,7 +164,7 @@ Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
 { "order_id": "uuid-of-the-order" }
 ```
 
-`order_id` là UUID của đơn hàng (trả về khi submit order hoặc load trang tracking). Server dùng nó để xác minh quyền sở hữu — chỉ người biết UUID mới có thể cancel.
+`order_id` là UUID của đơn hàng — lấy từ response của `GET /api/orders/:code` khi khách vào trang tracking. Server dùng nó để xác minh quyền sở hữu; chỉ người biết UUID mới có thể cancel. (UUID không được trả về khi submit order.)
 
 **Response 200**
 
