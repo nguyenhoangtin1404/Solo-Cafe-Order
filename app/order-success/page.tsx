@@ -40,7 +40,6 @@ function readOrderSuccess(): OrderSuccessData | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as OrderSuccessData;
     if (!parsed.order_code) return null;
-    sessionStorage.removeItem(ORDER_SUCCESS_SESSION_KEY);
     return parsed;
   } catch {
     return null;
@@ -52,7 +51,11 @@ export default function OrderSuccessPage() {
   const [data] = useState<OrderSuccessData | null>(readOrderSuccess);
 
   useEffect(() => {
-    if (!data) router.replace("/menu");
+    if (!data) {
+      router.replace("/menu");
+    } else {
+      sessionStorage.removeItem(ORDER_SUCCESS_SESSION_KEY);
+    }
   }, [data, router]);
 
   if (!data) return null;
