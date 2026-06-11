@@ -20,11 +20,18 @@ export function useOrderTracking(
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
 
+  // Prefer filtering by stable UUID to avoid cross-day order_code collisions
+  // (order_code resets daily; two orders can share the same code on different days).
+  const orderId = initialOrder?.id ?? null;
+
   useEffect(() => {
     // Guard: only subscribe if format matches A001–Z999 to prevent filter injection
     if (!orderCode || !/^[A-Z]\d{3}$/.test(orderCode)) return;
 
     const supabase = createClient();
+    const filter = orderId
+      ? `id=eq.${orderId}`
+      : `order_code=eq.${orderCode}`;
 
     const channel = supabase
       .channel(`order:${orderCode}`)
@@ -34,7 +41,7 @@ export function useOrderTracking(
           event: "UPDATE",
           schema: "public",
           table: "orders",
-          filter: `order_code=eq.${orderCode}`,
+          filter,
         },
         (payload) => {
           setOrder(payload.new as OrderRow);
@@ -54,7 +61,7 @@ export function useOrderTracking(
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [orderCode]);
+  }, [orderCode, orderId]);
 
   return { order, connectionStatus };
 }
