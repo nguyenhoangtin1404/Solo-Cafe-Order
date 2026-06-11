@@ -24,9 +24,14 @@ export async function checkOrderRateLimit(
   ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   if (!limiter) return { allowed: true, retryAfterSeconds: 0 };
-  const { success, reset } = await limiter.limit(ip);
-  return {
-    allowed: success,
-    retryAfterSeconds: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
-  };
+  try {
+    const { success, reset } = await limiter.limit(ip);
+    return {
+      allowed: success,
+      retryAfterSeconds: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
+    };
+  } catch {
+    // Upstash unreachable — fail open to avoid blocking legitimate orders
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
 }

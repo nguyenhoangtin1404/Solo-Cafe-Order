@@ -1,6 +1,8 @@
 import { type NextRequest } from "next/server";
-import { handleRouteError } from "@/lib/errors";
+import { errorResponse, handleRouteError } from "@/lib/errors";
 import { cancelOrder } from "@/lib/services/order.service";
+
+const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 
 export async function POST(
   _req: NextRequest,
@@ -8,6 +10,9 @@ export async function POST(
 ) {
   try {
     const { code } = await params;
+    if (!ORDER_CODE_RE.test(code)) {
+      return errorResponse("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
+    }
     const order = await cancelOrder(code, "customer");
     return Response.json({ order_code: order.order_code, status: order.status });
   } catch (err) {

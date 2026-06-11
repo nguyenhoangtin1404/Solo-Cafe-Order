@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { errorResponse, handleRouteError } from "@/lib/errors";
+import { AppError, errorResponse, handleRouteError } from "@/lib/errors";
 import { checkOrderRateLimit } from "@/lib/ratelimit";
 import { requireOwner } from "@/lib/auth/requireOwner";
 import { submitOrder, listOrders } from "@/lib/services/order.service";
@@ -70,11 +70,17 @@ type BankTransferInfo = {
   qr_image_url: string | null;
 };
 
-function getBankTransferInfo(): BankTransferInfo | null {
+function getBankTransferInfo(): BankTransferInfo {
   const bank_name = process.env.BANK_NAME;
   const account_number = process.env.BANK_ACCOUNT_NUMBER;
   const account_name = process.env.BANK_ACCOUNT_NAME;
-  if (!bank_name || !account_number || !account_name) return null;
+  if (!bank_name || !account_number || !account_name) {
+    throw new AppError(
+      "INTERNAL_ERROR",
+      "Thông tin chuyển khoản chưa được cấu hình. Vui lòng chọn thanh toán tiền mặt.",
+      500
+    );
+  }
   return {
     bank_name,
     account_number,
@@ -99,17 +105,20 @@ function toItemDto(item: OrderItem) {
 }
 
 export async function POST(req: NextRequest) {
+  // Vercel appends the real client IP as the last entry in x-forwarded-for;
+  // using the last value prevents spoofing via client-controlled headers.
   const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const { allowed, retryAfterSeconds } = await checkOrderRateLimit(ip);
-  if (!allowed) {
-    return Response.json(
-      { code: "RATE_LIMITED", message: "Vui lòng chờ 1 phút rồi thử lại." },
-      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
-    );
-  }
+    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "unknown";
 
   try {
+    const { allowed, retryAfterSeconds } = await checkOrderRateLimit(ip);
+    if (!allowed) {
+      return Response.json(
+        { code: "RATE_LIMITED", message: "Vui lòng chờ 1 phút rồi thử lại." },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     const parsed = submitOrderSchema.safeParse(body);
     if (!parsed.success) {

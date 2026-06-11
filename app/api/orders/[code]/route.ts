@@ -1,7 +1,9 @@
 import { type NextRequest } from "next/server";
-import { handleRouteError } from "@/lib/errors";
+import { errorResponse, handleRouteError } from "@/lib/errors";
 import { getOrderByCode } from "@/lib/services/order.service";
 import type { OrderItem } from "@/types/order";
+
+const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 
 function toItemDto(item: OrderItem) {
   return {
@@ -19,6 +21,9 @@ export async function GET(
 ) {
   try {
     const { code } = await params;
+    if (!ORDER_CODE_RE.test(code)) {
+      return errorResponse("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
+    }
     const order = await getOrderByCode(code);
     return Response.json({
       order_code: order.order_code,
