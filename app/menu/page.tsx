@@ -3,6 +3,8 @@ import { MenuView } from "@/components/menu/MenuView";
 import type { MenuCategory, MenuOption, MenuProduct } from "@/types/menu";
 import type { ProductWithOptions } from "@/types/product";
 
+export const dynamic = "force-dynamic";
+
 function toMenuProduct(p: ProductWithOptions): MenuProduct {
   return {
     id: p.id,
