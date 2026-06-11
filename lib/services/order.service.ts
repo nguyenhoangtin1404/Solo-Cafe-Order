@@ -293,6 +293,14 @@ export async function submitOrder(
   return { order, wait_estimate };
 }
 
+export async function getOrderByCode(orderCode: string): Promise<Order> {
+  const order = await orderRepo.findByCode(orderCode);
+  if (!order) {
+    throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
+  }
+  return order;
+}
+
 export async function cancelOrder(
   orderCode: string,
   actor: "customer" | "owner"
