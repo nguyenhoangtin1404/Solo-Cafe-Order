@@ -45,7 +45,10 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const statusParam = url.searchParams.get("status") ?? undefined;
     const cursor = url.searchParams.get("cursor") ?? undefined;
-    const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit")) || 30), 100);
+    const limit = Math.min(
+      Math.max(1, Number(url.searchParams.get("limit")) || 30),
+      100
+    );
 
     if (statusParam !== undefined && !VALID_STATUSES.has(statusParam)) {
       return errorResponse("VALIDATION_ERROR", "Status không hợp lệ.", 400);
