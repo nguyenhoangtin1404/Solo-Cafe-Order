@@ -144,6 +144,40 @@ export async function listByStatus(status?: OrderStatus): Promise<Order[]> {
   return (data ?? []) as Order[];
 }
 
+export interface ListPaginatedResult {
+  orders: Order[];
+  next_cursor: string | null;
+}
+
+export async function listPaginated(
+  status: OrderStatus | undefined,
+  cursor: string | undefined,
+  limit: number
+): Promise<ListPaginatedResult> {
+  const supabase = createAdminSupabaseClient();
+  const { start, end } = getTodayHCMBounds();
+
+  let query = supabase
+    .from("orders")
+    .select(WITH_ITEMS)
+    .gte("created_at", start)
+    .lt("created_at", end)
+    .order("created_at", { ascending: false })
+    .limit(limit + 1); // fetch one extra to detect next page
+
+  if (status !== undefined) query = query.eq("status", status);
+  if (cursor) query = query.lt("created_at", cursor);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const rows = (data ?? []) as Order[];
+  const hasNext = rows.length > limit;
+  const orders = hasNext ? rows.slice(0, limit) : rows;
+  const next_cursor = hasNext ? (orders[orders.length - 1]?.created_at ?? null) : null;
+  return { orders, next_cursor };
+}
+
 // Returns a weighted count: NEW orders × 1.0, MAKING orders × MAKING_ORDER_WEIGHT.
 // MAKING orders are already being prepared so they contribute less to the wait estimate.
 export async function countPending(): Promise<number> {

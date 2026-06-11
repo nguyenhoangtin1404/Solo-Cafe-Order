@@ -293,6 +293,24 @@ export async function submitOrder(
   return { order, wait_estimate };
 }
 
+export interface ListOrdersResult {
+  orders: Order[];
+  next_cursor: string | null;
+}
+
+export async function listOrders(
+  status: OrderStatus | undefined,
+  cursor: string | undefined,
+  limit: number
+): Promise<ListOrdersResult> {
+  // Active statuses: no pagination — dashboard always shows the full live queue
+  if (status === ORDER_STATUS.NEW || status === ORDER_STATUS.MAKING) {
+    const orders = await orderRepo.listByStatus(status);
+    return { orders, next_cursor: null };
+  }
+  return orderRepo.listPaginated(status, cursor, limit);
+}
+
 export async function getOrderByCode(orderCode: string): Promise<Order> {
   const order = await orderRepo.findByCode(orderCode);
   if (!order) {

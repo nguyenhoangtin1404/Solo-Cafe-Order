@@ -1,11 +1,67 @@
 import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { checkOrderRateLimit } from "@/lib/ratelimit";
-import { submitOrder } from "@/lib/services/order.service";
+import { requireOwner } from "@/lib/auth/requireOwner";
+import { submitOrder, listOrders } from "@/lib/services/order.service";
 import type { WaitEstimate } from "@/lib/services/order.service";
-import { PAYMENT_METHOD } from "@/lib/constants";
+import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
+import type { OrderStatus } from "@/lib/constants";
 import { submitOrderSchema } from "@/lib/validators";
-import type { OrderItem } from "@/types/order";
+import type { Order, OrderItem } from "@/types/order";
+
+const VALID_STATUSES = new Set<string>([
+  ORDER_STATUS.NEW,
+  ORDER_STATUS.MAKING,
+  ORDER_STATUS.DONE,
+  ORDER_STATUS.CANCELLED,
+]);
+
+function toOrderDto(order: Order) {
+  return {
+    id: order.id,
+    order_code: order.order_code,
+    status: order.status,
+    payment_method: order.payment_method,
+    total_amount: order.total_amount,
+    pickup_name: order.pickup_name,
+    note: order.note,
+    cancelled_by: order.cancelled_by,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    items: order.items.map((item) => ({
+      product_name: item.product_name,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      selected_options: item.selected_options,
+      note: item.note,
+    })),
+  };
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    await requireOwner();
+
+    const url = new URL(req.url);
+    const statusParam = url.searchParams.get("status") ?? undefined;
+    const cursor = url.searchParams.get("cursor") ?? undefined;
+    const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit")) || 30), 100);
+
+    if (statusParam !== undefined && !VALID_STATUSES.has(statusParam)) {
+      return errorResponse("VALIDATION_ERROR", "Status không hợp lệ.", 400);
+    }
+
+    const { orders, next_cursor } = await listOrders(
+      statusParam as OrderStatus | undefined,
+      cursor,
+      limit
+    );
+
+    return Response.json({ orders: orders.map(toOrderDto), next_cursor });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
 
 type BankTransferInfo = {
   bank_name: string;
