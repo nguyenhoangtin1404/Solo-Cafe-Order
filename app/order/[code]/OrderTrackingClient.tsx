@@ -136,7 +136,11 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
             disabled={connectionStatus !== "connected"}
             className="min-h-[44px] w-full rounded-xl border border-destructive py-3 font-medium text-destructive disabled:opacity-40"
           >
-            {connectionStatus !== "connected" ? "Đang kết nối..." : "Hủy đơn"}
+            {connectionStatus === "connecting"
+              ? "Đang kết nối..."
+              : connectionStatus === "disconnected"
+                ? "Mất kết nối"
+                : "Hủy đơn"}
           </button>
         )}
 
