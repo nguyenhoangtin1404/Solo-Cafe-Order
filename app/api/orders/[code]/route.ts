@@ -25,6 +25,7 @@ export async function GET(
     }
     const order = await getOrderByCode(code);
     return Response.json({
+      id: order.id,
       order_code: order.order_code,
       status: order.status,
       total_amount: order.total_amount,
