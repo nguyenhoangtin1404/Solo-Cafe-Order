@@ -64,7 +64,8 @@ export function CartSummary({ items, total, onClearCart }: Props) {
       try {
         sessionStorage.setItem(ORDER_SUCCESS_SESSION_KEY, JSON.stringify(data));
       } catch {
-        toast.error(
+        onClearCart();
+        toast.success(
           `Đặt hàng thành công! Mã đơn: ${data.order_code ?? ""}. Lưu lại nhé!`
         );
         return;

@@ -99,7 +99,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
           >
             <X size={16} />
           </button>

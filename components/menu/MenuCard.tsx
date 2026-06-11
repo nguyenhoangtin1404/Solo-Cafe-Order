@@ -15,7 +15,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
   return (
     <button
       onClick={onClick}
-      aria-label={`Thêm ${product.name} vào giỏ hàng`}
+      aria-label={`Chọn ${product.name}`}
       className="flex w-full items-center gap-3 rounded-xl bg-card p-3 text-left shadow-sm transition-transform active:scale-[0.98]"
     >
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
