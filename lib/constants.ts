@@ -34,3 +34,5 @@ export const MAX_PICKUP_NAME_LENGTH = 50;
 export const MAX_IMAGE_SIZE_MB = 2;
 
 export const ORDER_SUCCESS_SESSION_KEY = "vibe_cafe_order_success";
+
+export const ORDER_CODE_RE = /^[A-Z]\d{3}$/;

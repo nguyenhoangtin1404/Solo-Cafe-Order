@@ -26,9 +26,10 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
   const { order, connectionStatus } = useOrderTracking(orderCode, initialOrder);
   const [showConfirm, setShowConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [localCancelled, setLocalCancelled] = useState(false);
 
   const current = order ?? initialOrder;
-  const status = current.status;
+  const status = localCancelled ? ORDER_STATUS.CANCELLED : current.status;
   const stepIndex = STEP_STATUSES.indexOf(
     status as (typeof STEP_STATUSES)[number]
   );
@@ -48,6 +49,7 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
         return;
       }
       toast.success("Đơn hàng đã được hủy.");
+      setLocalCancelled(true);
       setShowConfirm(false);
     } catch {
       toast.error("Mất kết nối. Vui lòng thử lại.");

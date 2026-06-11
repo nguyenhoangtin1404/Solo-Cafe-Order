@@ -2,8 +2,7 @@ import Link from "next/link";
 import { getOrderByCode } from "@/lib/services/order.service";
 import { isAppError } from "@/lib/errors";
 import { OrderTrackingClient } from "./OrderTrackingClient";
-
-const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
+import { ORDER_CODE_RE } from "@/lib/constants";
 
 interface PageProps {
   params: Promise<{ code: string }>;

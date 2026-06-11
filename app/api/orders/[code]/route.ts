@@ -2,8 +2,7 @@ import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { getOrderByCode } from "@/lib/services/order.service";
 import type { OrderItem } from "@/types/order";
-
-const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
+import { ORDER_CODE_RE } from "@/lib/constants";
 
 function toItemDto(item: OrderItem) {
   return {
