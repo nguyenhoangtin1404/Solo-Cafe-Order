@@ -108,33 +108,39 @@ supabase/
 ## Database Schema (đầy đủ)
 
 ```sql
--- categories
-id uuid PK, name varchar, sort_order int, created_at timestamp
+-- categories  (soft delete)
+id uuid PK, name varchar, sort_order int, created_at timestamp,
+deleted_at timestamp             -- NULL = active; soft delete only
 
--- products
+-- products  (soft delete)
 id uuid PK, category_id uuid FK, name varchar, description text,
 price int (VND > 0), image_url varchar, is_available boolean DEFAULT true,
-created_at timestamp
+created_at timestamp,
+deleted_at timestamp             -- NULL = active; soft delete only
 
--- product_options
-id uuid PK, product_id uuid FK, name varchar, type varchar ('select'|'multi')
+-- product_options  (soft delete)
+id uuid PK, product_id uuid FK, name varchar, type varchar ('select'|'multi'),
+deleted_at timestamp             -- NULL = active; soft delete only
 
--- product_option_values
-id uuid PK, option_id uuid FK, name varchar, extra_price int DEFAULT 0
+-- product_option_values  (soft delete)
+id uuid PK, option_id uuid FK, name varchar, extra_price int DEFAULT 0,
+deleted_at timestamp             -- NULL = active; soft delete only
 
--- orders
+-- orders  (KHÔNG có deleted_at — cancel = status 'cancelled')
 id uuid PK
 order_code varchar UNIQUE       -- sinh bởi DB function
 status varchar                  -- new | making | done | cancelled
 total_amount int                -- snapshot VND
+payment_method varchar          -- cash | bank_transfer
 pickup_name varchar             -- nullable, tên khách lấy đồ
 note text                       -- ghi chú toàn đơn
 customer_ref varchar            -- nullable, dành cho Phase 3
+cancelled_by varchar            -- nullable: customer | owner (audit trail)
 created_at timestamp
 updated_at timestamp            -- auto-update via trigger
 
--- order_items
-id uuid PK, order_id uuid FK, product_id uuid FK (soft ref),
+-- order_items  (KHÔNG có deleted_at — item gắn liền với order)
+id uuid PK, order_id uuid FK, product_id uuid (soft ref, no FK),
 product_name varchar (snapshot), quantity int > 0,
 unit_price int (snapshot VND),
 selected_options jsonb (snapshot: [{option_name, value_name, extra_price}]),
