@@ -32,3 +32,5 @@ export const MAX_ORDER_NOTE_LENGTH = 500;
 export const MAX_ITEM_NOTE_LENGTH = 200;
 export const MAX_PICKUP_NAME_LENGTH = 50;
 export const MAX_IMAGE_SIZE_MB = 2;
+
+export const ORDER_SUCCESS_SESSION_KEY = "vibe_cafe_order_success";

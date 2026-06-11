@@ -42,12 +42,14 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
       if (!res.ok) {
         const err = (await res.json()) as { message?: string };
         toast.error(err.message ?? "Không thể hủy đơn.");
+        setShowConfirm(false);
         return;
       }
       toast.success("Đơn hàng đã được hủy.");
       setShowConfirm(false);
     } catch {
       toast.error("Mất kết nối. Vui lòng thử lại.");
+      setShowConfirm(false);
     } finally {
       setCancelling(false);
     }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Clock } from "lucide-react";
+import { ORDER_SUCCESS_SESSION_KEY } from "@/lib/constants";
 import type { PaymentMethod } from "@/lib/constants";
 import type { SelectedOption } from "@/types/order";
 
@@ -32,15 +33,15 @@ interface OrderSuccessData {
   bank_transfer_info: BankTransferInfo | null;
 }
 
-const SESSION_KEY = "vibe_cafe_order_success";
-
 function readOrderSuccess(): OrderSuccessData | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(ORDER_SUCCESS_SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as OrderSuccessData;
-    return parsed.order_code ? parsed : null;
+    if (!parsed.order_code) return null;
+    sessionStorage.removeItem(ORDER_SUCCESS_SESSION_KEY);
+    return parsed;
   } catch {
     return null;
   }

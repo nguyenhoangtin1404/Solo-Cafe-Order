@@ -7,6 +7,7 @@ import type { CartItem } from "@/types/order";
 import {
   MAX_ORDER_NOTE_LENGTH,
   MAX_PICKUP_NAME_LENGTH,
+  ORDER_SUCCESS_SESSION_KEY,
   PAYMENT_METHOD,
 } from "@/lib/constants";
 import type { PaymentMethod } from "@/lib/constants";
@@ -16,8 +17,6 @@ interface Props {
   total: number;
   onClearCart: () => void;
 }
-
-const SESSION_KEY = "vibe_cafe_order_success";
 
 export function CartSummary({ items, total, onClearCart }: Props) {
   const router = useRouter();
@@ -61,13 +60,14 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         toast.error(err.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         return;
       }
-      const data = await res.json();
+      const data = (await res.json()) as { order_code?: string };
       try {
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+        sessionStorage.setItem(ORDER_SUCCESS_SESSION_KEY, JSON.stringify(data));
       } catch {
         toast.error(
-          `Đặt hàng thành công! Mã đơn: ${(data as { order_code?: string }).order_code ?? ""}. Lưu lại nhé!`
+          `Đặt hàng thành công! Mã đơn: ${data.order_code ?? ""}. Lưu lại nhé!`
         );
+        return;
       }
       onClearCart();
       router.push("/order-success");

@@ -18,7 +18,7 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
         <button
           onClick={() => onRemove(index)}
           aria-label="Xóa món"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full bg-secondary"
         >
           <X size={14} />
         </button>
