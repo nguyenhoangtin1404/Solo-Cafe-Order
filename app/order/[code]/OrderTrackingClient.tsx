@@ -38,6 +38,8 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
     try {
       const res = await fetch(`/api/orders/${orderCode}/cancel`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: current.id }),
       });
       if (!res.ok) {
         const err = (await res.json()) as { message?: string };
@@ -53,7 +55,7 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
     } finally {
       setCancelling(false);
     }
-  }, [orderCode]);
+  }, [orderCode, current.id]);
 
   return (
     <div className="flex min-h-screen flex-col">

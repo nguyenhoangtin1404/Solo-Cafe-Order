@@ -132,12 +132,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { order, wait_estimate } = await submitOrder(parsed.data);
-
     const bank_transfer_info =
-      order.payment_method === PAYMENT_METHOD.BANK_TRANSFER
+      parsed.data.payment_method === PAYMENT_METHOD.BANK_TRANSFER
         ? getBankTransferInfo()
         : null;
+
+    const { order, wait_estimate } = await submitOrder(parsed.data);
 
     return Response.json(
       {
