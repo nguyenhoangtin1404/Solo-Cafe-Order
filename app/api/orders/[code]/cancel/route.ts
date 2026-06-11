@@ -27,6 +27,13 @@ export async function POST(
     }
 
     const body = await req.json().catch(() => null);
+    if (body === null) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Request body không hợp lệ.",
+        400
+      );
+    }
     const parsed = cancelBodySchema.safeParse(body);
     if (!parsed.success) {
       return errorResponse("VALIDATION_ERROR", "order_id không hợp lệ.", 400);

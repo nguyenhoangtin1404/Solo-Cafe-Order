@@ -328,7 +328,7 @@ export async function cancelOrder(
   if (!order) {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
-  if (expectedId !== undefined && order.id !== expectedId) {
+  if (expectedId !== undefined && order.id.toLowerCase() !== expectedId) {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
 
