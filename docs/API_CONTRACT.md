@@ -158,9 +158,13 @@ Lấy thông tin order theo `order_code` — dành cho khách xem tracking page.
 
 Khách tự cancel order bằng `order_code`. Chỉ được khi status = `new`.
 
-> ⚠️ **Security note**: `order_code` format `A001`–`Z999` (~25,000 codes/ngày) có thể bị brute-force. Risk thấp với quán nhỏ (attacker cancel order người khác không có lợi gì). Nếu cần bảo mật cao hơn ở Phase 2: thêm `cancel_token` random UUID vào orders.
+**Request body**
 
-**Request**: body rỗng
+```json
+{ "order_id": "uuid-of-the-order" }
+```
+
+`order_id` là UUID của đơn hàng (trả về khi submit order hoặc load trang tracking). Server dùng nó để xác minh quyền sở hữu — chỉ người biết UUID mới có thể cancel.
 
 **Response 200**
 
