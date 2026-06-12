@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { cancelOrder } from "@/lib/services/order.service";
-import { checkCancelRateLimit } from "@/lib/ratelimit";
+import { checkCancelRateLimit, getClientIp } from "@/lib/ratelimit";
 import { ORDER_CODE_RE } from "@/lib/constants";
 import { cancelBodySchema } from "@/lib/validators";
 
@@ -9,8 +9,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "unknown";
+  const ip = getClientIp(req);
 
   try {
     const { allowed, retryAfterSeconds } = await checkCancelRateLimit(ip);

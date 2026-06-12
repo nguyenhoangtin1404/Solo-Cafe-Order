@@ -61,3 +61,11 @@ export function checkCancelRateLimit(
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   return checkLimit(cancelLimiter, ip);
 }
+
+export function getClientIp(req: {
+  headers: { get: (name: string) => string | null };
+}): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "unknown"
+  );
+}

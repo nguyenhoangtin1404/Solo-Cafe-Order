@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { errorResponse, handleRouteError } from "@/lib/errors";
-import { checkOrderRateLimit } from "@/lib/ratelimit";
+import { checkOrderRateLimit, getClientIp } from "@/lib/ratelimit";
 import { requireOwner } from "@/lib/auth/requireOwner";
 import { submitOrder, listOrders } from "@/lib/services/order.service";
 import type { WaitEstimate } from "@/lib/services/order.service";
@@ -87,10 +87,7 @@ function toItemDto(item: OrderItem) {
 }
 
 export async function POST(req: NextRequest) {
-  // Vercel appends the real client IP as the last entry in x-forwarded-for;
-  // using the last value prevents spoofing via client-controlled headers.
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "unknown";
+  const ip = getClientIp(req);
 
   try {
     const { allowed, retryAfterSeconds } = await checkOrderRateLimit(ip);
