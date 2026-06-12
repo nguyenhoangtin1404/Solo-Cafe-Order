@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import type { CartItem } from "@/types/order";
+import type { CartItem, OrderSuccessData } from "@/types/order";
 import {
   MAX_ORDER_NOTE_LENGTH,
   MAX_PICKUP_NAME_LENGTH,
@@ -62,7 +62,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         toast.error(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         return;
       }
-      const data = (await res.json()) as { order_code?: string };
+      const data = (await res.json()) as OrderSuccessData;
       try {
         sessionStorage.setItem(ORDER_SUCCESS_SESSION_KEY, JSON.stringify(data));
       } catch {

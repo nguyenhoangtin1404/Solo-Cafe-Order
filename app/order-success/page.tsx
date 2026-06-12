@@ -5,33 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Clock } from "lucide-react";
 import { ORDER_SUCCESS_SESSION_KEY } from "@/lib/constants";
-import type { PaymentMethod } from "@/lib/constants";
-import type { SelectedOption } from "@/types/order";
-
-interface OrderItem {
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  selected_options: SelectedOption[];
-  note: string | null;
-}
-
-interface BankTransferInfo {
-  bank_name: string;
-  account_number: string;
-  account_name: string;
-  qr_image_url: string | null;
-}
-
-interface OrderSuccessData {
-  order_code: string;
-  total_amount: number;
-  payment_method: PaymentMethod;
-  wait_estimate: string;
-  pickup_name: string | null;
-  items: OrderItem[];
-  bank_transfer_info: BankTransferInfo | null;
-}
+import type { OrderSuccessData } from "@/types/order";
 
 function readOrderSuccess(): OrderSuccessData | null {
   if (typeof window === "undefined") return null;

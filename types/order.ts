@@ -50,3 +50,28 @@ export interface CartItem {
   selectedOptions: CartSelectedOption[]; // default [] khi không có options
   note: string | null; // null = không có note, consistent với validator output và DB
 }
+
+export interface OrderItemSummary {
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  selected_options: SelectedOption[];
+  note: string | null;
+}
+
+export interface BankTransferInfo {
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  qr_image_url: string | null;
+}
+
+export interface OrderSuccessData {
+  order_code: string;
+  total_amount: number;
+  payment_method: PaymentMethod;
+  wait_estimate: string;
+  pickup_name: string | null;
+  items: OrderItemSummary[];
+  bank_transfer_info: BankTransferInfo | null;
+}

@@ -29,6 +29,7 @@ export default async function OrderTrackingPage({ params }: PageProps) {
 
   return (
     <OrderTrackingClient
+      key={order.order_code}
       orderCode={order.order_code}
       initialOrder={orderRow}
       items={items}
