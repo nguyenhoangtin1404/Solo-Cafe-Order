@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { getOrderByCode } from "@/lib/services/order.service";
+import { checkTrackRateLimit, getClientIp } from "@/lib/ratelimit";
 import { ORDER_CODE_RE } from "@/lib/constants";
 import type { OrderItem } from "@/types/order";
 
@@ -15,10 +16,20 @@ function toItemDto(item: OrderItem) {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
+  const ip = getClientIp(req);
+
   try {
+    const { allowed, retryAfterSeconds } = await checkTrackRateLimit(ip);
+    if (!allowed) {
+      return Response.json(
+        { code: "RATE_LIMITED", message: "Vui lòng thử lại sau." },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+      );
+    }
+
     const { code } = await params;
     if (!ORDER_CODE_RE.test(code)) {
       return errorResponse("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);

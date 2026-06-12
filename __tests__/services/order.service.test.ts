@@ -401,6 +401,32 @@ describe("cancelOrder", () => {
       httpStatus: 409,
     });
   });
+
+  it("thành công khi expectedId khớp", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.NEW });
+    mockedOrderRepo.findByCode.mockResolvedValue(order);
+    mockedOrderRepo.updateStatus.mockResolvedValue({
+      ...order,
+      status: ORDER_STATUS.CANCELLED,
+      cancelled_by: "customer",
+    });
+
+    const result = await cancelOrder("A001", "customer", order.id.toLowerCase());
+
+    expect(result.status).toBe(ORDER_STATUS.CANCELLED);
+  });
+
+  it("throws ORDER_NOT_FOUND khi expectedId không khớp", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.NEW });
+    mockedOrderRepo.findByCode.mockResolvedValue(order);
+
+    await expect(
+      cancelOrder("A001", "customer", "00000000-0000-7000-8000-000000000000")
+    ).rejects.toMatchObject({
+      code: "ORDER_NOT_FOUND",
+      httpStatus: 404,
+    });
+  });
 });
 
 describe("updateStatus", () => {

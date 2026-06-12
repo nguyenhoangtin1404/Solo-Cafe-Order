@@ -29,6 +29,7 @@ function createLimiter(
 const redis = createRedis();
 const orderLimiter = redis ? createLimiter(redis, "rl:orders", 10) : null;
 const cancelLimiter = redis ? createLimiter(redis, "rl:cancel", 5) : null;
+const trackLimiter = redis ? createLimiter(redis, "rl:track", 30) : null;
 
 async function checkLimit(
   limiter: Ratelimit | null,
@@ -60,6 +61,12 @@ export function checkCancelRateLimit(
   ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   return checkLimit(cancelLimiter, ip);
+}
+
+export function checkTrackRateLimit(
+  ip: string
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  return checkLimit(trackLimiter, ip);
 }
 
 export function getClientIp(req: {
