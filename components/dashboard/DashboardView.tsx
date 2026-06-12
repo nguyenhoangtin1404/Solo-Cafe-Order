@@ -1,0 +1,288 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Wifi, WifiOff } from "lucide-react";
+import { useOrderQueue } from "@/hooks/useOrderQueue";
+import { useDashboardAudio } from "@/hooks/useDashboardAudio";
+import { ORDER_STATUS } from "@/lib/constants";
+import type { OrderStatus } from "@/lib/constants";
+import type { Order, OrderItemSummary } from "@/types/order";
+import { OrderCard } from "./OrderCard";
+import type { DashboardOrder } from "./OrderCard";
+import type { OrderRow } from "@/hooks/useOrderQueue";
+
+type TabId = "all" | "new" | "making" | "done";
+
+const TABS: { id: TabId; label: string; statuses: OrderStatus[] }[] = [
+  {
+    id: "all",
+    label: "Tất cả",
+    statuses: ["new", "making", "done", "cancelled"],
+  },
+  { id: "new", label: "Mới", statuses: ["new"] },
+  { id: "making", label: "Đang làm", statuses: ["making"] },
+  { id: "done", label: "Xong", statuses: ["done", "cancelled"] },
+];
+
+function toItemSummary(item: Order["items"][number]): OrderItemSummary {
+  return {
+    product_name: item.product_name,
+    quantity: item.quantity,
+    unit_price: item.unit_price,
+    selected_options: item.selected_options,
+    note: item.note,
+  };
+}
+
+function toOrderRow(o: Order): OrderRow {
+  return {
+    id: o.id,
+    order_code: o.order_code,
+    status: o.status,
+    payment_method: o.payment_method,
+    total_amount: o.total_amount,
+    pickup_name: o.pickup_name,
+    note: o.note,
+    customer_ref: o.customer_ref,
+    cancelled_by: o.cancelled_by,
+    created_at: o.created_at,
+    updated_at: o.updated_at,
+  };
+}
+
+interface Props {
+  initialOrders: Order[];
+}
+
+export function DashboardView({ initialOrders }: Props) {
+  // Lazy initialisers run once on mount — avoids reading ref.current during render
+  const [initialRowsOnce] = useState<OrderRow[]>(() =>
+    initialOrders.map(toOrderRow)
+  );
+  const [itemsMap, setItemsMap] = useState<Map<string, OrderItemSummary[]>>(
+    () =>
+      new Map(initialOrders.map((o) => [o.id, o.items.map(toItemSummary)]))
+  );
+
+  const [activeTab, setActiveTab] = useState<TabId>("new");
+  const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
+  const [newArrivals, setNewArrivals] = useState<Set<string>>(new Set());
+  const [lastSeenNewCount, setLastSeenNewCount] = useState(
+    () => initialOrders.filter((o) => o.status === ORDER_STATUS.NEW).length
+  );
+
+  const { orders: rows, connectionStatus } = useOrderQueue(initialRowsOnce);
+  const { unlocked, unlock, playNotification } = useDashboardAudio();
+
+  // Stable ref so async .then() callbacks always use the latest playNotification
+  const playRef = useRef(playNotification);
+  useEffect(() => {
+    playRef.current = playNotification;
+  }, [playNotification]);
+
+  // Derive display orders: rows (live status) merged with items (stable after creation)
+  const orders = useMemo<DashboardOrder[]>(
+    () => rows.map((row) => ({ ...row, items: itemsMap.get(row.id) ?? [] })),
+    [rows, itemsMap]
+  );
+
+  // Detect INSERT events → fetch items asynchronously, then update map
+  useEffect(() => {
+    const newRows = rows.filter((row) => !itemsMap.has(row.id));
+    if (newRows.length === 0) return;
+
+    const arrivedIds = new Set(newRows.map((r) => r.id));
+
+    Promise.all(
+      newRows.map(async (row): Promise<{ id: string; items: OrderItemSummary[] }> => {
+        try {
+          const res = await fetch(`/api/orders/${row.order_code}`);
+          if (!res.ok) return { id: row.id, items: [] };
+          const data = (await res.json()) as { items?: OrderItemSummary[] };
+          return { id: row.id, items: data.items ?? [] };
+        } catch {
+          return { id: row.id, items: [] };
+        }
+      })
+    ).then((results) => {
+      setItemsMap((prev) => {
+        const next = new Map(prev);
+        results.forEach((r) => next.set(r.id, r.items));
+        return next;
+      });
+      setNewArrivals((prev) => {
+        const next = new Set(prev);
+        arrivedIds.forEach((id) => next.add(id));
+        return next;
+      });
+      playRef.current();
+      setTimeout(() => {
+        setNewArrivals((prev) => {
+          const next = new Set(prev);
+          arrivedIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }, 3000);
+    });
+  }, [rows, itemsMap]);
+
+  // document.title unread badge
+  const newCount = orders.filter((o) => o.status === ORDER_STATUS.NEW).length;
+  const unreadCount = Math.max(0, newCount - lastSeenNewCount);
+
+  useEffect(() => {
+    document.title =
+      unreadCount > 0
+        ? `(${unreadCount}) Vibe Cafe`
+        : "Vibe Cafe — Dashboard";
+    return () => {
+      document.title = "Vibe Cafe";
+    };
+  }, [unreadCount]);
+
+  function handleTabChange(tab: TabId) {
+    setActiveTab(tab);
+    if (tab === "new") setLastSeenNewCount(newCount);
+  }
+
+  async function handleStatusUpdate(orderId: string, newStatus: OrderStatus) {
+    setPendingActions((prev) => new Set(prev).add(orderId));
+    try {
+      await fetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      // Realtime UPDATE event will sync state automatically
+    } catch (err) {
+      console.error("[dashboard] status update failed", err);
+    } finally {
+      setPendingActions((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }
+  }
+
+  const activeStatuses =
+    TABS.find((t) => t.id === activeTab)?.statuses ?? [];
+  const visibleOrders = orders.filter((o) =>
+    activeStatuses.includes(o.status)
+  );
+
+  const tabCounts: Record<TabId, number> = {
+    all: orders.length,
+    new: newCount,
+    making: orders.filter((o) => o.status === ORDER_STATUS.MAKING).length,
+    done: orders.filter(
+      (o) =>
+        o.status === ORDER_STATUS.DONE ||
+        o.status === ORDER_STATUS.CANCELLED
+    ).length,
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-10 border-b bg-background px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold">Dashboard</h1>
+          <ConnectionStatus status={connectionStatus} />
+        </div>
+      </header>
+
+      {/* Audio unlock banner — shown until first user interaction */}
+      {!unlocked && (
+        <button
+          onClick={unlock}
+          className="w-full border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800"
+        >
+          Nhấn để bật thông báo âm thanh khi có đơn mới 🔔
+        </button>
+      )}
+
+      {/* Filter tabs */}
+      <div className="sticky top-[57px] z-10 border-b bg-background">
+        <div className="flex px-1">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`relative flex min-h-[44px] items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+              {tabCounts[tab.id] > 0 && (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {tabCounts[tab.id]}
+                </span>
+              )}
+              {/* Red dot for unread new orders */}
+              {tab.id === "new" && unreadCount > 0 && activeTab !== "new" && (
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Order list */}
+      <main className="space-y-3 p-4">
+        {visibleOrders.length === 0 ? (
+          <div className="flex items-center justify-center py-16 text-muted-foreground">
+            <p>Không có đơn nào</p>
+          </div>
+        ) : (
+          visibleOrders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              isNew={newArrivals.has(order.id)}
+              isPending={pendingActions.has(order.id)}
+              onStatusUpdate={handleStatusUpdate}
+            />
+          ))
+        )}
+      </main>
+    </div>
+  );
+}
+
+type ConnectionStatusProps = {
+  status: "connected" | "connecting" | "disconnected";
+};
+
+function ConnectionStatus({ status }: ConnectionStatusProps) {
+  if (status === "connected") {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-green-600">
+        <Wifi size={14} />
+        Live
+      </span>
+    );
+  }
+  if (status === "connecting") {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-yellow-600">
+        <Loader2 size={14} className="animate-spin" />
+        Đang kết nối...
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-1.5 text-sm text-destructive">
+      <WifiOff size={14} />
+      Mất kết nối
+    </span>
+  );
+}
