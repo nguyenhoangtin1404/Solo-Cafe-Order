@@ -133,7 +133,10 @@ export async function POST(req: NextRequest) {
         wait_estimate: formatWaitEstimate(wait_estimate),
         pickup_name: order.pickup_name,
         items: order.items.map(toItemDto),
-        bank_transfer_info,
+        bank_transfer_info:
+          order.payment_method === PAYMENT_METHOD.BANK_TRANSFER
+            ? bank_transfer_info
+            : null,
       },
       { status: 201 }
     );
