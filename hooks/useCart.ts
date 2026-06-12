@@ -68,7 +68,9 @@ export function useCart() {
         );
         if (idx !== -1) {
           return prev.map((i, index) =>
-            index === idx ? { ...i, quantity: i.quantity + item.quantity } : i
+            index === idx
+              ? { ...i, quantity: Math.min(99, i.quantity + item.quantity) }
+              : i
           );
         }
         return [...prev, item];
