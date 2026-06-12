@@ -411,7 +411,11 @@ describe("cancelOrder", () => {
       cancelled_by: "customer",
     });
 
-    const result = await cancelOrder("A001", "customer", order.id.toLowerCase());
+    const result = await cancelOrder(
+      "A001",
+      "customer",
+      order.id.toLowerCase()
+    );
 
     expect(result.status).toBe(ORDER_STATUS.CANCELLED);
   });
