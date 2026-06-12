@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Clock } from "lucide-react";
@@ -48,7 +48,20 @@ function readOrderSuccess(): OrderSuccessData | null {
 
 export default function OrderSuccessPage() {
   const router = useRouter();
-  const [data] = useState<OrderSuccessData | null>(readOrderSuccess);
+  // Cache the first read so re-renders after removeItem don't return null.
+  const snapshotRef = useRef<OrderSuccessData | null | undefined>(undefined);
+  // useSyncExternalStore: server snapshot = null (matches SSR output),
+  // client snapshot reads sessionStorage once, preventing hydration mismatch.
+  const data = useSyncExternalStore(
+    () => () => {},
+    () => {
+      if (snapshotRef.current === undefined) {
+        snapshotRef.current = readOrderSuccess();
+      }
+      return snapshotRef.current;
+    },
+    () => null
+  );
 
   useEffect(() => {
     if (!data) {
