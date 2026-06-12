@@ -48,15 +48,17 @@ function readOrderSuccess(): OrderSuccessData | null {
 
 export default function OrderSuccessPage() {
   const router = useRouter();
-  const [data] = useState<OrderSuccessData | null>(readOrderSuccess);
+  const [data, setData] = useState<OrderSuccessData | null>(null);
 
   useEffect(() => {
-    if (!data) {
+    const d = readOrderSuccess();
+    if (!d) {
       router.replace("/menu");
     } else {
+      setData(d);
       sessionStorage.removeItem(ORDER_SUCCESS_SESSION_KEY);
     }
-  }, [data, router]);
+  }, [router]);
 
   if (!data) return null;
 
