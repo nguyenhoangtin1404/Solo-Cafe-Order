@@ -1,4 +1,5 @@
 import { type NextRequest } from "next/server";
+import { z } from "zod";
 import { AppError, errorResponse, handleRouteError } from "@/lib/errors";
 import { checkOrderRateLimit } from "@/lib/ratelimit";
 import { requireOwner } from "@/lib/auth/requireOwner";
@@ -52,6 +53,9 @@ export async function GET(req: NextRequest) {
 
     if (statusParam !== undefined && !VALID_STATUSES.has(statusParam)) {
       return errorResponse("VALIDATION_ERROR", "Status không hợp lệ.", 400);
+    }
+    if (cursor !== undefined && !z.string().uuid().safeParse(cursor).success) {
+      return errorResponse("VALIDATION_ERROR", "cursor không hợp lệ.", 400);
     }
 
     const { orders, next_cursor } = await listOrders(

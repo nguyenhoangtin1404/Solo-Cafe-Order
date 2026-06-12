@@ -1,8 +1,7 @@
 import { type NextRequest } from "next/server";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { cancelOrder } from "@/lib/services/order.service";
-
-const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
+import { ORDER_CODE_RE } from "@/lib/constants";
 
 export async function POST(
   _req: NextRequest,
