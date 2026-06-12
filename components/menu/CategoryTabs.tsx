@@ -20,7 +20,7 @@ export function CategoryTabs({ categories }: Props) {
         if (visible[0])
           setActiveId(visible[0].target.id.replace("section-", ""));
       },
-      { rootMargin: "-56px 0px -60% 0px", threshold: 0 }
+      { rootMargin: "-60px 0px -60% 0px", threshold: 0 }
     );
 
     categories.forEach((cat) => {
@@ -34,7 +34,7 @@ export function CategoryTabs({ categories }: Props) {
   const scrollTo = (id: string) => {
     const el = document.getElementById(`section-${id}`);
     if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 56;
+    const y = el.getBoundingClientRect().top + window.scrollY - 60;
     window.scrollTo({ top: y, behavior: "smooth" });
     setActiveId(id);
   };

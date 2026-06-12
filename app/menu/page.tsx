@@ -42,12 +42,14 @@ function toMenuProduct(p: ProductWithOptions): MenuProduct {
 
 export default async function MenuPage() {
   const raw = await getMenuWithCategories();
-  const categories: MenuCategory[] = raw.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-    sort_order: cat.sort_order,
-    products: cat.products.filter(hasNoEmptySelectOption).map(toMenuProduct),
-  }));
+  const categories: MenuCategory[] = raw
+    .map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      sort_order: cat.sort_order,
+      products: cat.products.filter(hasNoEmptySelectOption).map(toMenuProduct),
+    }))
+    .filter((cat) => cat.products.length > 0);
 
   if (categories.length === 0) {
     return (
