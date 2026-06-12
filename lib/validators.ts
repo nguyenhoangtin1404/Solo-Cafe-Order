@@ -55,7 +55,10 @@ export const updateStatusSchema = z.object({
 });
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
-// Validate URL path param — A001…Z999 format
-export const cancelOrderSchema = z.object({
-  order_code: z.string().regex(/^[A-Z]\d{3}$/, "Invalid order code format"),
+export const cancelBodySchema = z.object({
+  order_id: z
+    .string()
+    .uuid()
+    .transform((v) => v.toLowerCase()),
 });
+export type CancelBodyInput = z.infer<typeof cancelBodySchema>;

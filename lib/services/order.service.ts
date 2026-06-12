@@ -321,10 +321,14 @@ export async function getOrderByCode(orderCode: string): Promise<Order> {
 
 export async function cancelOrder(
   orderCode: string,
-  actor: "customer" | "owner"
+  actor: "customer" | "owner",
+  expectedId?: string
 ): Promise<Order> {
   const order = await orderRepo.findByCode(orderCode);
   if (!order) {
+    throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
+  }
+  if (expectedId !== undefined && order.id.toLowerCase() !== expectedId) {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
 
