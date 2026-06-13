@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Wifi, WifiOff } from "lucide-react";
+import { toast } from "sonner";
 import { useOrderQueue } from "@/hooks/useOrderQueue";
 import { useDashboardAudio } from "@/hooks/useDashboardAudio";
 import { ORDER_STATUS } from "@/lib/constants";
@@ -63,13 +64,18 @@ export function DashboardView({ initialOrders }: Props) {
     () =>
       new Map(initialOrders.map((o) => [o.id, o.items.map(toItemSummary)]))
   );
+  // Ref (not state) so the items-fetch effect only re-runs when `rows` changes,
+  // not when itemsMap changes — prevents duplicate fetches on each state update.
+  const fetchedIdsRef = useRef<Set<string>>(
+    new Set(initialOrders.map((o) => o.id))
+  );
 
   const [activeTab, setActiveTab] = useState<TabId>("new");
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
   const [newArrivals, setNewArrivals] = useState<Set<string>>(new Set());
-  const [lastSeenNewCount, setLastSeenNewCount] = useState(
-    () => initialOrders.filter((o) => o.status === ORDER_STATUS.NEW).length
-  );
+  // Track seen order IDs (not count) so cancellations don't skew the unread badge.
+  // Starts empty so initial new orders show as unread on fresh load.
+  const [seenNewIds, setSeenNewIds] = useState<Set<string>>(new Set());
 
   const { orders: rows, connectionStatus } = useOrderQueue(initialRowsOnce);
   const { unlocked, unlock, playNotification } = useDashboardAudio();
@@ -88,23 +94,34 @@ export function DashboardView({ initialOrders }: Props) {
 
   // Detect INSERT events → fetch items asynchronously, then update map
   useEffect(() => {
-    const newRows = rows.filter((row) => !itemsMap.has(row.id));
+    const newRows = rows.filter((row) => !fetchedIdsRef.current.has(row.id));
     if (newRows.length === 0) return;
 
+    // Mark as in-flight immediately so a re-run of this effect (from rows
+    // changing again) doesn't kick off duplicate fetches for the same IDs.
+    newRows.forEach((row) => fetchedIdsRef.current.add(row.id));
+
     const arrivedIds = new Set(newRows.map((r) => r.id));
+    let mounted = true;
+    let fetched = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     Promise.all(
-      newRows.map(async (row): Promise<{ id: string; items: OrderItemSummary[] }> => {
-        try {
-          const res = await fetch(`/api/orders/${row.order_code}`);
-          if (!res.ok) return { id: row.id, items: [] };
-          const data = (await res.json()) as { items?: OrderItemSummary[] };
-          return { id: row.id, items: data.items ?? [] };
-        } catch {
-          return { id: row.id, items: [] };
+      newRows.map(
+        async (row): Promise<{ id: string; items: OrderItemSummary[] }> => {
+          try {
+            const res = await fetch(`/api/orders/${row.order_code}`);
+            if (!res.ok) return { id: row.id, items: [] };
+            const data = (await res.json()) as { items?: OrderItemSummary[] };
+            return { id: row.id, items: data.items ?? [] };
+          } catch {
+            return { id: row.id, items: [] };
+          }
         }
-      })
+      )
     ).then((results) => {
+      if (!mounted) return;
+      fetched = true;
       setItemsMap((prev) => {
         const next = new Map(prev);
         results.forEach((r) => next.set(r.id, r.items));
@@ -116,7 +133,8 @@ export function DashboardView({ initialOrders }: Props) {
         return next;
       });
       playRef.current();
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        if (!mounted) return;
         setNewArrivals((prev) => {
           const next = new Set(prev);
           arrivedIds.forEach((id) => next.delete(id));
@@ -124,11 +142,39 @@ export function DashboardView({ initialOrders }: Props) {
         });
       }, 3000);
     });
-  }, [rows, itemsMap]);
+
+    return () => {
+      mounted = false;
+      // If the fetch never completed, roll back the IDs so the next effect
+      // run can retry them (avoids permanent items:[] for aborted fetches).
+      if (!fetched) {
+        newRows.forEach((row) => fetchedIdsRef.current.delete(row.id));
+      }
+      if (timeoutId !== null) clearTimeout(timeoutId);
+    };
+  }, [rows]);
+
+  // Auto-mark new orders as seen while the "Mới" tab is active so the badge
+  // doesn't persist when the owner is already looking at the right tab.
+  useEffect(() => {
+    if (activeTab !== "new") return;
+    setSeenNewIds((prev) => {
+      const toAdd = rows
+        .filter((r) => r.status === ORDER_STATUS.NEW && !prev.has(r.id))
+        .map((r) => r.id);
+      if (toAdd.length === 0) return prev;
+      const next = new Set(prev);
+      toAdd.forEach((id) => next.add(id));
+      return next;
+    });
+  }, [activeTab, rows]);
 
   // document.title unread badge
-  const newCount = orders.filter((o) => o.status === ORDER_STATUS.NEW).length;
-  const unreadCount = Math.max(0, newCount - lastSeenNewCount);
+  const newOrders = useMemo(
+    () => orders.filter((o) => o.status === ORDER_STATUS.NEW),
+    [orders]
+  );
+  const unreadCount = newOrders.filter((o) => !seenNewIds.has(o.id)).length;
 
   useEffect(() => {
     document.title =
@@ -142,20 +188,32 @@ export function DashboardView({ initialOrders }: Props) {
 
   function handleTabChange(tab: TabId) {
     setActiveTab(tab);
-    if (tab === "new") setLastSeenNewCount(newCount);
+    if (tab === "new") {
+      setSeenNewIds((prev) => {
+        const next = new Set(prev);
+        newOrders.forEach((o) => next.add(o.id));
+        return next;
+      });
+    }
   }
 
-  async function handleStatusUpdate(orderId: string, newStatus: OrderStatus) {
+  const handleStatusUpdate = useCallback(async (orderId: string, newStatus: OrderStatus) => {
     setPendingActions((prev) => new Set(prev).add(orderId));
     try {
-      await fetch(`/api/orders/${orderId}/status`, {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      // Realtime UPDATE event will sync state automatically
-    } catch (err) {
-      console.error("[dashboard] status update failed", err);
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        toast.error(body.message ?? "Cập nhật trạng thái thất bại.");
+      }
+      // On success: Realtime UPDATE event syncs state automatically
+    } catch {
+      toast.error("Mất kết nối. Vui lòng thử lại.");
     } finally {
       setPendingActions((prev) => {
         const next = new Set(prev);
@@ -163,7 +221,7 @@ export function DashboardView({ initialOrders }: Props) {
         return next;
       });
     }
-  }
+  }, []);
 
   const activeStatuses =
     TABS.find((t) => t.id === activeTab)?.statuses ?? [];
@@ -173,66 +231,68 @@ export function DashboardView({ initialOrders }: Props) {
 
   const tabCounts: Record<TabId, number> = {
     all: orders.length,
-    new: newCount,
+    new: newOrders.length,
     making: orders.filter((o) => o.status === ORDER_STATUS.MAKING).length,
     done: orders.filter(
       (o) =>
-        o.status === ORDER_STATUS.DONE ||
-        o.status === ORDER_STATUS.CANCELLED
+        o.status === ORDER_STATUS.DONE || o.status === ORDER_STATUS.CANCELLED
     ).length,
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background px-4 py-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold">Dashboard</h1>
-          <ConnectionStatus status={connectionStatus} />
-        </div>
-      </header>
+      {/* Sticky top block: header + optional audio banner + tabs all stick together
+          so the tab bar never overlaps the banner during scroll. */}
+      <div className="sticky top-0 z-10 bg-background">
+        <header className="border-b px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-bold">Dashboard</h1>
+            <ConnectionStatus status={connectionStatus} />
+          </div>
+        </header>
 
-      {/* Audio unlock banner — shown until first user interaction */}
-      {!unlocked && (
-        <button
-          onClick={unlock}
-          className="w-full border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800"
-        >
-          Nhấn để bật thông báo âm thanh khi có đơn mới 🔔
-        </button>
-      )}
+        {/* Audio unlock banner — shown until first user interaction */}
+        {!unlocked && (
+          <button
+            onClick={unlock}
+            className="w-full border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800"
+          >
+            Nhấn để bật thông báo âm thanh khi có đơn mới 🔔
+          </button>
+        )}
 
-      {/* Filter tabs */}
-      <div className="sticky top-[57px] z-10 border-b bg-background">
-        <div className="flex px-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`relative flex min-h-[44px] items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab.label}
-              {tabCounts[tab.id] > 0 && (
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                    activeTab === tab.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {tabCounts[tab.id]}
-                </span>
-              )}
-              {/* Red dot for unread new orders */}
-              {tab.id === "new" && unreadCount > 0 && activeTab !== "new" && (
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-              )}
-            </button>
-          ))}
+        {/* Filter tabs */}
+        <div className="border-b">
+          <div className="flex px-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`relative flex min-h-[44px] items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+                {tabCounts[tab.id] > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+                      activeTab === tab.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {tabCounts[tab.id]}
+                  </span>
+                )}
+                {/* Red dot for unread new orders */}
+                {tab.id === "new" && unreadCount > 0 && activeTab !== "new" && (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -17,10 +17,11 @@ interface Props {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("vi-VN", {
+  return new Intl.DateTimeFormat("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
-  });
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(new Date(iso));
 }
 
 function formatCurrency(amount: number): string {
@@ -111,7 +112,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
                     onClick={() =>
                       onStatusUpdate(order.id, ORDER_STATUS.MAKING)
                     }
-                    className="min-h-[36px] rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform active:scale-95"
+                    className="min-h-[44px] rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform active:scale-95"
                   >
                     Bắt đầu làm
                   </button>
@@ -119,7 +120,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
                     onClick={() =>
                       onStatusUpdate(order.id, ORDER_STATUS.CANCELLED)
                     }
-                    className="min-h-[36px] rounded-lg border px-3 py-1.5 text-xs font-medium text-destructive transition-transform active:scale-95"
+                    className="min-h-[44px] rounded-lg border px-3 py-1.5 text-xs font-medium text-destructive transition-transform active:scale-95"
                   >
                     Hủy
                   </button>
@@ -128,7 +129,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
               {order.status === ORDER_STATUS.MAKING && (
                 <button
                   onClick={() => onStatusUpdate(order.id, ORDER_STATUS.DONE)}
-                  className="min-h-[36px] rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-95"
+                  className="min-h-[44px] rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-95"
                 >
                   Hoàn thành
                 </button>

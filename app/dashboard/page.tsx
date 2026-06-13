@@ -14,15 +14,29 @@ export default async function DashboardPage() {
   }
 
   // Fetch active queue (full list — service ignores pagination for new/making)
-  // plus 20 most recent completed/cancelled for the "Xong" tab
-  const [{ orders: newOrders }, { orders: makingOrders }, { orders: doneOrders }] =
-    await Promise.all([
-      listOrders("new", undefined, 100),
-      listOrders("making", undefined, 100),
-      listOrders("done", undefined, 20),
-    ]);
+  // plus 20 most recent done AND cancelled for the "Xong" tab
+  const [
+    { orders: newOrders },
+    { orders: makingOrders },
+    { orders: doneOrders },
+    { orders: cancelledOrders },
+  ] = await Promise.all([
+    listOrders("new", undefined, 100),
+    listOrders("making", undefined, 100),
+    listOrders("done", undefined, 20),
+    listOrders("cancelled", undefined, 20),
+  ]);
 
-  const initialOrders: Order[] = [...newOrders, ...makingOrders, ...doneOrders];
+  // Deduplicate by id: 4 parallel queries can race if an order changes status
+  // between query completions (e.g., new→making), causing the same id to appear twice.
+  const seen = new Map<string, Order>();
+  [...newOrders, ...makingOrders, ...doneOrders, ...cancelledOrders].forEach(
+    (o) => {
+      const existing = seen.get(o.id);
+      if (!existing || o.updated_at > existing.updated_at) seen.set(o.id, o);
+    }
+  );
+  const initialOrders: Order[] = Array.from(seen.values());
 
   return <DashboardView initialOrders={initialOrders} />;
 }
