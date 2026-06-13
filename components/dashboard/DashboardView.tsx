@@ -300,9 +300,7 @@ export function DashboardView({ initialOrders }: Props) {
       {/* Order list */}
       <main className="space-y-3 p-4">
         {visibleOrders.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <p>Không có đơn nào</p>
-          </div>
+          <EmptyTab tab={activeTab} />
         ) : (
           visibleOrders.map((order) => (
             <OrderCard
@@ -315,6 +313,43 @@ export function DashboardView({ initialOrders }: Props) {
           ))
         )}
       </main>
+    </div>
+  );
+}
+
+const EMPTY_TAB_CONTENT: Record<
+  TabId,
+  { emoji: string; title: string; subtitle: string }
+> = {
+  all: {
+    emoji: "📋",
+    title: "Chưa có đơn nào",
+    subtitle: "Đơn mới sẽ xuất hiện tại đây.",
+  },
+  new: {
+    emoji: "🎉",
+    title: "Không có đơn mới",
+    subtitle: "Đang chờ khách đặt hàng...",
+  },
+  making: {
+    emoji: "☕",
+    title: "Không có đơn đang làm",
+    subtitle: "Chưa có đơn nào đang pha chế.",
+  },
+  done: {
+    emoji: "✅",
+    title: "Chưa có đơn hoàn thành",
+    subtitle: "Đơn xong và đã hủy sẽ xuất hiện ở đây.",
+  },
+};
+
+function EmptyTab({ tab }: { tab: TabId }) {
+  const { emoji, title, subtitle } = EMPTY_TAB_CONTENT[tab];
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+      <span className="text-4xl">{emoji}</span>
+      <p className="font-medium">{title}</p>
+      <p className="text-sm text-muted-foreground">{subtitle}</p>
     </div>
   );
 }
