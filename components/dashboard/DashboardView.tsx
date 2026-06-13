@@ -61,8 +61,7 @@ export function DashboardView({ initialOrders }: Props) {
     initialOrders.map(toOrderRow)
   );
   const [itemsMap, setItemsMap] = useState<Map<string, OrderItemSummary[]>>(
-    () =>
-      new Map(initialOrders.map((o) => [o.id, o.items.map(toItemSummary)]))
+    () => new Map(initialOrders.map((o) => [o.id, o.items.map(toItemSummary)]))
   );
   // Ref (not state) so the items-fetch effect only re-runs when `rows` changes,
   // not when itemsMap changes — prevents duplicate fetches on each state update.
@@ -178,9 +177,7 @@ export function DashboardView({ initialOrders }: Props) {
 
   useEffect(() => {
     document.title =
-      unreadCount > 0
-        ? `(${unreadCount}) Vibe Cafe`
-        : "Vibe Cafe — Dashboard";
+      unreadCount > 0 ? `(${unreadCount}) Vibe Cafe` : "Vibe Cafe — Dashboard";
     return () => {
       document.title = "Vibe Cafe";
     };
@@ -197,37 +194,37 @@ export function DashboardView({ initialOrders }: Props) {
     }
   }
 
-  const handleStatusUpdate = useCallback(async (orderId: string, newStatus: OrderStatus) => {
-    setPendingActions((prev) => new Set(prev).add(orderId));
-    try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          message?: string;
-        };
-        toast.error(body.message ?? "Cập nhật trạng thái thất bại.");
+  const handleStatusUpdate = useCallback(
+    async (orderId: string, newStatus: OrderStatus) => {
+      setPendingActions((prev) => new Set(prev).add(orderId));
+      try {
+        const res = await fetch(`/api/orders/${orderId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as {
+            message?: string;
+          };
+          toast.error(body.message ?? "Cập nhật trạng thái thất bại.");
+        }
+        // On success: Realtime UPDATE event syncs state automatically
+      } catch {
+        toast.error("Mất kết nối. Vui lòng thử lại.");
+      } finally {
+        setPendingActions((prev) => {
+          const next = new Set(prev);
+          next.delete(orderId);
+          return next;
+        });
       }
-      // On success: Realtime UPDATE event syncs state automatically
-    } catch {
-      toast.error("Mất kết nối. Vui lòng thử lại.");
-    } finally {
-      setPendingActions((prev) => {
-        const next = new Set(prev);
-        next.delete(orderId);
-        return next;
-      });
-    }
-  }, []);
-
-  const activeStatuses =
-    TABS.find((t) => t.id === activeTab)?.statuses ?? [];
-  const visibleOrders = orders.filter((o) =>
-    activeStatuses.includes(o.status)
+    },
+    []
   );
+
+  const activeStatuses = TABS.find((t) => t.id === activeTab)?.statuses ?? [];
+  const visibleOrders = orders.filter((o) => activeStatuses.includes(o.status));
 
   const tabCounts: Record<TabId, number> = {
     all: orders.length,

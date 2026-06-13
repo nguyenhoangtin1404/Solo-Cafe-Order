@@ -16,7 +16,11 @@ export async function PATCH(
 
     const { code: id } = await params;
     if (!z.string().uuid().safeParse(id).success) {
-      return errorResponse("VALIDATION_ERROR", "ID đơn hàng không hợp lệ.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "ID đơn hàng không hợp lệ.",
+        400
+      );
     }
 
     const body = await req.json().catch(() => null);
