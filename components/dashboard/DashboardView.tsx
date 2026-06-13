@@ -85,6 +85,13 @@ export function DashboardView({ initialOrders }: Props) {
     playRef.current = playNotification;
   }, [playNotification]);
 
+  // Stable ref so async .then() callbacks can check the active tab without
+  // capturing a stale closure value.
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
   // Derive display orders: rows (live status) merged with items (stable after creation)
   const orders = useMemo<DashboardOrder[]>(
     () => rows.map((row) => ({ ...row, items: itemsMap.get(row.id) ?? [] })),
@@ -93,12 +100,15 @@ export function DashboardView({ initialOrders }: Props) {
 
   // Detect INSERT events → fetch items asynchronously, then update map
   useEffect(() => {
-    const newRows = rows.filter((row) => !fetchedIdsRef.current.has(row.id));
+    // Capture the ref value so the cleanup closure uses the same Set instance
+    // even if fetchedIdsRef.current is reassigned between effect and cleanup.
+    const fetchedIds = fetchedIdsRef.current;
+    const newRows = rows.filter((row) => !fetchedIds.has(row.id));
     if (newRows.length === 0) return;
 
     // Mark as in-flight immediately so a re-run of this effect (from rows
     // changing again) doesn't kick off duplicate fetches for the same IDs.
-    newRows.forEach((row) => fetchedIdsRef.current.add(row.id));
+    newRows.forEach((row) => fetchedIds.add(row.id));
 
     const arrivedIds = new Set(newRows.map((r) => r.id));
     let mounted = true;
@@ -131,6 +141,15 @@ export function DashboardView({ initialOrders }: Props) {
         arrivedIds.forEach((id) => next.add(id));
         return next;
       });
+      // If the owner is already on the "Mới" tab, mark arrivals as seen
+      // immediately so the unread badge doesn't flash while they're watching.
+      if (activeTabRef.current === "new") {
+        setSeenNewIds((prev) => {
+          const next = new Set(prev);
+          arrivedIds.forEach((id) => next.add(id));
+          return next;
+        });
+      }
       playRef.current();
       timeoutId = setTimeout(() => {
         if (!mounted) return;
@@ -147,26 +166,11 @@ export function DashboardView({ initialOrders }: Props) {
       // If the fetch never completed, roll back the IDs so the next effect
       // run can retry them (avoids permanent items:[] for aborted fetches).
       if (!fetched) {
-        newRows.forEach((row) => fetchedIdsRef.current.delete(row.id));
+        newRows.forEach((row) => fetchedIds.delete(row.id));
       }
       if (timeoutId !== null) clearTimeout(timeoutId);
     };
   }, [rows]);
-
-  // Auto-mark new orders as seen while the "Mới" tab is active so the badge
-  // doesn't persist when the owner is already looking at the right tab.
-  useEffect(() => {
-    if (activeTab !== "new") return;
-    setSeenNewIds((prev) => {
-      const toAdd = rows
-        .filter((r) => r.status === ORDER_STATUS.NEW && !prev.has(r.id))
-        .map((r) => r.id);
-      if (toAdd.length === 0) return prev;
-      const next = new Set(prev);
-      toAdd.forEach((id) => next.add(id));
-      return next;
-    });
-  }, [activeTab, rows]);
 
   // document.title unread badge
   const newOrders = useMemo(
