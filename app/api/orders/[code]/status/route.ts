@@ -1,4 +1,5 @@
 import { type NextRequest } from "next/server";
+import { z } from "zod";
 import { requireOwner } from "@/lib/auth/requireOwner";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { updateStatus } from "@/lib/services/order.service";
@@ -14,6 +15,14 @@ export async function PATCH(
     await requireOwner();
 
     const { code: id } = await params;
+    if (!z.string().uuid().safeParse(id).success) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "ID đơn hàng không hợp lệ.",
+        400
+      );
+    }
+
     const body = await req.json().catch(() => null);
     const parsed = updateStatusSchema.safeParse(body);
     if (!parsed.success) {
