@@ -109,7 +109,10 @@ export async function updateStatus(
   cancelledBy?: "customer" | "owner"
 ): Promise<Order | null> {
   const supabase = createAdminSupabaseClient();
-  const updateData: { status: OrderStatus; cancelled_by?: string } = { status };
+  const updateData: {
+    status: OrderStatus;
+    cancelled_by?: "customer" | "owner";
+  } = { status };
   if (cancelledBy) updateData.cancelled_by = cancelledBy;
 
   const { data, error } = await supabase
