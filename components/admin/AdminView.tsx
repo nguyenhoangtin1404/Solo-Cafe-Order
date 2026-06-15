@@ -6,6 +6,8 @@ import type {
   AdminCategoryGroup,
   AdminProduct,
 } from "@/lib/services/product.service";
+import type { Category } from "@/types/product";
+import { CategoriesSection } from "./CategoriesSection";
 
 type AdminProductState = AdminProduct & { pending?: boolean };
 
@@ -16,9 +18,10 @@ type CategoryWithProducts = {
 
 interface Props {
   groups: AdminCategoryGroup[];
+  categories: Category[];
 }
 
-export function AdminView({ groups: initial }: Props) {
+export function AdminView({ groups: initial, categories }: Props) {
   const [groups, setGroups] = useState<CategoryWithProducts[]>(initial);
 
   async function handleToggle(productId: string, newValue: boolean) {
@@ -81,6 +84,8 @@ export function AdminView({ groups: initial }: Props) {
       </header>
 
       <main className="space-y-6 px-4 py-4">
+        <CategoriesSection initialCategories={categories} />
+
         {groups.map(({ category, products }) => (
           <section key={category.id}>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
