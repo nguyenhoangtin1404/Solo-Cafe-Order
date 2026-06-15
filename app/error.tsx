@@ -13,12 +13,15 @@ export default function Error({
     console.error(error);
   }, [error]);
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-      <p className="text-lg font-semibold text-gray-800">Có lỗi xảy ra</p>
-      <p className="mt-1 text-sm text-gray-500">Vui lòng thử lại.</p>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-2 px-4 text-center">
+      <span className="text-4xl">⚠️</span>
+      <p className="text-lg font-semibold">Có lỗi xảy ra</p>
+      <p className="text-sm text-muted-foreground">
+        Vui lòng kiểm tra kết nối và thử lại.
+      </p>
       <button
         onClick={reset}
-        className="mt-6 px-6 py-3 bg-black text-white rounded-full text-sm font-medium min-h-[44px]"
+        className="mt-4 min-h-[44px] rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground"
       >
         Thử lại
       </button>

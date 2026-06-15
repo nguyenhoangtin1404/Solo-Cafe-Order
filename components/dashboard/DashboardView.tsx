@@ -344,9 +344,7 @@ export function DashboardView({ initialOrders }: Props) {
       {/* Order list */}
       <main className="space-y-3 p-4">
         {visibleOrders.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <p>Không có đơn nào</p>
-          </div>
+          <TabEmptyState tab={activeTab} />
         ) : (
           visibleOrders.map((order) => (
             <OrderCard
@@ -366,6 +364,43 @@ export function DashboardView({ initialOrders }: Props) {
 type ConnectionStatusProps = {
   status: "connected" | "connecting" | "disconnected";
 };
+
+const TAB_EMPTY: Record<
+  TabId,
+  { emoji: string; heading: string; hint: string }
+> = {
+  all: {
+    emoji: "☕",
+    heading: "Chưa có đơn nào",
+    hint: "Khách scan QR → đặt hàng → đơn xuất hiện ở đây tự động",
+  },
+  new: {
+    emoji: "🛎️",
+    heading: "Chưa có đơn mới",
+    hint: "Đơn mới sẽ hiển thị và phát âm thanh tự động",
+  },
+  making: {
+    emoji: "👨‍🍳",
+    heading: "Không có đơn đang làm",
+    hint: "Nhấn \"Bắt đầu làm\" ở tab Mới để chuyển đơn sang đây",
+  },
+  done: {
+    emoji: "✅",
+    heading: "Chưa có đơn hoàn thành",
+    hint: "Nhấn \"Hoàn thành\" ở tab Đang làm để chuyển đơn",
+  },
+};
+
+function TabEmptyState({ tab }: { tab: TabId }) {
+  const { emoji, heading, hint } = TAB_EMPTY[tab];
+  return (
+    <div className="flex flex-col items-center gap-2 py-16 text-center">
+      <span className="text-4xl">{emoji}</span>
+      <p className="font-medium">{heading}</p>
+      <p className="max-w-xs text-sm text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
 
 function ConnectionStatus({ status }: ConnectionStatusProps) {
   if (status === "connected") {
