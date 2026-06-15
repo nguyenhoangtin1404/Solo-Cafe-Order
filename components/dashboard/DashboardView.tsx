@@ -117,25 +117,32 @@ export function DashboardView({ initialOrders }: Props) {
 
     Promise.all(
       newRows.map(
-        async (row): Promise<{ id: string; items: OrderItemSummary[] }> => {
+        async (row): Promise<{ id: string; items: OrderItemSummary[] | null }> => {
           try {
-            const res = await fetch(
-              `/api/dashboard/orders/${row.id}/items`
-            );
-            if (!res.ok) return { id: row.id, items: [] };
+            const res = await fetch(`/api/dashboard/orders/${row.id}/items`);
+            if (!res.ok) return { id: row.id, items: null };
             const data = (await res.json()) as { items?: OrderItemSummary[] };
             return { id: row.id, items: data.items ?? [] };
           } catch {
-            return { id: row.id, items: [] };
+            return { id: row.id, items: null };
           }
         }
       )
     ).then((results) => {
       if (!mounted) return;
       fetched = true;
+      // Roll back IDs whose fetch failed so the next rows update can retry them.
+      results
+        .filter((r) => r.items === null)
+        .forEach((r) => fetchedIds.delete(r.id));
       setItemsMap((prev) => {
         const next = new Map(prev);
-        results.forEach((r) => next.set(r.id, r.items));
+        results
+          .filter(
+            (r): r is { id: string; items: OrderItemSummary[] } =>
+              r.items !== null
+          )
+          .forEach((r) => next.set(r.id, r.items));
         return next;
       });
       setNewArrivals((prev) => {

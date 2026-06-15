@@ -8,7 +8,8 @@ import type { WaitEstimate } from "@/lib/services/order.service";
 import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import { submitOrderSchema } from "@/lib/validators";
-import type { Order, OrderItem } from "@/types/order";
+import type { Order } from "@/types/order";
+import { toItemDto } from "@/lib/dto/order";
 import { getBankTransferInfo } from "@/lib/config/bank";
 
 const VALID_STATUSES = new Set<string>([
@@ -74,16 +75,6 @@ export async function GET(req: NextRequest) {
 function formatWaitEstimate(estimate: WaitEstimate): string {
   if (estimate.degraded) return "5–15 phút";
   return `${estimate.min}–${estimate.max} phút`;
-}
-
-function toItemDto(item: OrderItem) {
-  return {
-    product_name: item.product_name,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    selected_options: item.selected_options,
-    note: item.note,
-  };
 }
 
 export async function POST(req: NextRequest) {

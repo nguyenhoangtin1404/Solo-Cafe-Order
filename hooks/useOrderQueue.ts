@@ -18,7 +18,7 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
 
-  const updateRow = useCallback((id: string, patch: Partial<OrderRow>) => {
+  const updateRow = useCallback((id: string, patch: Partial<Omit<OrderRow, "id">>) => {
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, ...patch } : o))
     );
@@ -49,6 +49,9 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
             const idx = prev.findIndex((o) => o.id === incoming.id);
             // Order absent from list (e.g. missed INSERT during reconnect) — prepend it
             if (idx === -1) return [incoming, ...prev];
+            // Discard stale replayed events (reconnect buffer) so they don't
+            // overwrite a newer optimistic update already applied locally.
+            if (incoming.updated_at <= prev[idx].updated_at) return prev;
             return prev.map((o, i) => (i === idx ? incoming : o));
           });
         }
