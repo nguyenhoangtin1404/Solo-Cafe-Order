@@ -33,7 +33,8 @@ export default async function DashboardPage() {
   [...newOrders, ...makingOrders, ...doneOrders, ...cancelledOrders].forEach(
     (o) => {
       const existing = seen.get(o.id);
-      if (!existing || o.updated_at > existing.updated_at) seen.set(o.id, o);
+      if (!existing || new Date(o.updated_at) > new Date(existing.updated_at))
+        seen.set(o.id, o);
     }
   );
   const initialOrders: Order[] = Array.from(seen.values());
