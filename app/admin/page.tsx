@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { isAppError } from "@/lib/errors";
 import { requireOwner } from "@/lib/auth/requireOwner";
 import { getAdminCategoryGroups } from "@/lib/services/product.service";
+import { getAdminCategories } from "@/lib/services/category.service";
 import { AdminView } from "@/components/admin/AdminView";
 
 export default async function AdminPage() {
@@ -14,6 +15,9 @@ export default async function AdminPage() {
     throw err;
   }
 
-  const groups = await getAdminCategoryGroups();
-  return <AdminView groups={groups} />;
+  const [groups, categories] = await Promise.all([
+    getAdminCategoryGroups(),
+    getAdminCategories(),
+  ]);
+  return <AdminView groups={groups} categories={categories} />;
 }

@@ -111,3 +111,17 @@ export async function updateAvailability(
   if (error) throw error;
   return (data as { id: string; is_available: boolean } | null) ?? null;
 }
+
+export async function countActiveByCategory(
+  categoryId: string
+): Promise<number> {
+  const supabase = createAdminSupabaseClient();
+  const { count, error } = await supabase
+    .from("products")
+    .select("*", { count: "exact", head: true })
+    .eq("category_id", categoryId)
+    .is("deleted_at", null);
+
+  if (error) throw error;
+  return count ?? 0;
+}
