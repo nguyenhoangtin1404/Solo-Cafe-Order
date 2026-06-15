@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import type { Order } from "@/types/order";
 
@@ -17,6 +17,12 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
   const [orders, setOrders] = useState<OrderRow[]>(initialOrders);
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
+
+  const updateRow = useCallback((id: string, patch: Partial<OrderRow>) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, ...patch } : o))
+    );
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -63,5 +69,5 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
     };
   }, []);
 
-  return { orders, connectionStatus };
+  return { orders, connectionStatus, updateRow };
 }

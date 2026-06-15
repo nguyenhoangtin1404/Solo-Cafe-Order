@@ -76,7 +76,7 @@ export function DashboardView({ initialOrders }: Props) {
   // Starts empty so initial new orders show as unread on fresh load.
   const [seenNewIds, setSeenNewIds] = useState<Set<string>>(new Set());
 
-  const { orders: rows, connectionStatus } = useOrderQueue(initialRowsOnce);
+  const { orders: rows, connectionStatus, updateRow } = useOrderQueue(initialRowsOnce);
   const { unlocked, unlock, playNotification } = useDashboardAudio();
 
   // Stable ref so async .then() callbacks always use the latest playNotification
@@ -119,7 +119,9 @@ export function DashboardView({ initialOrders }: Props) {
       newRows.map(
         async (row): Promise<{ id: string; items: OrderItemSummary[] }> => {
           try {
-            const res = await fetch(`/api/orders/${row.order_code}`);
+            const res = await fetch(
+              `/api/dashboard/orders/${row.id}/items`
+            );
             if (!res.ok) return { id: row.id, items: [] };
             const data = (await res.json()) as { items?: OrderItemSummary[] };
             return { id: row.id, items: data.items ?? [] };
@@ -212,8 +214,11 @@ export function DashboardView({ initialOrders }: Props) {
             message?: string;
           };
           toast.error(body.message ?? "Cập nhật trạng thái thất bại.");
+        } else {
+          // Optimistic update: apply locally so the card moves immediately even
+          // if the Realtime event is delayed or dropped.
+          updateRow(orderId, { status: newStatus });
         }
-        // On success: Realtime UPDATE event syncs state automatically
       } catch {
         toast.error("Mất kết nối. Vui lòng thử lại.");
       } finally {
@@ -224,7 +229,7 @@ export function DashboardView({ initialOrders }: Props) {
         });
       }
     },
-    []
+    [updateRow]
   );
 
   const activeStatuses = TABS.find((t) => t.id === activeTab)?.statuses ?? [];
