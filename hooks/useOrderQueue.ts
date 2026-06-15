@@ -51,7 +51,13 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
             if (idx === -1) return [incoming, ...prev];
             // Discard stale replayed events (reconnect buffer) so they don't
             // overwrite a newer optimistic update already applied locally.
-            if (incoming.updated_at <= prev[idx].updated_at) return prev;
+            // Use Date comparison — string comparison breaks across Supabase
+            // timestamp format variations (Z vs +00:00). Strict < so two DB
+            // writes with identical millisecond timestamps both get applied.
+            if (
+              new Date(incoming.updated_at) < new Date(prev[idx].updated_at)
+            )
+              return prev;
             return prev.map((o, i) => (i === idx ? incoming : o));
           });
         }

@@ -31,13 +31,7 @@ function toOrderDto(order: Order) {
     cancelled_by: order.cancelled_by,
     created_at: order.created_at,
     updated_at: order.updated_at,
-    items: order.items.map((item) => ({
-      product_name: item.product_name,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      selected_options: item.selected_options,
-      note: item.note,
-    })),
+    items: order.items.map(toItemDto),
   };
 }
 

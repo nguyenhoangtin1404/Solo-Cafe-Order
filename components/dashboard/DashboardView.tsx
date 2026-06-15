@@ -68,6 +68,11 @@ export function DashboardView({ initialOrders }: Props) {
   const fetchedIdsRef = useRef<Set<string>>(
     new Set(initialOrders.map((o) => o.id))
   );
+  // Tracks orders that have been announced (sound + animation) so a retry
+  // after a failed items fetch doesn't re-play the notification chime.
+  const announcedIdsRef = useRef<Set<string>>(
+    new Set(initialOrders.map((o) => o.id))
+  );
 
   const [activeTab, setActiveTab] = useState<TabId>("new");
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
@@ -110,7 +115,16 @@ export function DashboardView({ initialOrders }: Props) {
     // changing again) doesn't kick off duplicate fetches for the same IDs.
     newRows.forEach((row) => fetchedIds.add(row.id));
 
-    const arrivedIds = new Set(newRows.map((r) => r.id));
+    // Only announce (sound + animation) orders seen for the first time.
+    // Retried fetches (already in announcedIdsRef) are skipped so the
+    // notification chime does not replay for orders whose items fetch failed.
+    const announced = announcedIdsRef.current;
+    const freshArrivalIds = newRows
+      .filter((r) => !announced.has(r.id))
+      .map((r) => r.id);
+    freshArrivalIds.forEach((id) => announced.add(id));
+    const freshArrivalSet = new Set(freshArrivalIds);
+
     let mounted = true;
     let fetched = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -131,23 +145,21 @@ export function DashboardView({ initialOrders }: Props) {
     ).then((results) => {
       if (!mounted) return;
       fetched = true;
-      // Roll back IDs whose fetch failed so the next rows update can retry them.
-      results
-        .filter((r) => r.items === null)
-        .forEach((r) => fetchedIds.delete(r.id));
+      // Single pass: roll back failed IDs and populate itemsMap for successes.
+      results.forEach((r) => {
+        if (r.items === null) fetchedIds.delete(r.id); // allow retry on next rows update
+      });
       setItemsMap((prev) => {
         const next = new Map(prev);
-        results
-          .filter(
-            (r): r is { id: string; items: OrderItemSummary[] } =>
-              r.items !== null
-          )
-          .forEach((r) => next.set(r.id, r.items));
+        results.forEach((r) => {
+          if (r.items !== null) next.set(r.id, r.items);
+        });
         return next;
       });
+      if (freshArrivalSet.size === 0) return; // all retries — skip sound/animation
       setNewArrivals((prev) => {
         const next = new Set(prev);
-        arrivedIds.forEach((id) => next.add(id));
+        freshArrivalSet.forEach((id) => next.add(id));
         return next;
       });
       // If the owner is already on the "Mới" tab, mark arrivals as seen
@@ -155,7 +167,7 @@ export function DashboardView({ initialOrders }: Props) {
       if (activeTabRef.current === "new") {
         setSeenNewIds((prev) => {
           const next = new Set(prev);
-          arrivedIds.forEach((id) => next.add(id));
+          freshArrivalSet.forEach((id) => next.add(id));
           return next;
         });
       }
@@ -164,7 +176,7 @@ export function DashboardView({ initialOrders }: Props) {
         if (!mounted) return;
         setNewArrivals((prev) => {
           const next = new Set(prev);
-          arrivedIds.forEach((id) => next.delete(id));
+          freshArrivalSet.forEach((id) => next.delete(id));
           return next;
         });
       }, 3000);
