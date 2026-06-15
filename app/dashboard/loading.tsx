@@ -42,6 +42,11 @@ export default function DashboardLoading() {
           </div>
         </header>
 
+        {/* Audio banner — always visible on first load (unlocked starts false) */}
+        <div className="w-full border-b border-amber-200 bg-amber-50 px-4 py-2 text-center">
+          <Skeleton className="mx-auto h-4 w-56" />
+        </div>
+
         {/* Tab bar */}
         <div className="border-b">
           <div className="flex px-1">

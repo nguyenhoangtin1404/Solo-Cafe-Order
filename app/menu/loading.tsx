@@ -34,11 +34,13 @@ export default function MenuLoading() {
       {/* Menu sections */}
       <main className="flex-1 space-y-6 px-4 pb-28 pt-4">
         {Array.from({ length: 2 }).map((_, section) => (
-          <section key={section} className="space-y-3">
-            <Skeleton className="h-3 w-24" />
-            {Array.from({ length: 3 }).map((_, i) => (
-              <MenuCardSkeleton key={i} />
-            ))}
+          <section key={section}>
+            <Skeleton className="mb-3 h-3 w-24" />
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <MenuCardSkeleton key={i} />
+              ))}
+            </div>
           </section>
         ))}
       </main>
