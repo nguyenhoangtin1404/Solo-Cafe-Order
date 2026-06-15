@@ -19,6 +19,7 @@ export function CategoriesSection({ initialCategories }: Props) {
   const [addingNew, setAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newSortOrder, setNewSortOrder] = useState(0);
+  const [creating, setCreating] = useState(false);
 
   function startEdit(cat: CategoryState) {
     setEditingId(cat.id);
@@ -91,8 +92,9 @@ export function CategoriesSection({ initialCategories }: Props) {
 
   async function handleCreate() {
     const name = newName.trim();
-    if (!name) return;
+    if (!name || creating) return;
 
+    setCreating(true);
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
@@ -114,6 +116,8 @@ export function CategoriesSection({ initialCategories }: Props) {
       setAddingNew(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thêm thất bại.");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -217,7 +221,8 @@ export function CategoriesSection({ initialCategories }: Props) {
             />
             <button
               onClick={handleCreate}
-              className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
+              disabled={creating}
+              className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               Thêm
             </button>

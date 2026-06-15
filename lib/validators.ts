@@ -73,13 +73,17 @@ export const createCategorySchema = z.object({
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
-export const updateCategorySchema = z.object({
-  name: z
-    .string()
-    .min(1, "Tên danh mục không được để trống.")
-    .max(50, "Tên danh mục tối đa 50 ký tự.")
-    .transform((s) => s.trim())
-    .optional(),
-  sort_order: z.number().int().min(0).optional(),
-});
+export const updateCategorySchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, "Tên danh mục không được để trống.")
+      .max(50, "Tên danh mục tối đa 50 ký tự.")
+      .transform((s) => s.trim())
+      .optional(),
+    sort_order: z.number().int().min(0).optional(),
+  })
+  .refine((d) => d.name !== undefined || d.sort_order !== undefined, {
+    message: "Cần ít nhất một trường để cập nhật.",
+  });
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
