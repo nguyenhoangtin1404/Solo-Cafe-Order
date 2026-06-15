@@ -8,7 +8,13 @@ export function useDashboardAudio() {
   const mountedRef = useRef(true);
 
   const unlock = useCallback(async () => {
-    if (ctxRef.current) return;
+    // Allow retry: if a previous tap left the context suspended, close it and
+    // try again rather than bailing out on the existing (non-running) context.
+    if (ctxRef.current?.state === "running") return;
+    if (ctxRef.current) {
+      ctxRef.current.close().catch(() => null);
+      ctxRef.current = null;
+    }
     const ctx = new AudioContext();
     ctxRef.current = ctx;
     // iOS Safari starts AudioContext in suspended state even inside a user
