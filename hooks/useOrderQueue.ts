@@ -55,6 +55,8 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
             // timestamp format variations (Z vs +00:00). Strict < so two DB
             // writes with identical millisecond timestamps both get applied.
             if (
+              incoming.updated_at &&
+              prev[idx].updated_at &&
               new Date(incoming.updated_at) < new Date(prev[idx].updated_at)
             )
               return prev;

@@ -8,7 +8,7 @@ import type { WaitEstimate } from "@/lib/services/order.service";
 import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import { submitOrderSchema } from "@/lib/validators";
-import type { Order } from "@/types/order";
+import type { Order, OrderItemSummary } from "@/types/order";
 import { toItemDto } from "@/lib/dto/order";
 import { getBankTransferInfo } from "@/lib/config/bank";
 
@@ -19,7 +19,9 @@ const VALID_STATUSES = new Set<string>([
   ORDER_STATUS.CANCELLED,
 ]);
 
-function toOrderDto(order: Order) {
+type OrderDto = Omit<Order, "items"> & { items: OrderItemSummary[] };
+
+function toOrderDto(order: Order): OrderDto {
   return {
     id: order.id,
     order_code: order.order_code,

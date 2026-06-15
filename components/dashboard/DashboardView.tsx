@@ -143,8 +143,10 @@ export function DashboardView({ initialOrders }: Props) {
         }
       )
     ).then((results) => {
-      if (!mounted) return;
+      // Set fetched=true BEFORE the !mounted guard so cleanup knows the fetch
+      // completed and won't roll back successfully-fetched IDs unnecessarily.
       fetched = true;
+      if (!mounted) return;
       // Single pass: roll back failed IDs and populate itemsMap for successes.
       results.forEach((r) => {
         if (r.items === null) fetchedIds.delete(r.id); // allow retry on next rows update
