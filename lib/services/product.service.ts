@@ -1,4 +1,5 @@
-import type { Category, ProductWithOptions } from "@/types/product";
+import type { Category, Product, ProductWithOptions } from "@/types/product";
+import { AppError } from "@/lib/errors";
 import * as categoryRepo from "@/lib/repositories/category.repository";
 import * as productRepo from "@/lib/repositories/product.repository";
 
@@ -24,4 +25,53 @@ export async function getProductWithOptions(
   id: string
 ): Promise<ProductWithOptions | null> {
   return productRepo.findByIdWithOptions(id);
+}
+
+export type AdminProduct = Pick<
+  Product,
+  "id" | "category_id" | "name" | "price" | "image_url" | "is_available"
+>;
+
+export type AdminCategoryGroup = {
+  category: Category;
+  products: AdminProduct[];
+};
+
+export async function getAdminProducts(): Promise<AdminProduct[]> {
+  const products = await productRepo.findAllForAdminFlat();
+  return products.map(
+    ({ id, category_id, name, price, image_url, is_available }) => ({
+      id,
+      category_id,
+      name,
+      price,
+      image_url,
+      is_available,
+    })
+  );
+}
+
+export async function getAdminCategoryGroups(): Promise<AdminCategoryGroup[]> {
+  const [categories, products] = await Promise.all([
+    categoryRepo.findAllCategories(),
+    getAdminProducts(),
+  ]);
+
+  return categories
+    .map((category) => ({
+      category,
+      products: products.filter((p) => p.category_id === category.id),
+    }))
+    .filter((g) => g.products.length > 0);
+}
+
+export async function setProductAvailability(
+  id: string,
+  isAvailable: boolean
+): Promise<{ id: string; is_available: boolean }> {
+  const result = await productRepo.updateAvailability(id, isAvailable);
+  if (!result) {
+    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  return result;
 }

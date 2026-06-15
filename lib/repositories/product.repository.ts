@@ -1,5 +1,5 @@
 import { createAdminSupabaseClient } from "@/lib/supabase-admin";
-import type { ProductWithOptions } from "@/types/product";
+import type { Product, ProductWithOptions } from "@/types/product";
 import type { ProductOption, ProductOptionValue } from "@/types/product";
 
 // Raw shape returned from Supabase join — options/values may include deleted rows
@@ -50,6 +50,20 @@ export async function findAllForAdmin(): Promise<ProductWithOptions[]> {
   return (data as unknown as RawProductRow[]).map(filterDeletedNested);
 }
 
+export async function findAllForAdminFlat(): Promise<Product[]> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, category_id, name, description, price, image_url, is_available, created_at, deleted_at"
+    )
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as Product[];
+}
+
 export async function findByIdWithOptions(
   id: string
 ): Promise<ProductWithOptions | null> {
@@ -79,4 +93,21 @@ export async function findByIdsWithOptions(
 
   if (error) throw error;
   return (data as unknown as RawProductRow[]).map(filterDeletedNested);
+}
+
+export async function updateAvailability(
+  id: string,
+  isAvailable: boolean
+): Promise<{ id: string; is_available: boolean } | null> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .update({ is_available: isAvailable })
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id, is_available")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { id: string; is_available: boolean } | null) ?? null;
 }
