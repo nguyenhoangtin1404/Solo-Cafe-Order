@@ -241,7 +241,9 @@ export function DashboardView({ initialOrders }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    // Any pointer interaction triggers audio unlock so the owner doesn't have
+    // to find and tap the banner specifically as their first gesture.
+    <div className="min-h-screen bg-background" onPointerDown={unlock}>
       {/* Sticky top block: header + optional audio banner + tabs all stick together
           so the tab bar never overlaps the banner during scroll. */}
       <div className="sticky top-0 z-10 bg-background">
