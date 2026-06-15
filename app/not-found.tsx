@@ -3,10 +3,10 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-      <p className="text-7xl font-bold text-gray-100">404</p>
-      <p className="mt-4 text-lg font-semibold text-gray-800">
+      <p className="text-7xl font-bold text-gray-100" aria-hidden="true">404</p>
+      <h1 className="mt-4 text-lg font-semibold text-gray-800">
         Trang không tồn tại
-      </p>
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
         Địa chỉ này không còn hoặc chưa bao giờ tồn tại.
       </p>
