@@ -8,7 +8,8 @@ import type { WaitEstimate } from "@/lib/services/order.service";
 import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import { submitOrderSchema } from "@/lib/validators";
-import type { Order, OrderItem } from "@/types/order";
+import type { Order, OrderItemSummary } from "@/types/order";
+import { toItemDto } from "@/lib/dto/order";
 import { getBankTransferInfo } from "@/lib/config/bank";
 
 const VALID_STATUSES = new Set<string>([
@@ -18,7 +19,9 @@ const VALID_STATUSES = new Set<string>([
   ORDER_STATUS.CANCELLED,
 ]);
 
-function toOrderDto(order: Order) {
+type OrderDto = Omit<Order, "items"> & { items: OrderItemSummary[] };
+
+function toOrderDto(order: Order): OrderDto {
   return {
     id: order.id,
     order_code: order.order_code,
@@ -28,15 +31,10 @@ function toOrderDto(order: Order) {
     pickup_name: order.pickup_name,
     note: order.note,
     cancelled_by: order.cancelled_by,
+    customer_ref: order.customer_ref,
     created_at: order.created_at,
     updated_at: order.updated_at,
-    items: order.items.map((item) => ({
-      product_name: item.product_name,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      selected_options: item.selected_options,
-      note: item.note,
-    })),
+    items: order.items.map(toItemDto),
   };
 }
 
@@ -74,16 +72,6 @@ export async function GET(req: NextRequest) {
 function formatWaitEstimate(estimate: WaitEstimate): string {
   if (estimate.degraded) return "5–15 phút";
   return `${estimate.min}–${estimate.max} phút`;
-}
-
-function toItemDto(item: OrderItem) {
-  return {
-    product_name: item.product_name,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    selected_options: item.selected_options,
-    note: item.note,
-  };
 }
 
 export async function POST(req: NextRequest) {

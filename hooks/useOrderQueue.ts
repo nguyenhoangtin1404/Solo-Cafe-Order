@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import type { Order } from "@/types/order";
 
@@ -17,6 +17,15 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
   const [orders, setOrders] = useState<OrderRow[]>(initialOrders);
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
+
+  const updateRow = useCallback(
+    (id: string, patch: Partial<Omit<OrderRow, "id">>) => {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, ...patch } : o))
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     const supabase = createClient();
@@ -43,6 +52,17 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
             const idx = prev.findIndex((o) => o.id === incoming.id);
             // Order absent from list (e.g. missed INSERT during reconnect) — prepend it
             if (idx === -1) return [incoming, ...prev];
+            // Discard stale replayed events (reconnect buffer) so they don't
+            // overwrite a newer optimistic update already applied locally.
+            // Use Date comparison — string comparison breaks across Supabase
+            // timestamp format variations (Z vs +00:00). Strict < so two DB
+            // writes with identical millisecond timestamps both get applied.
+            if (
+              incoming.updated_at &&
+              prev[idx].updated_at &&
+              new Date(incoming.updated_at) < new Date(prev[idx].updated_at)
+            )
+              return prev;
             return prev.map((o, i) => (i === idx ? incoming : o));
           });
         }
@@ -63,5 +83,5 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
     };
   }, []);
 
-  return { orders, connectionStatus };
+  return { orders, connectionStatus, updateRow };
 }

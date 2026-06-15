@@ -8,6 +8,7 @@ import { useDashboardAudio } from "@/hooks/useDashboardAudio";
 import { ORDER_STATUS } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import type { Order, OrderItemSummary } from "@/types/order";
+import { toItemDto } from "@/lib/dto/order";
 import { OrderCard } from "./OrderCard";
 import type { DashboardOrder } from "./OrderCard";
 import type { OrderRow } from "@/hooks/useOrderQueue";
@@ -24,16 +25,6 @@ const TABS: { id: TabId; label: string; statuses: OrderStatus[] }[] = [
   { id: "making", label: "Đang làm", statuses: ["making"] },
   { id: "done", label: "Xong", statuses: ["done", "cancelled"] },
 ];
-
-function toItemSummary(item: Order["items"][number]): OrderItemSummary {
-  return {
-    product_name: item.product_name,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    selected_options: item.selected_options,
-    note: item.note,
-  };
-}
 
 function toOrderRow(o: Order): OrderRow {
   return {
@@ -61,11 +52,16 @@ export function DashboardView({ initialOrders }: Props) {
     initialOrders.map(toOrderRow)
   );
   const [itemsMap, setItemsMap] = useState<Map<string, OrderItemSummary[]>>(
-    () => new Map(initialOrders.map((o) => [o.id, o.items.map(toItemSummary)]))
+    () => new Map(initialOrders.map((o) => [o.id, o.items.map(toItemDto)]))
   );
   // Ref (not state) so the items-fetch effect only re-runs when `rows` changes,
   // not when itemsMap changes — prevents duplicate fetches on each state update.
   const fetchedIdsRef = useRef<Set<string>>(
+    new Set(initialOrders.map((o) => o.id))
+  );
+  // Tracks orders that have been announced (sound + animation) so a retry
+  // after a failed items fetch doesn't re-play the notification chime.
+  const announcedIdsRef = useRef<Set<string>>(
     new Set(initialOrders.map((o) => o.id))
   );
 
@@ -76,7 +72,11 @@ export function DashboardView({ initialOrders }: Props) {
   // Starts empty so initial new orders show as unread on fresh load.
   const [seenNewIds, setSeenNewIds] = useState<Set<string>>(new Set());
 
-  const { orders: rows, connectionStatus } = useOrderQueue(initialRowsOnce);
+  const {
+    orders: rows,
+    connectionStatus,
+    updateRow,
+  } = useOrderQueue(initialRowsOnce);
   const { unlocked, unlock, playNotification } = useDashboardAudio();
 
   // Stable ref so async .then() callbacks always use the latest playNotification
@@ -110,35 +110,55 @@ export function DashboardView({ initialOrders }: Props) {
     // changing again) doesn't kick off duplicate fetches for the same IDs.
     newRows.forEach((row) => fetchedIds.add(row.id));
 
-    const arrivedIds = new Set(newRows.map((r) => r.id));
+    // Only announce (sound + animation) orders seen for the first time.
+    // Retried fetches (already in announcedIdsRef) are skipped so the
+    // notification chime does not replay for orders whose items fetch failed.
+    const announced = announcedIdsRef.current;
+    const freshArrivalIds = newRows
+      .filter((r) => !announced.has(r.id))
+      .map((r) => r.id);
+    freshArrivalIds.forEach((id) => announced.add(id));
+    const freshArrivalSet = new Set(freshArrivalIds);
+
     let mounted = true;
     let fetched = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     Promise.all(
       newRows.map(
-        async (row): Promise<{ id: string; items: OrderItemSummary[] }> => {
+        async (
+          row
+        ): Promise<{ id: string; items: OrderItemSummary[] | null }> => {
           try {
-            const res = await fetch(`/api/orders/${row.order_code}`);
-            if (!res.ok) return { id: row.id, items: [] };
+            const res = await fetch(`/api/dashboard/orders/${row.id}/items`);
+            if (!res.ok) return { id: row.id, items: null };
             const data = (await res.json()) as { items?: OrderItemSummary[] };
             return { id: row.id, items: data.items ?? [] };
           } catch {
-            return { id: row.id, items: [] };
+            return { id: row.id, items: null };
           }
         }
       )
     ).then((results) => {
-      if (!mounted) return;
+      // Set fetched=true BEFORE the !mounted guard so cleanup knows the fetch
+      // completed and won't roll back successfully-fetched IDs unnecessarily.
       fetched = true;
+      if (!mounted) return;
+      // Single pass: roll back failed IDs and populate itemsMap for successes.
+      results.forEach((r) => {
+        if (r.items === null) fetchedIds.delete(r.id); // allow retry on next rows update
+      });
       setItemsMap((prev) => {
         const next = new Map(prev);
-        results.forEach((r) => next.set(r.id, r.items));
+        results.forEach((r) => {
+          if (r.items !== null) next.set(r.id, r.items);
+        });
         return next;
       });
+      if (freshArrivalSet.size === 0) return; // all retries — skip sound/animation
       setNewArrivals((prev) => {
         const next = new Set(prev);
-        arrivedIds.forEach((id) => next.add(id));
+        freshArrivalSet.forEach((id) => next.add(id));
         return next;
       });
       // If the owner is already on the "Mới" tab, mark arrivals as seen
@@ -146,7 +166,7 @@ export function DashboardView({ initialOrders }: Props) {
       if (activeTabRef.current === "new") {
         setSeenNewIds((prev) => {
           const next = new Set(prev);
-          arrivedIds.forEach((id) => next.add(id));
+          freshArrivalSet.forEach((id) => next.add(id));
           return next;
         });
       }
@@ -155,7 +175,7 @@ export function DashboardView({ initialOrders }: Props) {
         if (!mounted) return;
         setNewArrivals((prev) => {
           const next = new Set(prev);
-          arrivedIds.forEach((id) => next.delete(id));
+          freshArrivalSet.forEach((id) => next.delete(id));
           return next;
         });
       }, 3000);
@@ -163,12 +183,25 @@ export function DashboardView({ initialOrders }: Props) {
 
     return () => {
       mounted = false;
-      // If the fetch never completed, roll back the IDs so the next effect
-      // run can retry them (avoids permanent items:[] for aborted fetches).
       if (!fetched) {
-        newRows.forEach((row) => fetchedIds.delete(row.id));
+        // Roll back both refs so the next effect run can retry the fetch and
+        // re-announce the order (covers StrictMode double-invoke in dev too).
+        newRows.forEach((row) => {
+          fetchedIds.delete(row.id);
+          announced.delete(row.id);
+        });
       }
-      if (timeoutId !== null) clearTimeout(timeoutId);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        // .then() already ran (fetched=true) and added freshArrivalSet to
+        // newArrivals. Without the timeout's removal those IDs stay in the
+        // set forever when a second batch arrives within the 3 s window.
+        setNewArrivals((prev) => {
+          const next = new Set(prev);
+          freshArrivalSet.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
     };
   }, [rows]);
 
@@ -212,8 +245,19 @@ export function DashboardView({ initialOrders }: Props) {
             message?: string;
           };
           toast.error(body.message ?? "Cập nhật trạng thái thất bại.");
+        } else {
+          // Optimistic update: apply locally so the card moves immediately even
+          // if the Realtime event is delayed or dropped.
+          // Include server-confirmed updated_at so the staleness guard in
+          // useOrderQueue correctly discards any Realtime replay for this update
+          // if the owner triggers a second status change before it arrives.
+          const body = (await res.json().catch(() => ({}))) as {
+            updated_at?: string;
+          };
+          const patch: Partial<Omit<OrderRow, "id">> = { status: newStatus };
+          if (body.updated_at) patch.updated_at = body.updated_at;
+          updateRow(orderId, patch);
         }
-        // On success: Realtime UPDATE event syncs state automatically
       } catch {
         toast.error("Mất kết nối. Vui lòng thử lại.");
       } finally {
@@ -224,7 +268,7 @@ export function DashboardView({ initialOrders }: Props) {
         });
       }
     },
-    []
+    [updateRow]
   );
 
   const activeStatuses = TABS.find((t) => t.id === activeTab)?.statuses ?? [];
