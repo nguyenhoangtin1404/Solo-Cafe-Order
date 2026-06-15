@@ -184,12 +184,25 @@ export function DashboardView({ initialOrders }: Props) {
 
     return () => {
       mounted = false;
-      // If the fetch never completed, roll back the IDs so the next effect
-      // run can retry them (avoids permanent items:[] for aborted fetches).
       if (!fetched) {
-        newRows.forEach((row) => fetchedIds.delete(row.id));
+        // Roll back both refs so the next effect run can retry the fetch and
+        // re-announce the order (covers StrictMode double-invoke in dev too).
+        newRows.forEach((row) => {
+          fetchedIds.delete(row.id);
+          announced.delete(row.id);
+        });
       }
-      if (timeoutId !== null) clearTimeout(timeoutId);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        // .then() already ran (fetched=true) and added freshArrivalSet to
+        // newArrivals. Without the timeout's removal those IDs stay in the
+        // set forever when a second batch arrives within the 3 s window.
+        setNewArrivals((prev) => {
+          const next = new Set(prev);
+          freshArrivalSet.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
     };
   }, [rows]);
 

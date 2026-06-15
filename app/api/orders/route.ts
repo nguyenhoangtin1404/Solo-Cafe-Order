@@ -29,6 +29,7 @@ function toOrderDto(order: Order) {
     pickup_name: order.pickup_name,
     note: order.note,
     cancelled_by: order.cancelled_by,
+    customer_ref: order.customer_ref,
     created_at: order.created_at,
     updated_at: order.updated_at,
     items: order.items.map(toItemDto),
