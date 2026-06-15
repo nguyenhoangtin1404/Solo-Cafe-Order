@@ -72,7 +72,11 @@ export function DashboardView({ initialOrders }: Props) {
   // Starts empty so initial new orders show as unread on fresh load.
   const [seenNewIds, setSeenNewIds] = useState<Set<string>>(new Set());
 
-  const { orders: rows, connectionStatus, updateRow } = useOrderQueue(initialRowsOnce);
+  const {
+    orders: rows,
+    connectionStatus,
+    updateRow,
+  } = useOrderQueue(initialRowsOnce);
   const { unlocked, unlock, playNotification } = useDashboardAudio();
 
   // Stable ref so async .then() callbacks always use the latest playNotification
@@ -122,7 +126,9 @@ export function DashboardView({ initialOrders }: Props) {
 
     Promise.all(
       newRows.map(
-        async (row): Promise<{ id: string; items: OrderItemSummary[] | null }> => {
+        async (
+          row
+        ): Promise<{ id: string; items: OrderItemSummary[] | null }> => {
           try {
             const res = await fetch(`/api/dashboard/orders/${row.id}/items`);
             if (!res.ok) return { id: row.id, items: null };

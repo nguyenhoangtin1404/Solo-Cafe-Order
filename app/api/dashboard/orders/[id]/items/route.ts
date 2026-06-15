@@ -14,7 +14,11 @@ export async function GET(
 
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) {
-      return errorResponse("VALIDATION_ERROR", "ID đơn hàng không hợp lệ.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "ID đơn hàng không hợp lệ.",
+        400
+      );
     }
 
     const order = await getOrderById(id);

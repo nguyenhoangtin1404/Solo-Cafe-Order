@@ -18,11 +18,14 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
 
-  const updateRow = useCallback((id: string, patch: Partial<Omit<OrderRow, "id">>) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, ...patch } : o))
-    );
-  }, []);
+  const updateRow = useCallback(
+    (id: string, patch: Partial<Omit<OrderRow, "id">>) => {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, ...patch } : o))
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     const supabase = createClient();
