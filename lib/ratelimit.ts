@@ -45,8 +45,8 @@ async function checkLimit(
         ? 0
         : Math.max(0, Math.ceil((reset - Date.now()) / 1000)),
     };
-  } catch {
-    // Upstash unreachable — fail open to avoid blocking legitimate requests
+  } catch (err) {
+    console.error("[ratelimit] Upstash unreachable — failing open:", err);
     return { allowed: true, retryAfterSeconds: 0 };
   }
 }
@@ -73,6 +73,8 @@ export function getClientIp(req: {
   headers: { get: (name: string) => string | null };
 }): string {
   return (
-    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "unknown"
+    req.headers.get("x-real-ip")?.trim() ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown"
   );
 }

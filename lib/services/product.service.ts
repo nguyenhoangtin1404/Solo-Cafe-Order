@@ -57,12 +57,10 @@ export async function getAdminCategoryGroups(): Promise<AdminCategoryGroup[]> {
     getAdminProducts(),
   ]);
 
-  return categories
-    .map((category) => ({
-      category,
-      products: products.filter((p) => p.category_id === category.id),
-    }))
-    .filter((g) => g.products.length > 0);
+  return categories.map((category) => ({
+    category,
+    products: products.filter((p) => p.category_id === category.id),
+  }));
 }
 
 export async function setProductAvailability(

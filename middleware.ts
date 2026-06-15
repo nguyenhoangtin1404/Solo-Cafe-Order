@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
     if (isSafeRedirect(pathname)) url.searchParams.set("next", pathname);
     return makeRedirect(url, supabaseResponse);
   }
-  if (pathname.startsWith("/admin") && user) {
+  if (pathname.startsWith("/admin")) {
     const role = user.app_metadata?.role as string | undefined;
     if (role !== "admin") {
       const url = request.nextUrl.clone();
