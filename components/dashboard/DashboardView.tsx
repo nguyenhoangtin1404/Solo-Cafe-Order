@@ -8,6 +8,7 @@ import { useDashboardAudio } from "@/hooks/useDashboardAudio";
 import { ORDER_STATUS } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import type { Order, OrderItemSummary } from "@/types/order";
+import { toItemDto } from "@/lib/dto/order";
 import { OrderCard } from "./OrderCard";
 import type { DashboardOrder } from "./OrderCard";
 import type { OrderRow } from "@/hooks/useOrderQueue";
@@ -24,16 +25,6 @@ const TABS: { id: TabId; label: string; statuses: OrderStatus[] }[] = [
   { id: "making", label: "Đang làm", statuses: ["making"] },
   { id: "done", label: "Xong", statuses: ["done", "cancelled"] },
 ];
-
-function toItemSummary(item: Order["items"][number]): OrderItemSummary {
-  return {
-    product_name: item.product_name,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    selected_options: item.selected_options,
-    note: item.note,
-  };
-}
 
 function toOrderRow(o: Order): OrderRow {
   return {
@@ -61,7 +52,7 @@ export function DashboardView({ initialOrders }: Props) {
     initialOrders.map(toOrderRow)
   );
   const [itemsMap, setItemsMap] = useState<Map<string, OrderItemSummary[]>>(
-    () => new Map(initialOrders.map((o) => [o.id, o.items.map(toItemSummary)]))
+    () => new Map(initialOrders.map((o) => [o.id, o.items.map(toItemDto)]))
   );
   // Ref (not state) so the items-fetch effect only re-runs when `rows` changes,
   // not when itemsMap changes — prevents duplicate fetches on each state update.
@@ -251,7 +242,15 @@ export function DashboardView({ initialOrders }: Props) {
         } else {
           // Optimistic update: apply locally so the card moves immediately even
           // if the Realtime event is delayed or dropped.
-          updateRow(orderId, { status: newStatus });
+          // Include server-confirmed updated_at so the staleness guard in
+          // useOrderQueue correctly discards any Realtime replay for this update
+          // if the owner triggers a second status change before it arrives.
+          const body = (await res.json().catch(() => ({}))) as {
+            updated_at?: string;
+          };
+          const patch: Partial<Omit<OrderRow, "id">> = { status: newStatus };
+          if (body.updated_at) patch.updated_at = body.updated_at;
+          updateRow(orderId, patch);
         }
       } catch {
         toast.error("Mất kết nối. Vui lòng thử lại.");
