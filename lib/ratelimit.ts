@@ -42,10 +42,11 @@ async function checkLimit(
   limiter: Ratelimit | null,
   ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
-  if (!limiter || ip === "unknown")
-    return { allowed: true, retryAfterSeconds: 0 };
+  if (!limiter) return { allowed: true, retryAfterSeconds: 0 };
+  // Unresolvable IPs share a sentinel bucket rather than bypassing the limiter.
+  const effectiveIp = ip === "unknown" ? "unknown-ip" : ip;
   try {
-    const { success, reset } = await limiter.limit(ip);
+    const { success, reset } = await limiter.limit(effectiveIp);
     return {
       allowed: success,
       retryAfterSeconds: success
@@ -79,7 +80,10 @@ export function checkTrackRateLimit(
 export function getClientIp(req: {
   headers: { get: (name: string) => string | null };
 }): string {
+  // x-vercel-forwarded-for is set server-side by Vercel and cannot be spoofed.
+  // x-real-ip / x-forwarded-for are client-controlled fallbacks for other hosts.
   return (
+    req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip")?.trim() ??
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     "unknown"

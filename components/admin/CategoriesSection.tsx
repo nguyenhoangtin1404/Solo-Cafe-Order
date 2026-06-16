@@ -32,6 +32,7 @@ export function CategoriesSection({
   const [newSortOrder, setNewSortOrder] = useState(0);
   const [creating, setCreating] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   // Stable id for aria-describedby on the add-form cancel button.
   const addCancelHintId = useId();
@@ -48,6 +49,8 @@ export function CategoriesSection({
   const newNameInputRef = useRef<HTMLInputElement | null>(null);
   // Tracks the active status-clear timer so it can be cancelled on re-fire.
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Auto-cancels the delete double-confirm after 3 seconds of no second click.
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Synchronous guard against double-submit before React re-renders with creating=true.
   const creatingRef = useRef(false);
   // Per-category guards against concurrent PATCH and DELETE requests respectively.
@@ -58,6 +61,8 @@ export function CategoriesSection({
     return () => {
       if (announceTimerRef.current !== null)
         clearTimeout(announceTimerRef.current);
+      if (confirmTimerRef.current !== null)
+        clearTimeout(confirmTimerRef.current);
     };
   }, []);
 
@@ -107,6 +112,21 @@ export function CategoriesSection({
     setCategories((prev) =>
       prev.map((c) => (c.id === id ? { ...c, pending } : c))
     );
+  }
+
+  function requestDeleteConfirm(id: string) {
+    if (confirmTimerRef.current !== null) clearTimeout(confirmTimerRef.current);
+    setConfirmingId(id);
+    confirmTimerRef.current = setTimeout(() => {
+      setConfirmingId(null);
+      confirmTimerRef.current = null;
+    }, 3000);
+  }
+
+  function cancelConfirm() {
+    if (confirmTimerRef.current !== null) clearTimeout(confirmTimerRef.current);
+    setConfirmingId(null);
+    confirmTimerRef.current = null;
   }
 
   function parseSortOrder(raw: string): number {
@@ -166,15 +186,11 @@ export function CategoriesSection({
   }
 
   async function handleDelete(id: string) {
+    cancelConfirm();
     if (deletingIdsRef.current.has(id)) return;
     deletingIdsRef.current.add(id);
-    if (!window.confirm("Xóa danh mục này?")) {
-      deletingIdsRef.current.delete(id);
-      return;
-    }
     // Move focus before pending spinner replaces the action buttons on next render.
-    // Fall back to the add-form name input when the trigger button is not mounted.
-    (addTriggerRef.current ?? newNameInputRef.current)?.focus();
+    addTriggerRef.current?.focus();
     setStatusMessage("");
     setPending(id, true);
 
@@ -242,7 +258,6 @@ export function CategoriesSection({
       <div
         id="categories-pending-live"
         aria-live="polite"
-        aria-relevant="additions text"
         aria-atomic="true"
         className="sr-only"
       >
@@ -278,8 +293,9 @@ export function CategoriesSection({
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 maxLength={50}
+                disabled={cat.pending}
                 aria-label="Tên danh mục"
-                className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
                 placeholder="Tên danh mục"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleUpdate(cat.id);
@@ -298,16 +314,25 @@ export function CategoriesSection({
                 }}
                 min={0}
                 max={9999}
+                disabled={cat.pending}
                 aria-label="Thứ tự hiển thị"
-                className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
               />
               <button
                 onClick={() => handleUpdate(cat.id)}
                 disabled={cat.pending}
                 aria-label={`Lưu danh mục ${cat.name}`}
-                className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                className="min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
-                Lưu
+                {cat.pending ? (
+                  <Loader2
+                    size={16}
+                    aria-hidden="true"
+                    className="animate-spin"
+                  />
+                ) : (
+                  "Lưu"
+                )}
               </button>
               <button
                 onClick={cancelEdit}
@@ -349,17 +374,27 @@ export function CategoriesSection({
                     >
                       Sửa
                     </button>
-                    <button
-                      disabled={hasProducts}
-                      onClick={() => handleDelete(cat.id)}
-                      aria-label={`Xóa danh mục ${cat.name}`}
-                      aria-describedby={
-                        hasProducts ? `del-hint-${cat.id}` : undefined
-                      }
-                      className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Xóa
-                    </button>
+                    {confirmingId === cat.id ? (
+                      <button
+                        onClick={() => handleDelete(cat.id)}
+                        aria-label={`Xác nhận xóa danh mục ${cat.name}`}
+                        className="min-h-[44px] min-w-[54px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
+                      >
+                        Xóa?
+                      </button>
+                    ) : (
+                      <button
+                        disabled={hasProducts}
+                        onClick={() => requestDeleteConfirm(cat.id)}
+                        aria-label={`Xóa danh mục ${cat.name}`}
+                        aria-describedby={
+                          hasProducts ? `del-hint-${cat.id}` : undefined
+                        }
+                        className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Xóa
+                      </button>
+                    )}
                     {hasProducts && (
                       <span id={`del-hint-${cat.id}`} className="sr-only">
                         Xóa hết sản phẩm trước khi xóa danh mục

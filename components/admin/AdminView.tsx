@@ -131,7 +131,7 @@ export function AdminView({ groups: initial, categories }: Props) {
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {toggleStatusMessage}
       </div>
-      <header className="border-b px-4 py-3">
+      <header role="banner" className="border-b px-4 py-3">
         <h1 className="text-lg font-bold">Quản lý menu</h1>
       </header>
 
@@ -182,7 +182,7 @@ export function AdminView({ groups: initial, categories }: Props) {
                   <button
                     role="switch"
                     aria-checked={product.is_available}
-                    aria-label={`${product.name}: hiển thị trên menu`}
+                    aria-label={`${product.name}: ${product.is_available ? "đang hiển thị" : "đang ẩn"} trên menu`}
                     disabled={product.pending}
                     onClick={() =>
                       handleToggle(product.id, !product.is_available)
