@@ -84,7 +84,7 @@ export const updateCategorySchema = z
           .max(50, "Tên danh mục tối đa 50 ký tự.")
       )
       .optional(),
-    sort_order: z.number().int().min(0).max(9999).optional(),
+    sort_order: z.number().int().min(0).optional(),
   })
   .refine((d) => d.name !== undefined || d.sort_order !== undefined, {
     message: "Cần ít nhất một trường để cập nhật.",

@@ -43,8 +43,9 @@ export function CategoriesSection({
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Synchronous guard against double-submit before React re-renders with creating=true.
   const creatingRef = useRef(false);
-  // Per-category guard against concurrent PATCH requests from rapid Enter keypresses.
+  // Per-category guard against concurrent PATCH/DELETE requests.
   const updatingIdsRef = useRef<Set<string>>(new Set());
+  const deletingIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     return () => {
@@ -100,8 +101,14 @@ export function CategoriesSection({
 
   async function handleUpdate(id: string) {
     const name = editName.trim();
-    if (!name || updatingIdsRef.current.has(id)) return;
+    if (!name) {
+      toast.error("Tên danh mục không được để trống.");
+      return;
+    }
+    if (updatingIdsRef.current.has(id)) return;
+    const sortOrder = editSortOrder;
     updatingIdsRef.current.add(id);
+    setStatusMessage("");
     setPending(id, true);
     // Intentionally keep editingId open so user can see/retry if request fails.
 
@@ -109,7 +116,7 @@ export function CategoriesSection({
       const res = await fetch(`/api/categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, sort_order: editSortOrder }),
+        body: JSON.stringify({ name, sort_order: sortOrder }),
       });
       const body = (await res.json().catch(() => ({}))) as {
         category?: Category;
@@ -142,9 +149,12 @@ export function CategoriesSection({
   }
 
   async function handleDelete(id: string) {
+    if (deletingIdsRef.current.has(id)) return;
     if (!window.confirm("Xóa danh mục này?")) return;
+    deletingIdsRef.current.add(id);
     // Move focus before pending spinner replaces the action buttons on next render.
     addTriggerRef.current?.focus();
+    setStatusMessage("");
     setPending(id, true);
 
     try {
@@ -161,13 +171,20 @@ export function CategoriesSection({
     } catch (err) {
       setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
+    } finally {
+      deletingIdsRef.current.delete(id);
     }
   }
 
   async function handleCreate() {
     const name = newName.trim();
-    if (!name || creatingRef.current) return;
+    if (!name) {
+      toast.error("Tên danh mục không được để trống.");
+      return;
+    }
+    if (creatingRef.current) return;
     creatingRef.current = true;
+    setStatusMessage("");
     setCreating(true);
     try {
       const res = await fetch("/api/categories", {
@@ -251,12 +268,14 @@ export function CategoriesSection({
               <button
                 onClick={() => handleUpdate(cat.id)}
                 disabled={cat.pending}
+                aria-label={`Lưu danh mục ${cat.name}`}
                 className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
                 Lưu
               </button>
               <button
                 onClick={cancelEdit}
+                aria-label={`Hủy chỉnh sửa ${cat.name}`}
                 className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
               >
                 Hủy
@@ -360,13 +379,16 @@ export function CategoriesSection({
             <button
               onClick={handleCreate}
               disabled={creating}
+              aria-label="Thêm danh mục mới"
               className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               Thêm
             </button>
             <button
               onClick={cancelAdd}
-              className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
+              disabled={creating}
+              aria-label="Hủy thêm danh mục"
+              className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
             >
               Hủy
             </button>
@@ -377,7 +399,7 @@ export function CategoriesSection({
             onClick={() => setAddingNew(true)}
             className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
           >
-            + Thêm danh mục
+            <span aria-hidden="true">+</span> Thêm danh mục
           </button>
         )}
       </div>

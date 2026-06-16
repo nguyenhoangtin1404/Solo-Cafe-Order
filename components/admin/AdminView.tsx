@@ -11,7 +11,7 @@ import { CategoriesSection } from "./CategoriesSection";
 
 type AdminProductState = AdminProduct & { pending?: boolean };
 
-type CategoryWithProducts = {
+type AdminViewGroup = {
   category: AdminCategoryGroup["category"];
   products: AdminProductState[];
 };
@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function AdminView({ groups: initial, categories }: Props) {
-  const [groups, setGroups] = useState<CategoryWithProducts[]>(initial);
+  const [groups, setGroups] = useState<AdminViewGroup[]>(initial);
 
   // Derived from live groups state so it stays accurate after toggle/delete.
   const productCounts = Object.fromEntries(
@@ -140,10 +140,10 @@ export function AdminView({ groups: initial, categories }: Props) {
                       }`}
                     >
                       {product.name}
+                      {!product.is_available && (
+                        <span className="sr-only"> (không có sẵn)</span>
+                      )}
                     </p>
-                    {!product.is_available && (
-                      <span className="sr-only"> (không có sẵn)</span>
-                    )}
                     <p className="text-sm text-muted-foreground">
                       {product.price.toLocaleString("vi-VN")}đ
                     </p>
@@ -152,7 +152,7 @@ export function AdminView({ groups: initial, categories }: Props) {
                   <button
                     role="switch"
                     aria-checked={product.is_available}
-                    aria-label={`Bật/tắt ${product.name}`}
+                    aria-label={`${product.is_available ? "Tắt" : "Bật"} ${product.name}`}
                     disabled={product.pending}
                     onClick={() =>
                       handleToggle(product.id, !product.is_available)
