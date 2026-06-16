@@ -47,6 +47,8 @@ export function CategoriesSection({
   const addTriggerRef = useRef<HTMLButtonElement | null>(null);
   // Fallback focus target when addTriggerRef is null (add form is open).
   const newNameInputRef = useRef<HTMLInputElement | null>(null);
+  // Ref for the "Xóa?" confirm button — used to restore focus after it mounts.
+  const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
   // Tracks the active status-clear timer so it can be cancelled on re-fire.
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Auto-cancels the delete double-confirm after 3 seconds of no second click.
@@ -121,6 +123,8 @@ export function CategoriesSection({
       setConfirmingId(null);
       confirmTimerRef.current = null;
     }, 3000);
+    // Focus the confirm button after React mounts it (state update is async).
+    setTimeout(() => confirmButtonRef.current?.focus(), 0);
   }
 
   function cancelConfirm() {
@@ -146,6 +150,8 @@ export function CategoriesSection({
     const sortOrder = editSortOrder;
     updatingIdsRef.current.add(id);
     setStatusMessage("");
+    // Move focus before disabling all edit-row controls (prevents focus loss to body).
+    (addTriggerRef.current ?? newNameInputRef.current)?.focus();
     setPending(id, true);
     // Intentionally keep editingId open so user can see/retry if request fails.
 
@@ -187,10 +193,19 @@ export function CategoriesSection({
 
   async function handleDelete(id: string) {
     cancelConfirm();
+    // Reset stale edit state for the deleted category (edit form won't render
+    // after deletion, but refs and state would otherwise linger).
+    if (editingIdRef.current === id) {
+      editingIdRef.current = null;
+      setEditingId(null);
+      setEditName("");
+      setEditSortOrder(0);
+    }
     if (deletingIdsRef.current.has(id)) return;
     deletingIdsRef.current.add(id);
     // Move focus before pending spinner replaces the action buttons on next render.
-    addTriggerRef.current?.focus();
+    // Fall back to the add-form name input when the trigger button is not mounted.
+    (addTriggerRef.current ?? newNameInputRef.current)?.focus();
     setStatusMessage("");
     setPending(id, true);
 
@@ -203,6 +218,7 @@ export function CategoriesSection({
         throw new Error(body.message ?? "Xóa thất bại.");
       }
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      delete editTriggerRefs.current[id];
       onCategoryDeleted(id);
       announceStatus("Đã xóa danh mục.");
     } catch (err) {
@@ -338,10 +354,18 @@ export function CategoriesSection({
                 onClick={cancelEdit}
                 disabled={cat.pending}
                 aria-label={`Hủy chỉnh sửa ${cat.name}`}
+                aria-describedby={
+                  cat.pending ? `edit-pending-hint-${cat.id}` : undefined
+                }
                 className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
               >
                 Hủy
               </button>
+              {cat.pending && (
+                <span id={`edit-pending-hint-${cat.id}`} className="sr-only">
+                  Đang lưu, vui lòng chờ
+                </span>
+              )}
             </div>
           ) : (
             <div
@@ -376,7 +400,10 @@ export function CategoriesSection({
                     </button>
                     {confirmingId === cat.id ? (
                       <button
+                        ref={confirmButtonRef}
                         onClick={() => handleDelete(cat.id)}
+                        onBlur={cancelConfirm}
+                        title="Nhấn lần nữa để xác nhận xóa"
                         aria-label={`Xác nhận xóa danh mục ${cat.name}`}
                         className="min-h-[44px] min-w-[54px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
                       >
