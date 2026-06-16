@@ -118,7 +118,7 @@ export async function countActiveByCategory(
   const supabase = createAdminSupabaseClient();
   const { count, error } = await supabase
     .from("products")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("category_id", categoryId)
     .is("deleted_at", null);
 

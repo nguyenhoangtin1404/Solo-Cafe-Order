@@ -13,6 +13,10 @@ const appUrl =
 
 export const viewport: Viewport = {
   themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1, // prevents iOS auto-zoom on input focus
+  viewportFit: "cover", // allow content to extend into notch/Dynamic Island safe area
 };
 
 export const metadata: Metadata = {
@@ -21,7 +25,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Vibe Cafe",
   },
   openGraph: {

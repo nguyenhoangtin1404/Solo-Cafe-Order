@@ -1,3 +1,5 @@
+// Vietnam does not observe DST; UTC+7 is permanent.
+// If the timezone ever changes, replace this arithmetic with Intl.DateTimeFormat.
 const HCM_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 

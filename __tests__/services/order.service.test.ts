@@ -279,7 +279,8 @@ describe("submitOrder", () => {
   it("làm tròn wait_estimate min/max thành số nguyên", async () => {
     mockedProductRepo.findByIdsWithOptions.mockResolvedValue([makeProduct()]);
     mockedOrderRepo.createOrder.mockResolvedValue(makeOrder());
-    mockedOrderRepo.countPending.mockResolvedValue(2.5);
+    // count BEFORE insert: 1.5 pending → base 4.5 → min rounds 2.5→3, max rounds 6.5→7
+    mockedOrderRepo.countPending.mockResolvedValue(1.5);
 
     const result = await submitOrder(baseSubmitInput);
 
@@ -292,7 +293,8 @@ describe("submitOrder", () => {
   it("tính wait_estimate 3–5 phút khi queue có 1 MAKING (weighted 0.5)", async () => {
     mockedProductRepo.findByIdsWithOptions.mockResolvedValue([makeProduct()]);
     mockedOrderRepo.createOrder.mockResolvedValue(makeOrder());
-    mockedOrderRepo.countPending.mockResolvedValue(1.5);
+    // count BEFORE insert: only the in-making order remains (weighted 0.5)
+    mockedOrderRepo.countPending.mockResolvedValue(0.5);
 
     const result = await submitOrder(baseSubmitInput);
 

@@ -50,26 +50,27 @@ const OWNER_UPDATABLE_STATUSES = [
   ORDER_STATUS.CANCELLED,
 ] as const;
 
-export const updateStatusSchema = z.object({
-  status: z.enum(OWNER_UPDATABLE_STATUSES),
-});
+export const updateStatusSchema = z
+  .object({ status: z.enum(OWNER_UPDATABLE_STATUSES) })
+  .strict();
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
-export const cancelBodySchema = z.object({
-  order_id: z
-    .string()
-    .uuid()
-    .transform((v) => v.toLowerCase()),
-});
+export const cancelBodySchema = z
+  .object({ order_id: z.string().uuid() })
+  .strict();
 export type CancelBodyInput = z.infer<typeof cancelBodySchema>;
 
 export const createCategorySchema = z.object({
   name: z
     .string()
-    .min(1, "Tên danh mục không được để trống.")
-    .max(50, "Tên danh mục tối đa 50 ký tự.")
-    .transform((s) => s.trim()),
-  sort_order: z.number().int().min(0).default(0),
+    .transform((s) => s.trim())
+    .pipe(
+      z
+        .string()
+        .min(1, "Tên danh mục không được để trống.")
+        .max(50, "Tên danh mục tối đa 50 ký tự.")
+    ),
+  sort_order: z.number().int().min(0).max(9999).default(0),
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
@@ -77,11 +78,15 @@ export const updateCategorySchema = z
   .object({
     name: z
       .string()
-      .min(1, "Tên danh mục không được để trống.")
-      .max(50, "Tên danh mục tối đa 50 ký tự.")
       .transform((s) => s.trim())
+      .pipe(
+        z
+          .string()
+          .min(1, "Tên danh mục không được để trống.")
+          .max(50, "Tên danh mục tối đa 50 ký tự.")
+      )
       .optional(),
-    sort_order: z.number().int().min(0).optional(),
+    sort_order: z.number().int().min(0).max(9999).optional(),
   })
   .refine((d) => d.name !== undefined || d.sort_order !== undefined, {
     message: "Cần ít nhất một trường để cập nhật.",

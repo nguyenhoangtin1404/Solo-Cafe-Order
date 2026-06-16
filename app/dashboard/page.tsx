@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { isAppError } from "@/lib/errors";
 import { requireOwner } from "@/lib/auth/requireOwner";
 import { listOrders } from "@/lib/services/order.service";
 import { DashboardView } from "@/components/dashboard/DashboardView";
@@ -9,8 +10,11 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   try {
     await requireOwner();
-  } catch {
-    redirect("/login");
+  } catch (err) {
+    if (isAppError(err) && (err.httpStatus === 401 || err.httpStatus === 403)) {
+      redirect("/login");
+    }
+    throw err;
   }
 
   // Fetch active queue (full list — service ignores pagination for new/making)

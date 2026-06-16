@@ -151,7 +151,7 @@ export function CategoriesSection({ initialCategories }: Props) {
                 onChange={(e) => setEditSortOrder(Number(e.target.value))}
                 min={0}
                 className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                title="Thứ tự"
+                aria-label="Thứ tự sắp xếp"
               />
               <button
                 onClick={() => handleUpdate(cat.id)}

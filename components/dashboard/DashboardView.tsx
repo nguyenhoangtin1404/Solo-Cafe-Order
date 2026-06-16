@@ -139,47 +139,51 @@ export function DashboardView({ initialOrders }: Props) {
           }
         }
       )
-    ).then((results) => {
-      // Set fetched=true BEFORE the !mounted guard so cleanup knows the fetch
-      // completed and won't roll back successfully-fetched IDs unnecessarily.
-      fetched = true;
-      if (!mounted) return;
-      // Single pass: roll back failed IDs and populate itemsMap for successes.
-      results.forEach((r) => {
-        if (r.items === null) fetchedIds.delete(r.id); // allow retry on next rows update
-      });
-      setItemsMap((prev) => {
-        const next = new Map(prev);
+    )
+      .then((results) => {
+        // Set fetched=true BEFORE the !mounted guard so cleanup knows the fetch
+        // completed and won't roll back successfully-fetched IDs unnecessarily.
+        fetched = true;
+        if (!mounted) return;
+        // Single pass: roll back failed IDs and populate itemsMap for successes.
         results.forEach((r) => {
-          if (r.items !== null) next.set(r.id, r.items);
+          if (r.items === null) fetchedIds.delete(r.id); // allow retry on next rows update
         });
-        return next;
-      });
-      if (freshArrivalSet.size === 0) return; // all retries — skip sound/animation
-      setNewArrivals((prev) => {
-        const next = new Set(prev);
-        freshArrivalSet.forEach((id) => next.add(id));
-        return next;
-      });
-      // If the owner is already on the "Mới" tab, mark arrivals as seen
-      // immediately so the unread badge doesn't flash while they're watching.
-      if (activeTabRef.current === "new") {
-        setSeenNewIds((prev) => {
+        setItemsMap((prev) => {
+          const next = new Map(prev);
+          results.forEach((r) => {
+            if (r.items !== null) next.set(r.id, r.items);
+          });
+          return next;
+        });
+        if (freshArrivalSet.size === 0) return; // all retries — skip sound/animation
+        setNewArrivals((prev) => {
           const next = new Set(prev);
           freshArrivalSet.forEach((id) => next.add(id));
           return next;
         });
-      }
-      playRef.current();
-      timeoutId = setTimeout(() => {
-        if (!mounted) return;
-        setNewArrivals((prev) => {
-          const next = new Set(prev);
-          freshArrivalSet.forEach((id) => next.delete(id));
-          return next;
-        });
-      }, 3000);
-    });
+        // If the owner is already on the "Mới" tab, mark arrivals as seen
+        // immediately so the unread badge doesn't flash while they're watching.
+        if (activeTabRef.current === "new") {
+          setSeenNewIds((prev) => {
+            const next = new Set(prev);
+            freshArrivalSet.forEach((id) => next.add(id));
+            return next;
+          });
+        }
+        playRef.current();
+        timeoutId = setTimeout(() => {
+          if (!mounted) return;
+          setNewArrivals((prev) => {
+            const next = new Set(prev);
+            freshArrivalSet.forEach((id) => next.delete(id));
+            return next;
+          });
+        }, 3000);
+      })
+      .catch((err) => {
+        console.error("[dashboard] items fetch error", err);
+      });
 
     return () => {
       mounted = false;

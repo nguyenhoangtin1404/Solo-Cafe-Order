@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
+import { ORDER_CODE_RE } from "@/lib/constants";
 import type { Order } from "@/types/order";
 
 type ConnectionStatus = "connected" | "connecting" | "disconnected";
@@ -26,7 +27,7 @@ export function useOrderTracking(
 
   useEffect(() => {
     // Guard: only subscribe if format matches A001–Z999 to prevent filter injection
-    if (!orderCode || !/^[A-Z]\d{3}$/.test(orderCode)) return;
+    if (!orderCode || !ORDER_CODE_RE.test(orderCode)) return;
 
     const supabase = createClient();
     const filter = orderId ? `id=eq.${orderId}` : `order_code=eq.${orderCode}`;
@@ -57,7 +58,7 @@ export function useOrderTracking(
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channel).catch(() => null);
     };
   }, [orderCode, orderId]);
 

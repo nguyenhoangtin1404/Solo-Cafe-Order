@@ -23,7 +23,7 @@ export async function findCategoryById(id: string): Promise<Category | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return (data as Category | null) ?? null;
+  return data as Category | null;
 }
 
 export async function createCategory(
@@ -55,7 +55,7 @@ export async function updateCategory(
     .maybeSingle();
 
   if (error) throw error;
-  return (data as Category | null) ?? null;
+  return data as Category | null;
 }
 
 export async function softDeleteCategory(id: string): Promise<boolean> {
