@@ -31,10 +31,14 @@ export function CategoriesSection({
   const [newName, setNewName] = useState("");
   const [newSortOrder, setNewSortOrder] = useState(0);
   const [creating, setCreating] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
   // Ref mirrors editingId synchronously so async handlers can check the
   // latest value without relying on a stale closure.
   const editingIdRef = useRef<string | null>(null);
+  // Refs for restoring focus after edit/add actions.
+  const editTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const addTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   function startEdit(cat: CategoryState) {
     editingIdRef.current = cat.id;
@@ -44,16 +48,24 @@ export function CategoriesSection({
   }
 
   function cancelEdit() {
+    const id = editingIdRef.current;
     editingIdRef.current = null;
     setEditingId(null);
     setEditName("");
     setEditSortOrder(0);
+    if (id) setTimeout(() => editTriggerRefs.current[id]?.focus(), 0);
   }
 
   function cancelAdd() {
     setAddingNew(false);
     setNewName("");
     setNewSortOrder(0);
+    setTimeout(() => addTriggerRef.current?.focus(), 0);
+  }
+
+  function announceStatus(message: string) {
+    setStatusMessage(message);
+    setTimeout(() => setStatusMessage(""), 3000);
   }
 
   function setPending(id: string, pending: boolean) {
@@ -99,6 +111,8 @@ export function CategoriesSection({
         setEditingId(null);
         setEditName("");
         setEditSortOrder(0);
+        announceStatus("Đã cập nhật danh mục thành công.");
+        setTimeout(() => editTriggerRefs.current[id]?.focus(), 0);
       }
     } catch (err) {
       setPending(id, false);
@@ -121,6 +135,8 @@ export function CategoriesSection({
       }
       setCategories((prev) => prev.filter((c) => c.id !== id));
       onCategoryDeleted(id);
+      announceStatus("Đã xóa danh mục.");
+      setTimeout(() => addTriggerRef.current?.focus(), 0);
     } catch (err) {
       setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
@@ -150,6 +166,7 @@ export function CategoriesSection({
       );
       onCategoryCreated(category);
       cancelAdd();
+      announceStatus("Đã thêm danh mục thành công.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thêm thất bại.");
     } finally {
@@ -160,11 +177,14 @@ export function CategoriesSection({
   const hasPending = categories.some((c) => c.pending);
 
   return (
-    <section>
+    <section aria-labelledby="categories-section-heading">
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {hasPending ? "Đang lưu thay đổi danh mục..." : ""}
+        {hasPending ? "Đang lưu thay đổi danh mục..." : statusMessage}
       </div>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <h2
+        id="categories-section-heading"
+        className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
         Danh mục
       </h2>
       <div className="space-y-2">
@@ -240,6 +260,9 @@ export function CategoriesSection({
                 ) : (
                   <>
                     <button
+                      ref={(el) => {
+                        editTriggerRefs.current[cat.id] = el;
+                      }}
                       onClick={() => startEdit(cat)}
                       aria-label={`Sửa danh mục ${cat.name}`}
                       className="min-h-[44px] rounded-lg border px-3 text-sm"
@@ -322,6 +345,7 @@ export function CategoriesSection({
           </div>
         ) : (
           <button
+            ref={addTriggerRef}
             onClick={() => setAddingNew(true)}
             className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
           >

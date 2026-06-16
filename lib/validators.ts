@@ -14,9 +14,7 @@ const trimmedOptionalString = (max: number) =>
     .string()
     .nullable()
     .optional()
-    .transform((v) =>
-      v == null || v === undefined ? undefined : v.trim() || undefined
-    )
+    .transform((v) => (v == null ? undefined : v.trim() || undefined))
     .pipe(z.string().min(1).max(max).optional())
     .transform((v) => v ?? null);
 

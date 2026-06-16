@@ -115,8 +115,14 @@ export function AdminView({ groups: initial, categories }: Props) {
         />
 
         {groups.map(({ category, products }) => (
-          <section key={category.id}>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <section
+            key={category.id}
+            aria-labelledby={`cat-group-${category.id}`}
+          >
+            <h2
+              id={`cat-group-${category.id}`}
+              className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
               {category.name}
             </h2>
             <div className="space-y-2">
@@ -134,6 +140,9 @@ export function AdminView({ groups: initial, categories }: Props) {
                       }`}
                     >
                       {product.name}
+                      {!product.is_available && (
+                        <span className="sr-only"> (không có sẵn)</span>
+                      )}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {product.price.toLocaleString("vi-VN")}đ
@@ -148,17 +157,21 @@ export function AdminView({ groups: initial, categories }: Props) {
                     onClick={() =>
                       handleToggle(product.id, !product.is_available)
                     }
-                    className={`relative ml-4 inline-flex min-h-[44px] w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-                      product.is_available ? "bg-primary" : "bg-input"
-                    }`}
+                    className="relative ml-4 flex min-h-[44px] w-11 shrink-0 cursor-pointer items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span
-                      className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                        product.is_available
-                          ? "translate-x-5"
-                          : "translate-x-0.5"
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        product.is_available ? "bg-primary" : "bg-input"
                       }`}
-                    />
+                    >
+                      <span
+                        className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                          product.is_available
+                            ? "translate-x-5"
+                            : "translate-x-0.5"
+                        }`}
+                      />
+                    </span>
                   </button>
                 </div>
               ))}
