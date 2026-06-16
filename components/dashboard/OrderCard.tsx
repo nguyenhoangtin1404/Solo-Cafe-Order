@@ -16,12 +16,14 @@ interface Props {
   onStatusUpdate: (orderId: string, newStatus: OrderStatus) => void;
 }
 
+const TIME_FORMAT = new Intl.DateTimeFormat("vi-VN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Asia/Ho_Chi_Minh",
+});
+
 function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Ho_Chi_Minh",
-  }).format(new Date(iso));
+  return TIME_FORMAT.format(new Date(iso));
 }
 
 function formatCurrency(amount: number): string {
@@ -58,6 +60,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
       {/* Items */}
       <ul className="mb-3 space-y-1">
         {order.items.map((item, i) => (
+          // Items within an order are immutable — index key is safe here.
           <li key={i} className="text-sm">
             <span className="font-medium">{item.quantity}×</span>{" "}
             {item.product_name}

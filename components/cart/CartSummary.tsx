@@ -93,6 +93,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
           value={pickupName}
           onChange={(e) => setPickupName(e.target.value)}
           placeholder="Nhập tên để nhân viên gọi khi xong"
+          maxLength={MAX_PICKUP_NAME_LENGTH}
           className="w-full rounded-lg border border-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
         />
         {pickupNameTooLong && (

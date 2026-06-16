@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
       {
         source: "/",
         destination: "/menu",
-        permanent: true, // 308
+        permanent: false, // 307 — avoid permanently-cached redirects during active development
       },
     ];
   },
@@ -34,6 +34,15 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // HSTS: only in production — prevents downgrade attacks on HTTPS
+          ...(isDev
+            ? []
+            : [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=63072000; includeSubDomains; preload",
+                },
+              ]),
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",

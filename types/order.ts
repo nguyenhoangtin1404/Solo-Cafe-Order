@@ -1,4 +1,5 @@
 ﻿import type { OrderStatus, PaymentMethod } from "@/lib/constants";
+import type { BankTransferInfo } from "@/lib/config/bank";
 
 // DB-facing: shape trả về từ Supabase khi join order_items với options
 export interface SelectedOption {
@@ -59,12 +60,7 @@ export interface OrderItemSummary {
   note: string | null;
 }
 
-export interface BankTransferInfo {
-  bank_name: string;
-  account_number: string;
-  account_name: string;
-  qr_image_url: string | null;
-}
+export type { BankTransferInfo };
 
 export interface OrderSuccessData {
   order_code: string;

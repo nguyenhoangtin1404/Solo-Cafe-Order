@@ -14,6 +14,8 @@ function createRedis(): Redis | null {
   });
 }
 
+const RATE_LIMIT_WINDOW = "1 m" as const;
+
 function createLimiter(
   redis: Redis,
   prefix: string,
@@ -21,12 +23,17 @@ function createLimiter(
 ): Ratelimit {
   return new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(requests, "1 m"),
+    limiter: Ratelimit.slidingWindow(requests, RATE_LIMIT_WINDOW),
     prefix,
   });
 }
 
 const redis = createRedis();
+if (!redis && process.env.NODE_ENV === "production") {
+  console.warn(
+    "[ratelimit] UPSTASH_REDIS_REST_URL / TOKEN missing — rate limiting is disabled in production"
+  );
+}
 const orderLimiter = redis ? createLimiter(redis, "rl:orders", 10) : null;
 const cancelLimiter = redis ? createLimiter(redis, "rl:cancel", 5) : null;
 const trackLimiter = redis ? createLimiter(redis, "rl:track", 30) : null;
@@ -45,8 +52,8 @@ async function checkLimit(
         ? 0
         : Math.max(0, Math.ceil((reset - Date.now()) / 1000)),
     };
-  } catch {
-    // Upstash unreachable — fail open to avoid blocking legitimate requests
+  } catch (err) {
+    console.error("[ratelimit] Upstash unreachable — failing open:", err);
     return { allowed: true, retryAfterSeconds: 0 };
   }
 }
@@ -73,6 +80,8 @@ export function getClientIp(req: {
   headers: { get: (name: string) => string | null };
 }): string {
   return (
-    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "unknown"
+    req.headers.get("x-real-ip")?.trim() ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown"
   );
 }

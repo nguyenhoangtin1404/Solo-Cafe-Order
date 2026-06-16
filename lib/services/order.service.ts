@@ -108,13 +108,7 @@ function validateOptionConstraints(
   }
 
   for (const option of product.options) {
-    if (option.type === "select" && option.values.length === 0) {
-      throw new AppError(
-        "PRODUCT_UNAVAILABLE",
-        `"${product.name}" tạm thời không có sẵn.`,
-        422
-      );
-    }
+    // Empty select-option availability is pre-checked in assertAllItemsAvailable.
     const optionValueIds = new Set(option.values.map((v) => v.id));
     const selectedCount = uniqueValueIds.filter((id) =>
       optionValueIds.has(id)
@@ -126,7 +120,6 @@ function validateOptionConstraints(
       );
     }
     // multi options: no minimum enforced — all selections are optional extras.
-    // If schema adds min_selections to product_options, enforce it here.
   }
 }
 
@@ -274,6 +267,9 @@ export async function submitOrder(
     );
   }
 
+  // Count before insert so the new order isn't included in the wait estimate
+  const { count: pendingCount, degraded } = await safeCountPending();
+
   const order = await orderRepo.createOrder({
     pickup_name: sanitizeOrNull(input.pickup_name, MAX_PICKUP_NAME_LENGTH),
     note: sanitizeOrNull(input.note, MAX_ORDER_NOTE_LENGTH),
@@ -281,10 +277,6 @@ export async function submitOrder(
     total_amount: totalAmount,
     items: orderItems,
   });
-
-  // Subtract 1: this new order is already counted as pending — exclude from estimate
-  const { count, degraded } = await safeCountPending();
-  const pendingCount = Math.max(0, count - 1);
 
   const wait_estimate: WaitEstimate = {
     ...computeWaitEstimate(pendingCount),
@@ -336,7 +328,7 @@ export async function cancelOrder(
   if (!order) {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
-  if (expectedId !== undefined && order.id.toLowerCase() !== expectedId) {
+  if (expectedId !== undefined && order.id !== expectedId) {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
 

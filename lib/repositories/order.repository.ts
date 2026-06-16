@@ -8,11 +8,6 @@ import {
 } from "@/lib/utils/timezone";
 import type { Order, SelectedOption } from "@/types/order";
 
-export {
-  getPreviousDayHCMBounds,
-  getTodayHCMBounds,
-} from "@/lib/utils/timezone";
-
 export interface CreateOrderItemData {
   product_id: string;
   product_name: string;
@@ -109,7 +104,10 @@ export async function updateStatus(
   cancelledBy?: "customer" | "owner"
 ): Promise<Order | null> {
   const supabase = createAdminSupabaseClient();
-  const updateData: { status: OrderStatus; cancelled_by?: string } = { status };
+  const updateData: {
+    status: OrderStatus;
+    cancelled_by?: "customer" | "owner";
+  } = { status };
   if (cancelledBy) updateData.cancelled_by = cancelledBy;
 
   const { data, error } = await supabase
@@ -124,22 +122,18 @@ export async function updateStatus(
   return data as Order | null;
 }
 
-export async function listByStatus(status?: OrderStatus): Promise<Order[]> {
+export async function listByStatus(status: OrderStatus): Promise<Order[]> {
   const supabase = createAdminSupabaseClient();
   const { start, end } = getTodayHCMBounds();
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("orders")
     .select(WITH_ITEMS)
     .gte("created_at", start)
     .lt("created_at", end)
+    .eq("status", status)
     .order("created_at", { ascending: false });
 
-  if (status !== undefined) {
-    query = query.eq("status", status);
-  }
-
-  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []) as Order[];
 }
