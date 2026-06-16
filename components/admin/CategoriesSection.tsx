@@ -39,6 +39,8 @@ export function CategoriesSection({
   // Refs for restoring focus after edit/add actions.
   const editTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const addTriggerRef = useRef<HTMLButtonElement | null>(null);
+  // Tracks the active status-clear timer so it can be cancelled on re-fire.
+  const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function startEdit(cat: CategoryState) {
     editingIdRef.current = cat.id;
@@ -64,8 +66,13 @@ export function CategoriesSection({
   }
 
   function announceStatus(message: string) {
+    if (announceTimerRef.current !== null)
+      clearTimeout(announceTimerRef.current);
     setStatusMessage(message);
-    setTimeout(() => setStatusMessage(""), 3000);
+    announceTimerRef.current = setTimeout(() => {
+      setStatusMessage("");
+      announceTimerRef.current = null;
+    }, 3000);
   }
 
   function setPending(id: string, pending: boolean) {
@@ -174,12 +181,15 @@ export function CategoriesSection({
     }
   }
 
-  const hasPending = categories.some((c) => c.pending);
+  const hasPending = creating || categories.some((c) => c.pending);
 
   return (
     <section aria-labelledby="categories-section-heading">
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {hasPending ? "Đang lưu thay đổi danh mục..." : statusMessage}
+        {hasPending && "Đang lưu thay đổi danh mục..."}
+      </div>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {statusMessage}
       </div>
       <h2
         id="categories-section-heading"
