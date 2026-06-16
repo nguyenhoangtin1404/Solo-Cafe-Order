@@ -29,6 +29,11 @@ function createLimiter(
 }
 
 const redis = createRedis();
+if (!redis && process.env.NODE_ENV === "production") {
+  console.warn(
+    "[ratelimit] UPSTASH_REDIS_REST_URL / TOKEN missing — rate limiting is disabled in production"
+  );
+}
 const orderLimiter = redis ? createLimiter(redis, "rl:orders", 10) : null;
 const cancelLimiter = redis ? createLimiter(redis, "rl:cancel", 5) : null;
 const trackLimiter = redis ? createLimiter(redis, "rl:track", 30) : null;

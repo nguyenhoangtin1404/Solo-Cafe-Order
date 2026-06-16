@@ -58,7 +58,7 @@ export function useOrderTracking(
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channel).catch(() => null);
     };
   }, [orderCode, orderId]);
 

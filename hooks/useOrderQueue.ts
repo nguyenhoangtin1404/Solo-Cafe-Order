@@ -79,7 +79,7 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channel).catch(() => null);
     };
   }, []);
 
