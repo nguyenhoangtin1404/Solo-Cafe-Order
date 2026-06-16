@@ -1,5 +1,6 @@
 import type { Category } from "@/types/product";
 import { AppError } from "@/lib/errors";
+import { CATEGORY_HAS_PRODUCTS } from "@/lib/constants";
 import * as categoryRepo from "@/lib/repositories/category.repository";
 import * as productRepo from "@/lib/repositories/product.repository";
 
@@ -33,7 +34,7 @@ export async function deleteCategory(id: string): Promise<void> {
   const productCount = await productRepo.countActiveByCategory(id);
   if (productCount > 0) {
     throw new AppError(
-      "CATEGORY_HAS_PRODUCTS",
+      CATEGORY_HAS_PRODUCTS,
       "Danh mục còn sản phẩm, không thể xóa.",
       422
     );

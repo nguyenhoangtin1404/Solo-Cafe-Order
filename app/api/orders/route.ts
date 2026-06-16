@@ -12,12 +12,11 @@ import type { Order, OrderItemSummary } from "@/types/order";
 import { toItemDto } from "@/lib/dto/order";
 import { getBankTransferInfo } from "@/lib/config/bank";
 
-const VALID_STATUSES = new Set<string>([
-  ORDER_STATUS.NEW,
-  ORDER_STATUS.MAKING,
-  ORDER_STATUS.DONE,
-  ORDER_STATUS.CANCELLED,
-]);
+const VALID_STATUSES = new Set<OrderStatus>(Object.values(ORDER_STATUS));
+
+function isOrderStatus(s: string): s is OrderStatus {
+  return (VALID_STATUSES as Set<string>).has(s);
+}
 
 type OrderDto = Omit<Order, "items"> & { items: OrderItemSummary[] };
 
@@ -50,7 +49,7 @@ export async function GET(req: NextRequest) {
       100
     );
 
-    if (statusParam !== undefined && !VALID_STATUSES.has(statusParam)) {
+    if (statusParam !== undefined && !isOrderStatus(statusParam)) {
       return errorResponse("VALIDATION_ERROR", "Status không hợp lệ.", 400);
     }
     if (cursor !== undefined && !z.string().uuid().safeParse(cursor).success) {
@@ -58,7 +57,9 @@ export async function GET(req: NextRequest) {
     }
 
     const { orders, next_cursor } = await listOrders(
-      statusParam as OrderStatus | undefined,
+      statusParam !== undefined && isOrderStatus(statusParam)
+        ? statusParam
+        : undefined,
       cursor,
       limit
     );

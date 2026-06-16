@@ -56,10 +56,7 @@ export const updateStatusSchema = z.object({
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
 export const cancelBodySchema = z.object({
-  order_id: z
-    .string()
-    .uuid()
-    .transform((v) => v.toLowerCase()),
+  order_id: z.string().uuid(),
 });
 export type CancelBodyInput = z.infer<typeof cancelBodySchema>;
 

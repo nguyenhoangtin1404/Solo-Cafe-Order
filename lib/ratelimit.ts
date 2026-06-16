@@ -14,6 +14,8 @@ function createRedis(): Redis | null {
   });
 }
 
+const RATE_LIMIT_WINDOW = "1 m" as const;
+
 function createLimiter(
   redis: Redis,
   prefix: string,
@@ -21,7 +23,7 @@ function createLimiter(
 ): Ratelimit {
   return new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(requests, "1 m"),
+    limiter: Ratelimit.slidingWindow(requests, RATE_LIMIT_WINDOW),
     prefix,
   });
 }
