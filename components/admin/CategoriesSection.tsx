@@ -43,6 +43,8 @@ export function CategoriesSection({
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Synchronous guard against double-submit before React re-renders with creating=true.
   const creatingRef = useRef(false);
+  // Per-category guard against concurrent PATCH requests from rapid Enter keypresses.
+  const updatingIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     return () => {
@@ -98,8 +100,8 @@ export function CategoriesSection({
 
   async function handleUpdate(id: string) {
     const name = editName.trim();
-    if (!name) return;
-
+    if (!name || updatingIdsRef.current.has(id)) return;
+    updatingIdsRef.current.add(id);
     setPending(id, true);
     // Intentionally keep editingId open so user can see/retry if request fails.
 
@@ -134,12 +136,15 @@ export function CategoriesSection({
     } catch (err) {
       setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
+    } finally {
+      updatingIdsRef.current.delete(id);
     }
   }
 
   async function handleDelete(id: string) {
     if (!window.confirm("Xóa danh mục này?")) return;
-
+    // Move focus before pending spinner replaces the action buttons on next render.
+    addTriggerRef.current?.focus();
     setPending(id, true);
 
     try {
@@ -153,7 +158,6 @@ export function CategoriesSection({
       setCategories((prev) => prev.filter((c) => c.id !== id));
       onCategoryDeleted(id);
       announceStatus("Đã xóa danh mục.");
-      setTimeout(() => addTriggerRef.current?.focus(), 0);
     } catch (err) {
       setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
