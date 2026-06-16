@@ -152,7 +152,7 @@ export function AdminView({ groups: initial, categories }: Props) {
                   <button
                     role="switch"
                     aria-checked={product.is_available}
-                    aria-label={`${product.is_available ? "Tắt" : "Bật"} ${product.name}`}
+                    aria-label={product.name}
                     disabled={product.pending}
                     onClick={() =>
                       handleToggle(product.id, !product.is_available)

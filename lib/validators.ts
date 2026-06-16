@@ -72,6 +72,8 @@ export const createCategorySchema = z.object({
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
+// sort_order has no .max() here (unlike createCategorySchema) so that editing
+// an existing category with a high sort_order does not fail validation.
 export const updateCategorySchema = z
   .object({
     name: z

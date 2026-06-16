@@ -43,7 +43,7 @@ export function CategoriesSection({
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Synchronous guard against double-submit before React re-renders with creating=true.
   const creatingRef = useRef(false);
-  // Per-category guard against concurrent PATCH/DELETE requests.
+  // Per-category guards against concurrent PATCH and DELETE requests respectively.
   const updatingIdsRef = useRef<Set<string>>(new Set());
   const deletingIdsRef = useRef<Set<string>>(new Set());
 
@@ -150,8 +150,11 @@ export function CategoriesSection({
 
   async function handleDelete(id: string) {
     if (deletingIdsRef.current.has(id)) return;
-    if (!window.confirm("Xóa danh mục này?")) return;
     deletingIdsRef.current.add(id);
+    if (!window.confirm("Xóa danh mục này?")) {
+      deletingIdsRef.current.delete(id);
+      return;
+    }
     // Move focus before pending spinner replaces the action buttons on next render.
     addTriggerRef.current?.focus();
     setStatusMessage("");
@@ -218,7 +221,10 @@ export function CategoriesSection({
   return (
     <section aria-labelledby="categories-section-heading">
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {hasPending ? "Đang lưu thay đổi danh mục..." : statusMessage}
+        {hasPending ? "Đang lưu thay đổi danh mục..." : ""}
+      </div>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {statusMessage}
       </div>
       <h2
         id="categories-section-heading"
@@ -360,7 +366,7 @@ export function CategoriesSection({
               placeholder="Tên danh mục mới"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
-                if (e.key === "Escape") cancelAdd();
+                if (e.key === "Escape" && !creatingRef.current) cancelAdd();
               }}
             />
             <input
@@ -369,7 +375,7 @@ export function CategoriesSection({
               onChange={(e) => setNewSortOrder(parseSortOrder(e.target.value))}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
-                if (e.key === "Escape") cancelAdd();
+                if (e.key === "Escape" && !creatingRef.current) cancelAdd();
               }}
               min={0}
               max={9999}
@@ -384,10 +390,16 @@ export function CategoriesSection({
             >
               Thêm
             </button>
+            {creating && (
+              <span id="add-cancel-hint" className="sr-only">
+                Đang xử lý, vui lòng chờ
+              </span>
+            )}
             <button
               onClick={cancelAdd}
               disabled={creating}
               aria-label="Hủy thêm danh mục"
+              aria-describedby={creating ? "add-cancel-hint" : undefined}
               className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
             >
               Hủy
@@ -397,6 +409,7 @@ export function CategoriesSection({
           <button
             ref={addTriggerRef}
             onClick={() => setAddingNew(true)}
+            aria-label="Thêm danh mục"
             className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
           >
             <span aria-hidden="true">+</span> Thêm danh mục
