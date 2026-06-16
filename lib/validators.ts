@@ -72,8 +72,9 @@ export const createCategorySchema = z.object({
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
-// sort_order has no .max() here (unlike createCategorySchema) so that editing
-// an existing category with a high sort_order does not fail validation.
+// Higher limit than createCategorySchema (9999) so existing categories with
+// sort_order > 9999 can be name-edited without the current value being rejected.
+// Capped at 999999 to prevent PostgreSQL int column overflow (~2.1B).
 export const updateCategorySchema = z
   .object({
     name: z
@@ -86,7 +87,7 @@ export const updateCategorySchema = z
           .max(50, "Tên danh mục tối đa 50 ký tự.")
       )
       .optional(),
-    sort_order: z.number().int().min(0).optional(),
+    sort_order: z.number().int().min(0).max(999999).optional(),
   })
   .refine((d) => d.name !== undefined || d.sort_order !== undefined, {
     message: "Cần ít nhất một trường để cập nhật.",

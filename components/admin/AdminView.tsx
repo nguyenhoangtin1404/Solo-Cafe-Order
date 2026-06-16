@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type {
   AdminCategoryGroup,
@@ -23,6 +23,8 @@ interface Props {
 
 export function AdminView({ groups: initial, categories }: Props) {
   const [groups, setGroups] = useState<AdminViewGroup[]>(initial);
+  // Synchronous guard against concurrent PATCH requests on the same product.
+  const togglingIdsRef = useRef<Set<string>>(new Set());
 
   // Derived from live groups state so it stays accurate after toggle/delete.
   const productCounts = Object.fromEntries(
@@ -50,6 +52,8 @@ export function AdminView({ groups: initial, categories }: Props) {
   }
 
   async function handleToggle(productId: string, newValue: boolean) {
+    if (togglingIdsRef.current.has(productId)) return;
+    togglingIdsRef.current.add(productId);
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
@@ -74,6 +78,14 @@ export function AdminView({ groups: initial, categories }: Props) {
         };
         throw new Error(body.message ?? "Cập nhật thất bại.");
       }
+      setGroups((prev) =>
+        prev.map((g) => ({
+          ...g,
+          products: g.products.map((p) =>
+            p.id === productId ? { ...p, pending: false } : p
+          ),
+        }))
+      );
     } catch (err) {
       setGroups((prev) =>
         prev.map((g) => ({
@@ -86,17 +98,9 @@ export function AdminView({ groups: initial, categories }: Props) {
         }))
       );
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
-      return;
+    } finally {
+      togglingIdsRef.current.delete(productId);
     }
-
-    setGroups((prev) =>
-      prev.map((g) => ({
-        ...g,
-        products: g.products.map((p) =>
-          p.id === productId ? { ...p, pending: false } : p
-        ),
-      }))
-    );
   }
 
   return (
@@ -152,7 +156,7 @@ export function AdminView({ groups: initial, categories }: Props) {
                   <button
                     role="switch"
                     aria-checked={product.is_available}
-                    aria-label={product.name}
+                    aria-label={`${product.name}: hiển thị trên menu`}
                     disabled={product.pending}
                     onClick={() =>
                       handleToggle(product.id, !product.is_available)

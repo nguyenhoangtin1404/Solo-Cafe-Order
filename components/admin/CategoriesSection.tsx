@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
@@ -33,12 +33,17 @@ export function CategoriesSection({
   const [creating, setCreating] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
+  // Stable id for aria-describedby on the add-form cancel button.
+  const addCancelHintId = useId();
+
   // Ref mirrors editingId synchronously so async handlers can check the
   // latest value without relying on a stale closure.
   const editingIdRef = useRef<string | null>(null);
   // Refs for restoring focus after edit/add actions.
   const editTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const addTriggerRef = useRef<HTMLButtonElement | null>(null);
+  // Fallback focus target when addTriggerRef is null (add form is open).
+  const newNameInputRef = useRef<HTMLInputElement | null>(null);
   // Tracks the active status-clear timer so it can be cancelled on re-fire.
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Synchronous guard against double-submit before React re-renders with creating=true.
@@ -105,7 +110,8 @@ export function CategoriesSection({
       toast.error("Tên danh mục không được để trống.");
       return;
     }
-    if (updatingIdsRef.current.has(id)) return;
+    if (updatingIdsRef.current.has(id) || deletingIdsRef.current.has(id))
+      return;
     const sortOrder = editSortOrder;
     updatingIdsRef.current.add(id);
     setStatusMessage("");
@@ -156,7 +162,8 @@ export function CategoriesSection({
       return;
     }
     // Move focus before pending spinner replaces the action buttons on next render.
-    addTriggerRef.current?.focus();
+    // Fall back to the add-form name input when the trigger button is not mounted.
+    (addTriggerRef.current ?? newNameInputRef.current)?.focus();
     setStatusMessage("");
     setPending(id, true);
 
@@ -220,10 +227,22 @@ export function CategoriesSection({
 
   return (
     <section aria-labelledby="categories-section-heading">
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {/* Two independent regions so in-progress and success messages don't compete. */}
+      <div
+        id="categories-pending-live"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-atomic="true"
+        className="sr-only"
+      >
         {hasPending ? "Đang lưu thay đổi danh mục..." : ""}
       </div>
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
+      <div
+        id="categories-status-live"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
         {statusMessage}
       </div>
       <h2
@@ -357,6 +376,7 @@ export function CategoriesSection({
             className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm"
           >
             <input
+              ref={newNameInputRef}
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -388,10 +408,18 @@ export function CategoriesSection({
               aria-label="Thêm danh mục mới"
               className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
-              Thêm
+              {creating ? (
+                <Loader2
+                  size={16}
+                  aria-hidden="true"
+                  className="animate-spin"
+                />
+              ) : (
+                "Thêm"
+              )}
             </button>
             {creating && (
-              <span id="add-cancel-hint" className="sr-only">
+              <span id={addCancelHintId} className="sr-only">
                 Đang xử lý, vui lòng chờ
               </span>
             )}
@@ -399,7 +427,7 @@ export function CategoriesSection({
               onClick={cancelAdd}
               disabled={creating}
               aria-label="Hủy thêm danh mục"
-              aria-describedby={creating ? "add-cancel-hint" : undefined}
+              aria-describedby={creating ? addCancelHintId : undefined}
               className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
             >
               Hủy
