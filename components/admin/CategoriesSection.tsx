@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
 
@@ -8,9 +9,19 @@ type CategoryState = Category & { pending?: boolean };
 
 interface Props {
   initialCategories: Category[];
+  productCounts: Record<string, number>;
+  onCategoryCreated: (category: Category) => void;
+  onCategoryDeleted: (id: string) => void;
+  onCategoryUpdated: (category: Category) => void;
 }
 
-export function CategoriesSection({ initialCategories }: Props) {
+export function CategoriesSection({
+  initialCategories,
+  productCounts,
+  onCategoryCreated,
+  onCategoryDeleted,
+  onCategoryUpdated,
+}: Props) {
   const [categories, setCategories] =
     useState<CategoryState[]>(initialCategories);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -21,24 +32,47 @@ export function CategoriesSection({ initialCategories }: Props) {
   const [newSortOrder, setNewSortOrder] = useState(0);
   const [creating, setCreating] = useState(false);
 
+  // Ref mirrors editingId synchronously so async handlers can check the
+  // latest value without relying on a stale closure.
+  const editingIdRef = useRef<string | null>(null);
+
   function startEdit(cat: CategoryState) {
+    editingIdRef.current = cat.id;
     setEditingId(cat.id);
     setEditName(cat.name);
     setEditSortOrder(cat.sort_order);
   }
 
   function cancelEdit() {
+    editingIdRef.current = null;
     setEditingId(null);
+    setEditName("");
+    setEditSortOrder(0);
+  }
+
+  function cancelAdd() {
+    setAddingNew(false);
+    setNewName("");
+    setNewSortOrder(0);
+  }
+
+  function setPending(id: string, pending: boolean) {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, pending } : c))
+    );
+  }
+
+  function parseSortOrder(raw: string): number {
+    const n = Number(raw);
+    return Number.isNaN(n) ? 0 : Math.trunc(n);
   }
 
   async function handleUpdate(id: string) {
     const name = editName.trim();
     if (!name) return;
 
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, pending: true } : c))
-    );
-    setEditingId(null);
+    setPending(id, true);
+    // Intentionally keep editingId open so user can see/retry if request fails.
 
     try {
       const res = await fetch(`/api/categories/${id}`, {
@@ -46,22 +80,28 @@ export function CategoriesSection({ initialCategories }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, sort_order: editSortOrder }),
       });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          message?: string;
-        };
-        throw new Error(body.message ?? "Cập nhật thất bại.");
-      }
-      const { category } = (await res.json()) as { category: Category };
+      const body = (await res.json().catch(() => ({}))) as {
+        category?: Category;
+        message?: string;
+      };
+      if (!res.ok) throw new Error(body.message ?? "Cập nhật thất bại.");
+      const category = body.category;
+      if (!category) throw new Error("Phản hồi không hợp lệ.");
       setCategories((prev) =>
         prev
           .map((c) => (c.id === id ? { ...category, pending: false } : c))
           .sort((a, b) => a.sort_order - b.sort_order)
       );
+      onCategoryUpdated(category);
+      // Only reset form state if user hasn't switched to editing a different item.
+      if (editingIdRef.current === id) {
+        editingIdRef.current = null;
+        setEditingId(null);
+        setEditName("");
+        setEditSortOrder(0);
+      }
     } catch (err) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, pending: false } : c))
-      );
+      setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
     }
   }
@@ -69,9 +109,7 @@ export function CategoriesSection({ initialCategories }: Props) {
   async function handleDelete(id: string) {
     if (!window.confirm("Xóa danh mục này?")) return;
 
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, pending: true } : c))
-    );
+    setPending(id, true);
 
     try {
       const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
@@ -82,10 +120,9 @@ export function CategoriesSection({ initialCategories }: Props) {
         throw new Error(body.message ?? "Xóa thất bại.");
       }
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      onCategoryDeleted(id);
     } catch (err) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, pending: false } : c))
-      );
+      setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
     }
   }
@@ -101,19 +138,18 @@ export function CategoriesSection({ initialCategories }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, sort_order: newSortOrder }),
       });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          message?: string;
-        };
-        throw new Error(body.message ?? "Thêm thất bại.");
-      }
-      const { category } = (await res.json()) as { category: Category };
+      const body = (await res.json().catch(() => ({}))) as {
+        category?: Category;
+        message?: string;
+      };
+      if (!res.ok) throw new Error(body.message ?? "Thêm thất bại.");
+      const category = body.category;
+      if (!category) throw new Error("Phản hồi không hợp lệ.");
       setCategories((prev) =>
         [...prev, category].sort((a, b) => a.sort_order - b.sort_order)
       );
-      setNewName("");
-      setNewSortOrder(0);
-      setAddingNew(false);
+      onCategoryCreated(category);
+      cancelAdd();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thêm thất bại.");
     } finally {
@@ -121,14 +157,21 @@ export function CategoriesSection({ initialCategories }: Props) {
     }
   }
 
+  const hasPending = categories.some((c) => c.pending);
+
   return (
     <section>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {hasPending ? "Đang lưu thay đổi danh mục..." : ""}
+      </div>
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Danh mục
       </h2>
       <div className="space-y-2">
-        {categories.map((cat) =>
-          editingId === cat.id ? (
+        {categories.map((cat) => {
+          const count = productCounts[cat.id] ?? 0;
+          const hasProducts = count > 0;
+          return editingId === cat.id ? (
             <div
               key={cat.id}
               className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm"
@@ -138,6 +181,7 @@ export function CategoriesSection({ initialCategories }: Props) {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 maxLength={50}
+                aria-label="Tên danh mục"
                 className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Tên danh mục"
                 onKeyDown={(e) => {
@@ -148,14 +192,22 @@ export function CategoriesSection({ initialCategories }: Props) {
               <input
                 type="number"
                 value={editSortOrder}
-                onChange={(e) => setEditSortOrder(Number(e.target.value))}
+                onChange={(e) =>
+                  setEditSortOrder(parseSortOrder(e.target.value))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleUpdate(cat.id);
+                  if (e.key === "Escape") cancelEdit();
+                }}
                 min={0}
+                max={9999}
+                aria-label="Thứ tự hiển thị"
                 className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                aria-label="Thứ tự sắp xếp"
               />
               <button
                 onClick={() => handleUpdate(cat.id)}
-                className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
+                disabled={cat.pending}
+                className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
                 Lưu
               </button>
@@ -175,26 +227,55 @@ export function CategoriesSection({ initialCategories }: Props) {
                 <p className="truncate font-medium">{cat.name}</p>
                 <p className="text-xs text-muted-foreground">
                   Thứ tự: {cat.sort_order}
+                  {count > 0 && ` · ${count} sản phẩm`}
                 </p>
               </div>
-              <div className="ml-4 flex shrink-0 gap-2">
-                <button
-                  disabled={cat.pending}
-                  onClick={() => startEdit(cat)}
-                  className="min-h-[44px] rounded-lg border px-3 text-sm disabled:opacity-50"
-                >
-                  Sửa
-                </button>
-                <button
-                  disabled={cat.pending}
-                  onClick={() => handleDelete(cat.id)}
-                  className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive disabled:opacity-50"
-                >
-                  Xóa
-                </button>
+              <div className="ml-4 flex shrink-0 items-center gap-2">
+                {cat.pending ? (
+                  <Loader2
+                    size={16}
+                    aria-hidden="true"
+                    className="animate-spin text-muted-foreground"
+                  />
+                ) : (
+                  <>
+                    <button
+                      onClick={() => startEdit(cat)}
+                      aria-label={`Sửa danh mục ${cat.name}`}
+                      className="min-h-[44px] rounded-lg border px-3 text-sm"
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      disabled={hasProducts}
+                      onClick={() => handleDelete(cat.id)}
+                      aria-label={`Xóa danh mục ${cat.name}`}
+                      aria-describedby={
+                        hasProducts ? `del-hint-${cat.id}` : undefined
+                      }
+                      className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Xóa
+                    </button>
+                    {hasProducts && (
+                      <span id={`del-hint-${cat.id}`} className="sr-only">
+                        Xóa hết sản phẩm trước khi xóa danh mục
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          )
+          );
+        })}
+
+        {categories.length === 0 && !addingNew && (
+          <div className="rounded-xl border border-dashed py-8 text-center text-muted-foreground">
+            <p className="text-sm font-medium">Chưa có danh mục nào</p>
+            <p className="mt-1 text-xs">
+              Tạo danh mục đầu tiên để bắt đầu thêm sản phẩm vào menu
+            </p>
+          </div>
         )}
 
         {addingNew ? (
@@ -204,20 +285,26 @@ export function CategoriesSection({ initialCategories }: Props) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               maxLength={50}
+              aria-label="Tên danh mục mới"
               className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Tên danh mục mới"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
-                if (e.key === "Escape") setAddingNew(false);
+                if (e.key === "Escape") cancelAdd();
               }}
             />
             <input
               type="number"
               value={newSortOrder}
-              onChange={(e) => setNewSortOrder(Number(e.target.value))}
+              onChange={(e) => setNewSortOrder(parseSortOrder(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") cancelAdd();
+              }}
               min={0}
+              max={9999}
+              aria-label="Thứ tự hiển thị"
               className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              title="Thứ tự"
             />
             <button
               onClick={handleCreate}
@@ -227,7 +314,7 @@ export function CategoriesSection({ initialCategories }: Props) {
               Thêm
             </button>
             <button
-              onClick={() => setAddingNew(false)}
+              onClick={cancelAdd}
               className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
             >
               Hủy

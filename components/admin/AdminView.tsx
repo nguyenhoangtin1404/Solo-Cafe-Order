@@ -24,8 +24,32 @@ interface Props {
 export function AdminView({ groups: initial, categories }: Props) {
   const [groups, setGroups] = useState<CategoryWithProducts[]>(initial);
 
+  // Derived from live groups state so it stays accurate after toggle/delete.
+  const productCounts = Object.fromEntries(
+    groups.map((g) => [g.category.id, g.products.length])
+  );
+
+  function handleCategoryCreated(category: Category) {
+    setGroups((prev) =>
+      [...prev, { category, products: [] }].sort(
+        (a, b) => a.category.sort_order - b.category.sort_order
+      )
+    );
+  }
+
+  function handleCategoryDeleted(id: string) {
+    setGroups((prev) => prev.filter((g) => g.category.id !== id));
+  }
+
+  function handleCategoryUpdated(category: Category) {
+    setGroups((prev) =>
+      prev
+        .map((g) => (g.category.id === category.id ? { ...g, category } : g))
+        .sort((a, b) => a.category.sort_order - b.category.sort_order)
+    );
+  }
+
   async function handleToggle(productId: string, newValue: boolean) {
-    // Optimistic update
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
@@ -51,7 +75,6 @@ export function AdminView({ groups: initial, categories }: Props) {
         throw new Error(body.message ?? "Cập nhật thất bại.");
       }
     } catch (err) {
-      // Revert
       setGroups((prev) =>
         prev.map((g) => ({
           ...g,
@@ -66,7 +89,6 @@ export function AdminView({ groups: initial, categories }: Props) {
       return;
     }
 
-    // Clear pending flag
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
@@ -84,7 +106,13 @@ export function AdminView({ groups: initial, categories }: Props) {
       </header>
 
       <main className="space-y-6 px-4 py-4">
-        <CategoriesSection initialCategories={categories} />
+        <CategoriesSection
+          initialCategories={categories}
+          productCounts={productCounts}
+          onCategoryCreated={handleCategoryCreated}
+          onCategoryDeleted={handleCategoryDeleted}
+          onCategoryUpdated={handleCategoryUpdated}
+        />
 
         {groups.map(({ category, products }) => (
           <section key={category.id}>
