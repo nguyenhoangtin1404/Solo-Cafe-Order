@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
@@ -41,6 +41,15 @@ export function CategoriesSection({
   const addTriggerRef = useRef<HTMLButtonElement | null>(null);
   // Tracks the active status-clear timer so it can be cancelled on re-fire.
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Synchronous guard against double-submit before React re-renders with creating=true.
+  const creatingRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (announceTimerRef.current !== null)
+        clearTimeout(announceTimerRef.current);
+    };
+  }, []);
 
   function startEdit(cat: CategoryState) {
     editingIdRef.current = cat.id;
@@ -83,7 +92,8 @@ export function CategoriesSection({
 
   function parseSortOrder(raw: string): number {
     const n = Number(raw);
-    return Number.isNaN(n) ? 0 : Math.trunc(n);
+    if (Number.isNaN(n)) return 0;
+    return Math.min(9999, Math.max(0, Math.trunc(n)));
   }
 
   async function handleUpdate(id: string) {
@@ -152,8 +162,8 @@ export function CategoriesSection({
 
   async function handleCreate() {
     const name = newName.trim();
-    if (!name || creating) return;
-
+    if (!name || creatingRef.current) return;
+    creatingRef.current = true;
     setCreating(true);
     try {
       const res = await fetch("/api/categories", {
@@ -177,6 +187,7 @@ export function CategoriesSection({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thêm thất bại.");
     } finally {
+      creatingRef.current = false;
       setCreating(false);
     }
   }
@@ -186,10 +197,7 @@ export function CategoriesSection({
   return (
     <section aria-labelledby="categories-section-heading">
       <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {hasPending && "Đang lưu thay đổi danh mục..."}
-      </div>
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {statusMessage}
+        {hasPending ? "Đang lưu thay đổi danh mục..." : statusMessage}
       </div>
       <h2
         id="categories-section-heading"
@@ -204,6 +212,8 @@ export function CategoriesSection({
           return editingId === cat.id ? (
             <div
               key={cat.id}
+              role="group"
+              aria-label={`Chỉnh sửa danh mục: ${cat.name}`}
               className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm"
             >
               <input
@@ -312,7 +322,11 @@ export function CategoriesSection({
         )}
 
         {addingNew ? (
-          <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm">
+          <div
+            role="group"
+            aria-label="Thêm danh mục mới"
+            className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm"
+          >
             <input
               autoFocus
               value={newName}

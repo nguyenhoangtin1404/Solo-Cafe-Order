@@ -140,10 +140,10 @@ export function AdminView({ groups: initial, categories }: Props) {
                       }`}
                     >
                       {product.name}
-                      {!product.is_available && (
-                        <span className="sr-only"> (không có sẵn)</span>
-                      )}
                     </p>
+                    {!product.is_available && (
+                      <span className="sr-only"> (không có sẵn)</span>
+                    )}
                     <p className="text-sm text-muted-foreground">
                       {product.price.toLocaleString("vi-VN")}đ
                     </p>
