@@ -4,7 +4,7 @@ import { requireOwner } from "@/lib/auth/requireOwner";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { setProductAvailability } from "@/lib/services/product.service";
 
-const bodySchema = z.object({ is_available: z.boolean() });
+const bodySchema = z.object({ is_available: z.boolean() }).strict();
 
 export async function PATCH(
   req: NextRequest,

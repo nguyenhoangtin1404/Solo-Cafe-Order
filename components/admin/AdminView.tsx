@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type {
   AdminCategoryGroup,
@@ -23,8 +23,25 @@ interface Props {
 
 export function AdminView({ groups: initial, categories }: Props) {
   const [groups, setGroups] = useState<AdminViewGroup[]>(initial);
+  const [toggleStatusMessage, setToggleStatusMessage] = useState("");
   // Synchronous guard against concurrent PATCH requests on the same product.
   const togglingIdsRef = useRef<Set<string>>(new Set());
+  const toggleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toggleTimerRef.current !== null) clearTimeout(toggleTimerRef.current);
+    };
+  }, []);
+
+  function announceToggle(message: string) {
+    if (toggleTimerRef.current !== null) clearTimeout(toggleTimerRef.current);
+    setToggleStatusMessage(message);
+    toggleTimerRef.current = setTimeout(() => {
+      setToggleStatusMessage("");
+      toggleTimerRef.current = null;
+    }, 3000);
+  }
 
   // Derived from live groups state so it stays accurate after toggle/delete.
   const productCounts = Object.fromEntries(
@@ -54,6 +71,9 @@ export function AdminView({ groups: initial, categories }: Props) {
   async function handleToggle(productId: string, newValue: boolean) {
     if (togglingIdsRef.current.has(productId)) return;
     togglingIdsRef.current.add(productId);
+    const productName =
+      groups.flatMap((g) => g.products).find((p) => p.id === productId)?.name ??
+      "";
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
@@ -86,6 +106,9 @@ export function AdminView({ groups: initial, categories }: Props) {
           ),
         }))
       );
+      announceToggle(
+        `${productName}: ${newValue ? "đang hiển thị trên menu" : "đã ẩn khỏi menu"}.`
+      );
     } catch (err) {
       setGroups((prev) =>
         prev.map((g) => ({
@@ -105,6 +128,9 @@ export function AdminView({ groups: initial, categories }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {toggleStatusMessage}
+      </div>
       <header className="border-b px-4 py-3">
         <h1 className="text-lg font-bold">Quản lý menu</h1>
       </header>

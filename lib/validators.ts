@@ -74,7 +74,7 @@ export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
 // Higher limit than createCategorySchema (9999) so existing categories with
 // sort_order > 9999 can be name-edited without the current value being rejected.
-// Capped at 999999 to prevent PostgreSQL int column overflow (~2.1B).
+// Capped at 999999 as a practical application-level guard.
 export const updateCategorySchema = z
   .object({
     name: z

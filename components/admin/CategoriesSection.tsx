@@ -39,6 +39,8 @@ export function CategoriesSection({
   // Ref mirrors editingId synchronously so async handlers can check the
   // latest value without relying on a stale closure.
   const editingIdRef = useRef<string | null>(null);
+  // Tracks previous addingNew value to detect false→false (no-op) vs true→false (close).
+  const prevAddingNewRef = useRef(false);
   // Refs for restoring focus after edit/add actions.
   const editTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const addTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -58,6 +60,15 @@ export function CategoriesSection({
         clearTimeout(announceTimerRef.current);
     };
   }, []);
+
+  // Focus the trigger button after the add form closes (addingNew: true → false).
+  // useEffect fires after the DOM commit, so addTriggerRef.current is already mounted.
+  useEffect(() => {
+    if (prevAddingNewRef.current && !addingNew) {
+      addTriggerRef.current?.focus();
+    }
+    prevAddingNewRef.current = addingNew;
+  }, [addingNew]);
 
   function startEdit(cat: CategoryState) {
     editingIdRef.current = cat.id;
@@ -79,7 +90,7 @@ export function CategoriesSection({
     setAddingNew(false);
     setNewName("");
     setNewSortOrder(0);
-    setTimeout(() => addTriggerRef.current?.focus(), 0);
+    // Focus is restored by the useEffect watching addingNew (fires after DOM commit).
   }
 
   function announceStatus(message: string) {
@@ -231,7 +242,7 @@ export function CategoriesSection({
       <div
         id="categories-pending-live"
         aria-live="polite"
-        aria-relevant="additions"
+        aria-relevant="additions text"
         aria-atomic="true"
         className="sr-only"
       >
@@ -300,8 +311,9 @@ export function CategoriesSection({
               </button>
               <button
                 onClick={cancelEdit}
+                disabled={cat.pending}
                 aria-label={`Hủy chỉnh sửa ${cat.name}`}
-                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
+                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
               >
                 Hủy
               </button>
@@ -381,8 +393,9 @@ export function CategoriesSection({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               maxLength={50}
+              disabled={creating}
               aria-label="Tên danh mục mới"
-              className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
               placeholder="Tên danh mục mới"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
@@ -399,14 +412,15 @@ export function CategoriesSection({
               }}
               min={0}
               max={9999}
+              disabled={creating}
               aria-label="Thứ tự hiển thị"
-              className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             />
             <button
               onClick={handleCreate}
               disabled={creating}
               aria-label="Thêm danh mục mới"
-              className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {creating ? (
                 <Loader2
@@ -437,7 +451,7 @@ export function CategoriesSection({
           <button
             ref={addTriggerRef}
             onClick={() => setAddingNew(true)}
-            aria-label="Thêm danh mục"
+            aria-label="Thêm danh mục mới"
             className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
           >
             <span aria-hidden="true">+</span> Thêm danh mục
