@@ -73,22 +73,13 @@ export function ProductForm({
 
     try {
       const parsedPrice = parsePrice(price)!;
-      const body =
-        mode === "create"
-          ? {
-              category_id: categoryId,
-              name: name.trim(),
-              description: description.trim() || null,
-              price: parsedPrice,
-              is_available: isAvailable,
-            }
-          : {
-              category_id: categoryId,
-              name: name.trim(),
-              description: description.trim() || null,
-              price: parsedPrice,
-              is_available: isAvailable,
-            };
+      const body = {
+        category_id: categoryId,
+        name: name.trim(),
+        description: description.trim() || null,
+        price: parsedPrice,
+        is_available: isAvailable,
+      };
 
       const url =
         mode === "create"
