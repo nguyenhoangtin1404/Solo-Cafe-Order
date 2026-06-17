@@ -24,8 +24,8 @@ interface FormErrors {
 function parsePrice(raw: string): number | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  if (/[a-zA-Z]/.test(trimmed)) return null;
-  if (/[-+]/.test(trimmed)) return null;
+  if (/[^\d.,\s]/.test(trimmed)) return null;
+  if (/[.,]$/.test(trimmed)) return null;
   if (/[.,]\d{1,2}$/.test(trimmed)) return null;
   const n = Number(trimmed.replace(/[^\d]/g, ""));
   return Number.isInteger(n) && n > 0 ? n : null;

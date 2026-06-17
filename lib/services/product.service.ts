@@ -137,17 +137,14 @@ export async function updateProduct(
       throw new AppError("CATEGORY_NOT_FOUND", "Danh mục không tồn tại.", 404);
     }
   }
-  if (data.name !== undefined) {
-    const sanitizedName = sanitizeText(data.name, 100);
-    if (!sanitizedName) {
-      throw new AppError("VALIDATION_ERROR", "Tên sản phẩm không hợp lệ.", 400);
-    }
+  const sanitizedName =
+    data.name !== undefined ? sanitizeText(data.name, 100) : undefined;
+  if (sanitizedName !== undefined && !sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên sản phẩm không hợp lệ.", 400);
   }
   const product = await productRepo.updateProduct(id, {
     ...data,
-    ...(data.name !== undefined && {
-      name: sanitizeText(data.name, 100),
-    }),
+    ...(sanitizedName !== undefined && { name: sanitizedName }),
     ...(data.description !== undefined && {
       description:
         data.description !== null
