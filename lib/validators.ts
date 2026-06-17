@@ -130,7 +130,23 @@ export const updateProductSchema = z
   .object({
     category_id: z.string().uuid("ID danh mục không hợp lệ.").optional(),
     name: productNameField.optional(),
-    description: trimmedOptionalString(500),
+    description: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        return v.trim() || null;
+      })
+      .pipe(
+        z
+          .string()
+          .min(1)
+          .max(500, "Mô tả tối đa 500 ký tự.")
+          .nullable()
+          .optional()
+      ),
     price: z
       .number()
       .int("Giá phải là số nguyên.")

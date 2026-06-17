@@ -184,7 +184,7 @@ export function ProductForm({
                   setErrors((p) => ({ ...p, price: undefined }));
               }}
               onBlur={() => {
-                if (parsePrice(price) === null)
+                if (price !== "" && parsePrice(price) === null)
                   setErrors((p) => ({
                     ...p,
                     price: "Giá phải là số nguyên lớn hơn 0.",
