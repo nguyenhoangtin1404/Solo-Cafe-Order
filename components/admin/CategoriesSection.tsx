@@ -77,6 +77,14 @@ export function CategoriesSection({
     prevAddingNewRef.current = addingNew;
   }, [addingNew]);
 
+  // Focus the confirm button after React commits the render in which confirmingId is set.
+  // useEffect guarantees the DOM is committed before attempting focus, unlike setTimeout(0).
+  useEffect(() => {
+    if (confirmingId !== null) {
+      confirmButtonRef.current?.focus();
+    }
+  }, [confirmingId]);
+
   function startEdit(cat: CategoryState) {
     editingIdRef.current = cat.id;
     setEditingId(cat.id);
@@ -123,8 +131,7 @@ export function CategoriesSection({
       setConfirmingId(null);
       confirmTimerRef.current = null;
     }, 3000);
-    // Focus the confirm button after React mounts it (state update is async).
-    setTimeout(() => confirmButtonRef.current?.focus(), 0);
+    // Focus is restored by the useEffect watching confirmingId (fires after DOM commit).
   }
 
   function cancelConfirm() {
@@ -150,8 +157,6 @@ export function CategoriesSection({
     const sortOrder = editSortOrder;
     updatingIdsRef.current.add(id);
     setStatusMessage("");
-    // Move focus before disabling all edit-row controls (prevents focus loss to body).
-    (addTriggerRef.current ?? newNameInputRef.current)?.focus();
     setPending(id, true);
     // Intentionally keep editingId open so user can see/retry if request fails.
 
@@ -336,9 +341,9 @@ export function CategoriesSection({
               />
               <button
                 onClick={() => handleUpdate(cat.id)}
-                disabled={cat.pending}
+                aria-disabled={cat.pending || undefined}
                 aria-label={`Lưu danh mục ${cat.name}`}
-                className="min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                className={`min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground${cat.pending ? " cursor-not-allowed opacity-50" : ""}`}
               >
                 {cat.pending ? (
                   <Loader2
@@ -351,13 +356,13 @@ export function CategoriesSection({
                 )}
               </button>
               <button
-                onClick={cancelEdit}
-                disabled={cat.pending}
+                onClick={() => { if (!cat.pending) cancelEdit(); }}
+                aria-disabled={cat.pending || undefined}
                 aria-label={`Hủy chỉnh sửa ${cat.name}`}
                 aria-describedby={
                   cat.pending ? `edit-pending-hint-${cat.id}` : undefined
                 }
-                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
+                className={`min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground${cat.pending ? " cursor-not-allowed opacity-50" : ""}`}
               >
                 Hủy
               </button>
@@ -399,16 +404,20 @@ export function CategoriesSection({
                       Sửa
                     </button>
                     {confirmingId === cat.id ? (
-                      <button
-                        ref={confirmButtonRef}
-                        onClick={() => handleDelete(cat.id)}
-                        onBlur={cancelConfirm}
-                        title="Nhấn lần nữa để xác nhận xóa"
-                        aria-label={`Xác nhận xóa danh mục ${cat.name}`}
-                        className="min-h-[44px] min-w-[54px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
-                      >
-                        Xóa?
-                      </button>
+                      <>
+                        <button
+                          ref={confirmButtonRef}
+                          onClick={() => handleDelete(cat.id)}
+                          aria-label={`Xác nhận xóa danh mục ${cat.name}`}
+                          aria-describedby={`confirm-hint-${cat.id}`}
+                          className="min-h-[44px] min-w-[54px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
+                        >
+                          Xóa?
+                        </button>
+                        <span id={`confirm-hint-${cat.id}`} className="sr-only">
+                          Nhấn lần nữa để xác nhận xóa
+                        </span>
+                      </>
                     ) : (
                       <button
                         disabled={hasProducts}
