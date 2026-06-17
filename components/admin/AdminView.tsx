@@ -12,7 +12,7 @@ import { ProductsSection } from "./ProductsSection";
 
 type AdminProductState = AdminProduct & { pending?: boolean };
 
-type AdminViewGroup = {
+export type AdminViewGroup = {
   category: AdminCategoryGroup["category"];
   products: AdminProductState[];
 };
@@ -150,6 +150,7 @@ export function AdminView({
           ),
         }))
       );
+      announceToggle(`Cập nhật ${productName} thất bại.`);
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
     } finally {
       togglingIdsRef.current.delete(productId);

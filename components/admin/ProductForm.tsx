@@ -313,6 +313,9 @@ export function ProductForm({
             type="button"
             onClick={onCancel}
             disabled={submitting}
+            aria-label={
+              mode === "create" ? "Hủy thêm sản phẩm" : "Hủy sửa sản phẩm"
+            }
             className="min-h-[44px] rounded-lg border px-4 text-sm text-muted-foreground disabled:opacity-50"
           >
             Hủy

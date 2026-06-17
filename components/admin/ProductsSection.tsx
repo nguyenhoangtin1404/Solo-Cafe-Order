@@ -4,16 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
-import type {
-  AdminProduct,
-  AdminCategoryGroup,
-} from "@/lib/services/product.service";
+import type { AdminProduct } from "@/lib/services/product.service";
 import { ProductForm } from "./ProductForm";
-
-type AdminViewGroup = {
-  category: AdminCategoryGroup["category"];
-  products: (AdminProduct & { pending?: boolean })[];
-};
+import type { AdminViewGroup } from "./AdminView";
 
 interface Props {
   groups: AdminViewGroup[];
@@ -224,6 +217,7 @@ export function ProductsSection({
                       <>
                         {/* Availability toggle */}
                         <button
+                          type="button"
                           role="switch"
                           aria-checked={product.is_available}
                           aria-label={`${product.name}: bật/tắt hiển thị`}

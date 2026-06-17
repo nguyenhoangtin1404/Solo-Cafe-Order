@@ -116,6 +116,9 @@ export async function createProduct(
     description: data.description
       ? sanitizeText(data.description, 500) || null
       : data.description,
+    ...(data.image_url != null && {
+      image_url: data.image_url.replace(/\0/g, ""),
+    }),
   });
   return toAdminProduct(product);
 }
@@ -138,6 +141,9 @@ export async function updateProduct(
         data.description !== null
           ? sanitizeText(data.description, 500) || null
           : null,
+    }),
+    ...(data.image_url != null && {
+      image_url: data.image_url.replace(/\0/g, ""),
     }),
   });
   if (!product) {
