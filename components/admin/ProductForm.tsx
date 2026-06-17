@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
@@ -51,6 +51,7 @@ export function ProductForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const uid = useId();
 
   function validate(): FormErrors {
     const errs: FormErrors = {};
@@ -143,7 +144,7 @@ export function ProductForm({
             disabled={submitting}
             aria-label="Tên sản phẩm"
             aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "pf-name-error" : undefined}
+            aria-describedby={errors.name ? `${uid}-name-error` : undefined}
             placeholder="Tên sản phẩm *"
             className={inputCls}
             onKeyDown={(e) => {
@@ -152,7 +153,7 @@ export function ProductForm({
             }}
           />
           {errors.name && (
-            <p id="pf-name-error" className={errorCls}>
+            <p id={`${uid}-name-error`} className={errorCls}>
               {errors.name}
             </p>
           )}
@@ -192,7 +193,7 @@ export function ProductForm({
               disabled={submitting}
               aria-label="Giá (VND)"
               aria-invalid={!!errors.price}
-              aria-describedby={errors.price ? "pf-price-error" : undefined}
+              aria-describedby={errors.price ? `${uid}-price-error` : undefined}
               placeholder="Giá (VND) *"
               className={inputCls}
               onKeyDown={(e) => {
@@ -201,7 +202,7 @@ export function ProductForm({
               }}
             />
             {errors.price && (
-              <p id="pf-price-error" className={errorCls}>
+              <p id={`${uid}-price-error`} className={errorCls}>
                 {errors.price}
               </p>
             )}
@@ -219,7 +220,9 @@ export function ProductForm({
               disabled={submitting}
               aria-label="Danh mục"
               aria-invalid={!!errors.category_id}
-              aria-describedby={errors.category_id ? "pf-cat-error" : undefined}
+              aria-describedby={
+                errors.category_id ? `${uid}-cat-error` : undefined
+              }
               className={`${inputCls} bg-background`}
             >
               <option value="">-- Chọn danh mục --</option>
@@ -230,7 +233,7 @@ export function ProductForm({
               ))}
             </select>
             {errors.category_id && (
-              <p id="pf-cat-error" className={errorCls}>
+              <p id={`${uid}-cat-error`} className={errorCls}>
                 {errors.category_id}
               </p>
             )}
