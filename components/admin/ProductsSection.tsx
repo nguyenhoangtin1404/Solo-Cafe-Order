@@ -75,12 +75,20 @@ export function ProductsSection({
   }
 
   function openAdd(categoryId: string) {
+    if (confirmTimerRef.current !== null) {
+      clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = null;
+    }
     setEditingProductId(null);
     setConfirmingProductId(null);
     setAddingToCategoryId(categoryId);
   }
 
   function openEdit(product: AdminProduct) {
+    if (confirmTimerRef.current !== null) {
+      clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = null;
+    }
     setAddingToCategoryId(null);
     setConfirmingProductId(null);
     setEditingProductId(product.id);
@@ -290,7 +298,7 @@ export function ProductsSection({
             )}
 
             {/* Empty state */}
-            {products.length === 0 && (
+            {products.length === 0 && addingToCategoryId !== category.id && (
               <div className="rounded-xl border border-dashed py-6 text-center text-muted-foreground">
                 <p className="text-sm">Chưa có sản phẩm trong danh mục này</p>
               </div>

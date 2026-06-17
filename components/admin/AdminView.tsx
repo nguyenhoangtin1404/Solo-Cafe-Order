@@ -156,6 +156,10 @@ export function AdminView({
   }
 
   function handleProductCreated(product: AdminProduct) {
+    if (!groups.some((g) => g.category.id === product.category_id)) {
+      toast.error("Danh mục không còn tồn tại. Vui lòng tải lại trang.");
+      return;
+    }
     setGroups((prev) =>
       prev.map((g) =>
         g.category.id === product.category_id

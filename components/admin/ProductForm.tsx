@@ -80,7 +80,6 @@ export function ProductForm({
       );
       return;
     }
-    if (parsedPrice === null) return;
     setFormAlert("");
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -113,13 +112,15 @@ export function ProductForm({
       };
       if (!res.ok) throw new Error(data.message ?? "Lưu thất bại.");
       if (!data.product) throw new Error("Phản hồi không hợp lệ.");
+      setFormAlert("");
       onSuccess(data.product);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lưu thất bại.");
+      const msg = err instanceof Error ? err.message : "Lưu thất bại.";
+      setFormAlert(msg);
+      toast.error(msg);
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
-      setFormAlert("");
     }
   }
 
