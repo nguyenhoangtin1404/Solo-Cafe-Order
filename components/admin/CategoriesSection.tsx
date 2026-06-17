@@ -356,7 +356,9 @@ export function CategoriesSection({
                 )}
               </button>
               <button
-                onClick={() => { if (!cat.pending) cancelEdit(); }}
+                onClick={() => {
+                  if (!cat.pending) cancelEdit();
+                }}
                 aria-disabled={cat.pending || undefined}
                 aria-label={`Hủy chỉnh sửa ${cat.name}`}
                 aria-describedby={
