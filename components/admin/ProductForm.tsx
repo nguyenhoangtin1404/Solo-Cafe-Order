@@ -60,19 +60,30 @@ export function ProductForm({
     nameInputRef.current?.focus();
   }, []);
 
-  function validate(): FormErrors {
-    const errs: FormErrors = {};
-    if (!name.trim()) errs.name = "Tên sản phẩm không được để trống.";
+  useEffect(() => {
+    if (
+      mode === "create" &&
+      !defaultCategoryId &&
+      categoryId === "" &&
+      categories.length > 0
+    ) {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories, mode, defaultCategoryId, categoryId]);
+
+  function validate(): { errors: FormErrors; parsedPrice: number | null } {
+    const errors: FormErrors = {};
+    if (!name.trim()) errors.name = "Tên sản phẩm không được để trống.";
     else if (name.trim().length > 100)
-      errs.name = "Tên sản phẩm tối đa 100 ký tự.";
-    if (!categoryId) errs.category_id = "Vui lòng chọn danh mục.";
-    if (parsePrice(price) === null)
-      errs.price = "Giá phải là số nguyên lớn hơn 0.";
-    return errs;
+      errors.name = "Tên sản phẩm tối đa 100 ký tự.";
+    if (!categoryId) errors.category_id = "Vui lòng chọn danh mục.";
+    const parsedPrice = parsePrice(price);
+    if (parsedPrice === null) errors.price = "Giá phải là số nguyên lớn hơn 0.";
+    return { errors, parsedPrice };
   }
 
   async function handleSubmit() {
-    const errs = validate();
+    const { errors: errs, parsedPrice } = validate();
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       setFormAlert(
@@ -80,13 +91,13 @@ export function ProductForm({
       );
       return;
     }
+    if (parsedPrice === null) return;
     setFormAlert("");
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
 
     try {
-      const parsedPrice = parsePrice(price)!;
       const body = {
         category_id: categoryId,
         name: name.trim(),
@@ -249,7 +260,6 @@ export function ProductForm({
               }
               className={`${inputCls} bg-background`}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
                 if (e.key === "Escape") onCancel();
               }}
             >

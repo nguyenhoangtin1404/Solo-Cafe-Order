@@ -60,7 +60,8 @@ export function ProductsSection({
   }, []);
 
   useEffect(() => {
-    if (confirmingProductId !== null) confirmButtonRef.current?.focus();
+    if (confirmingProductId === null) return;
+    confirmButtonRef.current?.focus();
   }, [confirmingProductId]);
 
   function announceStatus(message: string) {
@@ -299,6 +300,7 @@ export function ProductsSection({
             {/* Add button */}
             {addingToCategoryId !== category.id && (
               <button
+                type="button"
                 onClick={() => openAdd(category.id)}
                 aria-label={`Thêm sản phẩm vào ${category.name}`}
                 className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
