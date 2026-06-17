@@ -105,12 +105,22 @@ export function ProductsSection({
   }
 
   function cancelConfirm() {
-    if (confirmTimerRef.current !== null) clearTimeout(confirmTimerRef.current);
+    if (confirmTimerRef.current !== null) {
+      clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = null;
+    }
+    const id = confirmingProductId;
     setConfirmingProductId(null);
+    if (id) setTimeout(() => deleteTriggerRefs.current[id]?.focus(), 0);
   }
 
   async function handleDelete(id: string, categoryId: string) {
-    cancelConfirm();
+    // Clear confirm state without restoring focus — product is about to be removed
+    if (confirmTimerRef.current !== null) {
+      clearTimeout(confirmTimerRef.current);
+      confirmTimerRef.current = null;
+    }
+    setConfirmingProductId(null);
     if (deletingIdsRef.current.has(id)) return;
     deletingIdsRef.current.add(id);
 
@@ -251,6 +261,9 @@ export function ProductsSection({
                             onClick={() =>
                               handleDelete(product.id, product.category_id)
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === "Escape") cancelConfirm();
+                            }}
                             aria-label={`Xác nhận xóa sản phẩm ${product.name}`}
                             className="min-h-[44px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
                           >
@@ -305,7 +318,7 @@ export function ProductsSection({
                 aria-label={`Thêm sản phẩm vào ${category.name}`}
                 className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
               >
-                <span aria-hidden="true">+</span>&nbsp;Thêm sản phẩm
+                <span aria-hidden="true">+</span>{" "}Thêm sản phẩm
               </button>
             )}
           </div>

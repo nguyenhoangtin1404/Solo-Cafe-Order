@@ -53,6 +53,14 @@ export function AdminView({
     [groups]
   );
 
+  const productNames = useMemo(
+    () =>
+      Object.fromEntries(
+        groups.flatMap((g) => g.products).map((p) => [p.id, p.name])
+      ),
+    [groups]
+  );
+
   // ── Category callbacks ────────────────────────────────────────────────────
 
   function handleCategoryCreated(category: Category) {
@@ -100,9 +108,7 @@ export function AdminView({
   async function handleToggle(productId: string, newValue: boolean) {
     if (togglingIdsRef.current.has(productId)) return;
     togglingIdsRef.current.add(productId);
-    const productName =
-      groups.flatMap((g) => g.products).find((p) => p.id === productId)?.name ??
-      "";
+    const productName = productNames[productId] ?? "";
     // Optimistic update
     setGroups((prev) =>
       prev.map((g) => ({

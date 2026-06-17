@@ -2,8 +2,10 @@
 // React auto-escapes text nodes; attribute values need a separate escaping strategy.
 export function sanitizeText(input: string, maxLength: number): string {
   if (!input || maxLength <= 0) return "";
+  // Pre-truncate to limit work before tag stripping — prevents DoS on deeply-nested inputs
+  const raw = input.slice(0, maxLength * 10);
   // Strip null bytes — PostgreSQL rejects \x00 in text columns
-  let text = input.replace(/\0/g, "");
+  let text = raw.replace(/\0/g, "");
   // Multi-pass strip — handles nested tags like <<script>script>
   let prev: string;
   do {

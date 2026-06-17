@@ -98,7 +98,7 @@ export function ProductForm({
       const url =
         mode === "create"
           ? "/api/products"
-          : `/api/products/${initialData!.id}`;
+          : `/api/products/${initialData?.id ?? ""}`;
       const method = mode === "create" ? "POST" : "PATCH";
 
       const res = await fetch(url, {
@@ -119,6 +119,7 @@ export function ProductForm({
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
+      setFormAlert("");
     }
   }
 
