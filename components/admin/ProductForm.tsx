@@ -164,6 +164,9 @@ export function ProductForm({
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onCancel();
+          }}
           maxLength={500}
           disabled={submitting}
           aria-label="Mô tả (không bắt buộc)"
@@ -259,6 +262,7 @@ export function ProductForm({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
+            aria-busy={submitting}
             className="min-h-[44px] flex-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {submitting ? (

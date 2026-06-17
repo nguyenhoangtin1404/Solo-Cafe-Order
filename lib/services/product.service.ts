@@ -124,7 +124,7 @@ export async function updateProduct(
   id: string,
   data: UpdateProductInput
 ): Promise<AdminProduct> {
-  if (data.category_id) {
+  if (data.category_id !== undefined) {
     const category = await categoryRepo.findCategoryById(data.category_id);
     if (!category) {
       throw new AppError("CATEGORY_NOT_FOUND", "Danh mục không tồn tại.", 404);

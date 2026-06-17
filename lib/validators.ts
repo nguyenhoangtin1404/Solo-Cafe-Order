@@ -119,9 +119,18 @@ export const createProductSchema = z
     price: z
       .number()
       .int("Giá phải là số nguyên.")
-      .min(1, "Giá phải lớn hơn 0."),
+      .min(1, "Giá phải lớn hơn 0.")
+      .max(100_000_000, "Giá tối đa 100,000,000đ."),
     is_available: z.boolean().default(true),
-    image_url: z.string().url("URL ảnh không hợp lệ.").nullable().optional(),
+    image_url: z
+      .string()
+      .url("URL ảnh không hợp lệ.")
+      .refine(
+        (u) => /^https?:\/\//i.test(u),
+        "URL ảnh phải bắt đầu bằng http:// hoặc https://."
+      )
+      .nullable()
+      .optional(),
   })
   .strict();
 export type CreateProductInput = z.infer<typeof createProductSchema>;
@@ -151,9 +160,18 @@ export const updateProductSchema = z
       .number()
       .int("Giá phải là số nguyên.")
       .min(1, "Giá phải lớn hơn 0.")
+      .max(100_000_000, "Giá tối đa 100,000,000đ.")
       .optional(),
     is_available: z.boolean().optional(),
-    image_url: z.string().url().nullable().optional(),
+    image_url: z
+      .string()
+      .url()
+      .refine(
+        (u) => /^https?:\/\//i.test(u),
+        "URL ảnh phải bắt đầu bằng http:// hoặc https://."
+      )
+      .nullable()
+      .optional(),
   })
   .strict()
   .refine((d) => Object.values(d).some((v) => v !== undefined), {
