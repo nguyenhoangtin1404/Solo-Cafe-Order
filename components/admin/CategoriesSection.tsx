@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
 
@@ -8,9 +9,19 @@ type CategoryState = Category & { pending?: boolean };
 
 interface Props {
   initialCategories: Category[];
+  productCounts: Record<string, number>;
+  onCategoryCreated: (category: Category) => void;
+  onCategoryDeleted: (id: string) => void;
+  onCategoryUpdated: (category: Category) => void;
 }
 
-export function CategoriesSection({ initialCategories }: Props) {
+export function CategoriesSection({
+  initialCategories,
+  productCounts,
+  onCategoryCreated,
+  onCategoryDeleted,
+  onCategoryUpdated,
+}: Props) {
   const [categories, setCategories] =
     useState<CategoryState[]>(initialCategories);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -20,58 +31,189 @@ export function CategoriesSection({ initialCategories }: Props) {
   const [newName, setNewName] = useState("");
   const [newSortOrder, setNewSortOrder] = useState(0);
   const [creating, setCreating] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  // Stable id for aria-describedby on the add-form cancel button.
+  const addCancelHintId = useId();
+
+  // Ref mirrors editingId synchronously so async handlers can check the
+  // latest value without relying on a stale closure.
+  const editingIdRef = useRef<string | null>(null);
+  // Tracks previous addingNew value to detect false→false (no-op) vs true→false (close).
+  const prevAddingNewRef = useRef(false);
+  // Refs for restoring focus after edit/add actions.
+  const editTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const addTriggerRef = useRef<HTMLButtonElement | null>(null);
+  // Fallback focus target when addTriggerRef is null (add form is open).
+  const newNameInputRef = useRef<HTMLInputElement | null>(null);
+  // Ref for the "Xóa?" confirm button — used to restore focus after it mounts.
+  const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
+  // Tracks the active status-clear timer so it can be cancelled on re-fire.
+  const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Auto-cancels the delete double-confirm after 3 seconds of no second click.
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Synchronous guard against double-submit before React re-renders with creating=true.
+  const creatingRef = useRef(false);
+  // Per-category guards against concurrent PATCH and DELETE requests respectively.
+  const updatingIdsRef = useRef<Set<string>>(new Set());
+  const deletingIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      if (announceTimerRef.current !== null)
+        clearTimeout(announceTimerRef.current);
+      if (confirmTimerRef.current !== null)
+        clearTimeout(confirmTimerRef.current);
+    };
+  }, []);
+
+  // Focus the trigger button after the add form closes (addingNew: true → false).
+  // useEffect fires after the DOM commit, so addTriggerRef.current is already mounted.
+  useEffect(() => {
+    if (prevAddingNewRef.current && !addingNew) {
+      addTriggerRef.current?.focus();
+    }
+    prevAddingNewRef.current = addingNew;
+  }, [addingNew]);
+
+  // Focus the confirm button after React commits the render in which confirmingId is set.
+  // useEffect guarantees the DOM is committed before attempting focus, unlike setTimeout(0).
+  useEffect(() => {
+    if (confirmingId !== null) {
+      confirmButtonRef.current?.focus();
+    }
+  }, [confirmingId]);
 
   function startEdit(cat: CategoryState) {
+    cancelConfirm();
+    editingIdRef.current = cat.id;
     setEditingId(cat.id);
     setEditName(cat.name);
     setEditSortOrder(cat.sort_order);
   }
 
   function cancelEdit() {
+    const id = editingIdRef.current;
+    editingIdRef.current = null;
     setEditingId(null);
+    setEditName("");
+    setEditSortOrder(0);
+    if (id) setTimeout(() => editTriggerRefs.current[id]?.focus(), 0);
+  }
+
+  function cancelAdd() {
+    setAddingNew(false);
+    setNewName("");
+    setNewSortOrder(0);
+    // Focus is restored by the useEffect watching addingNew (fires after DOM commit).
+  }
+
+  function announceStatus(message: string) {
+    if (announceTimerRef.current !== null)
+      clearTimeout(announceTimerRef.current);
+    setStatusMessage(message);
+    announceTimerRef.current = setTimeout(() => {
+      setStatusMessage("");
+      announceTimerRef.current = null;
+    }, 3000);
+  }
+
+  function setPending(id: string, pending: boolean) {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, pending } : c))
+    );
+  }
+
+  function requestDeleteConfirm(id: string) {
+    if (confirmTimerRef.current !== null) clearTimeout(confirmTimerRef.current);
+    setConfirmingId(id);
+    confirmTimerRef.current = setTimeout(() => {
+      setConfirmingId(null);
+      confirmTimerRef.current = null;
+    }, 3000);
+    // Focus is restored by the useEffect watching confirmingId (fires after DOM commit).
+  }
+
+  function cancelConfirm() {
+    if (confirmTimerRef.current !== null) clearTimeout(confirmTimerRef.current);
+    setConfirmingId(null);
+    confirmTimerRef.current = null;
+  }
+
+  function parseSortOrder(raw: string): number {
+    const n = Number(raw);
+    if (Number.isNaN(n)) return 0;
+    return Math.min(9999, Math.max(0, Math.trunc(n)));
   }
 
   async function handleUpdate(id: string) {
     const name = editName.trim();
-    if (!name) return;
-
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, pending: true } : c))
-    );
-    setEditingId(null);
+    if (!name) {
+      toast.error("Tên danh mục không được để trống.");
+      return;
+    }
+    if (updatingIdsRef.current.has(id) || deletingIdsRef.current.has(id))
+      return;
+    const sortOrder = editSortOrder;
+    updatingIdsRef.current.add(id);
+    setStatusMessage("");
+    setPending(id, true);
+    // Intentionally keep editingId open so user can see/retry if request fails.
 
     try {
       const res = await fetch(`/api/categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, sort_order: editSortOrder }),
+        body: JSON.stringify({ name, sort_order: sortOrder }),
       });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          message?: string;
-        };
-        throw new Error(body.message ?? "Cập nhật thất bại.");
-      }
-      const { category } = (await res.json()) as { category: Category };
+      const body = (await res.json().catch(() => ({}))) as {
+        category?: Category;
+        message?: string;
+      };
+      if (!res.ok) throw new Error(body.message ?? "Cập nhật thất bại.");
+      const category = body.category;
+      if (!category) throw new Error("Phản hồi không hợp lệ.");
       setCategories((prev) =>
         prev
           .map((c) => (c.id === id ? { ...category, pending: false } : c))
           .sort((a, b) => a.sort_order - b.sort_order)
       );
+      onCategoryUpdated(category);
+      // Only reset form state if user hasn't switched to editing a different item.
+      if (editingIdRef.current === id) {
+        editingIdRef.current = null;
+        setEditingId(null);
+        setEditName("");
+        setEditSortOrder(0);
+        announceStatus("Đã cập nhật danh mục thành công.");
+        setTimeout(() => editTriggerRefs.current[id]?.focus(), 0);
+      }
     } catch (err) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, pending: false } : c))
-      );
+      setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
+    } finally {
+      updatingIdsRef.current.delete(id);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm("Xóa danh mục này?")) return;
-
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, pending: true } : c))
-    );
+    cancelConfirm();
+    // Reset stale edit state for the deleted category (edit form won't render
+    // after deletion, but refs and state would otherwise linger).
+    if (editingIdRef.current === id) {
+      editingIdRef.current = null;
+      setEditingId(null);
+      setEditName("");
+      setEditSortOrder(0);
+    }
+    if (deletingIdsRef.current.has(id)) return;
+    deletingIdsRef.current.add(id);
+    // Move focus before pending spinner replaces the action buttons on next render.
+    // Fall back to the add-form name input when the trigger button is not mounted.
+    (addTriggerRef.current ?? newNameInputRef.current)?.focus();
+    setStatusMessage("");
+    setPending(id, true);
 
     try {
       const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
@@ -82,18 +224,26 @@ export function CategoriesSection({ initialCategories }: Props) {
         throw new Error(body.message ?? "Xóa thất bại.");
       }
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      delete editTriggerRefs.current[id];
+      onCategoryDeleted(id);
+      announceStatus("Đã xóa danh mục.");
     } catch (err) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, pending: false } : c))
-      );
+      setPending(id, false);
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
+    } finally {
+      deletingIdsRef.current.delete(id);
     }
   }
 
   async function handleCreate() {
     const name = newName.trim();
-    if (!name || creating) return;
-
+    if (!name) {
+      toast.error("Tên danh mục không được để trống.");
+      return;
+    }
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+    setStatusMessage("");
     setCreating(true);
     try {
       const res = await fetch("/api/categories", {
@@ -101,36 +251,63 @@ export function CategoriesSection({ initialCategories }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, sort_order: newSortOrder }),
       });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          message?: string;
-        };
-        throw new Error(body.message ?? "Thêm thất bại.");
-      }
-      const { category } = (await res.json()) as { category: Category };
+      const body = (await res.json().catch(() => ({}))) as {
+        category?: Category;
+        message?: string;
+      };
+      if (!res.ok) throw new Error(body.message ?? "Thêm thất bại.");
+      const category = body.category;
+      if (!category) throw new Error("Phản hồi không hợp lệ.");
       setCategories((prev) =>
         [...prev, category].sort((a, b) => a.sort_order - b.sort_order)
       );
-      setNewName("");
-      setNewSortOrder(0);
-      setAddingNew(false);
+      onCategoryCreated(category);
+      cancelAdd();
+      announceStatus("Đã thêm danh mục thành công.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thêm thất bại.");
     } finally {
+      creatingRef.current = false;
       setCreating(false);
     }
   }
 
+  const hasPending = creating || categories.some((c) => c.pending);
+
   return (
-    <section>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <section aria-labelledby="categories-section-heading">
+      {/* Two independent regions so in-progress and success messages don't compete. */}
+      <div
+        id="categories-pending-live"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {hasPending ? "Đang lưu thay đổi danh mục..." : ""}
+      </div>
+      <div
+        id="categories-status-live"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {statusMessage}
+      </div>
+      <h2
+        id="categories-section-heading"
+        className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
         Danh mục
       </h2>
       <div className="space-y-2">
-        {categories.map((cat) =>
-          editingId === cat.id ? (
+        {categories.map((cat) => {
+          const count = productCounts[cat.id] ?? 0;
+          const hasProducts = count > 0;
+          return editingId === cat.id ? (
             <div
               key={cat.id}
+              role="group"
+              aria-label={`Chỉnh sửa danh mục: ${cat.name}`}
               className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm"
             >
               <input
@@ -138,7 +315,9 @@ export function CategoriesSection({ initialCategories }: Props) {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 maxLength={50}
-                className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                disabled={cat.pending}
+                aria-label="Tên danh mục"
+                className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
                 placeholder="Tên danh mục"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleUpdate(cat.id);
@@ -148,23 +327,61 @@ export function CategoriesSection({ initialCategories }: Props) {
               <input
                 type="number"
                 value={editSortOrder}
-                onChange={(e) => setEditSortOrder(Number(e.target.value))}
+                onChange={(e) =>
+                  setEditSortOrder(parseSortOrder(e.target.value))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleUpdate(cat.id);
+                  if (e.key === "Escape") cancelEdit();
+                }}
                 min={0}
-                className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                aria-label="Thứ tự sắp xếp"
+                max={9999}
+                disabled={cat.pending}
+                aria-label="Thứ tự hiển thị"
+                className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
               />
               <button
-                onClick={() => handleUpdate(cat.id)}
-                className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
+                onClick={() => {
+                  if (cat.pending) return;
+                  handleUpdate(cat.id);
+                }}
+                aria-disabled={cat.pending || undefined}
+                aria-label={`Lưu danh mục ${cat.name}`}
+                onKeyDown={(e) => {
+                  if (cat.pending && (e.key === "Enter" || e.key === " "))
+                    e.preventDefault();
+                }}
+                className={`min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground${cat.pending ? " cursor-not-allowed opacity-50" : ""}`}
               >
-                Lưu
+                {cat.pending ? (
+                  <Loader2
+                    size={16}
+                    aria-hidden="true"
+                    className="animate-spin"
+                  />
+                ) : (
+                  "Lưu"
+                )}
               </button>
               <button
-                onClick={cancelEdit}
-                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
+                onClick={() => {
+                  if (cat.pending) return;
+                  cancelEdit();
+                }}
+                aria-disabled={cat.pending || undefined}
+                aria-label={`Hủy chỉnh sửa ${cat.name}`}
+                aria-describedby={
+                  cat.pending ? `edit-pending-hint-${cat.id}` : undefined
+                }
+                className={`min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground${cat.pending ? " cursor-not-allowed opacity-50" : ""}`}
               >
                 Hủy
               </button>
+              {cat.pending && (
+                <span id={`edit-pending-hint-${cat.id}`} className="sr-only">
+                  Đang lưu, vui lòng chờ
+                </span>
+              )}
             </div>
           ) : (
             <div
@@ -175,70 +392,151 @@ export function CategoriesSection({ initialCategories }: Props) {
                 <p className="truncate font-medium">{cat.name}</p>
                 <p className="text-xs text-muted-foreground">
                   Thứ tự: {cat.sort_order}
+                  {count > 0 && ` · ${count} sản phẩm`}
                 </p>
               </div>
-              <div className="ml-4 flex shrink-0 gap-2">
-                <button
-                  disabled={cat.pending}
-                  onClick={() => startEdit(cat)}
-                  className="min-h-[44px] rounded-lg border px-3 text-sm disabled:opacity-50"
-                >
-                  Sửa
-                </button>
-                <button
-                  disabled={cat.pending}
-                  onClick={() => handleDelete(cat.id)}
-                  className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive disabled:opacity-50"
-                >
-                  Xóa
-                </button>
+              <div className="ml-4 flex shrink-0 items-center gap-2">
+                {cat.pending ? (
+                  <Loader2
+                    size={16}
+                    aria-hidden="true"
+                    className="animate-spin text-muted-foreground"
+                  />
+                ) : (
+                  <>
+                    <button
+                      ref={(el) => {
+                        editTriggerRefs.current[cat.id] = el;
+                      }}
+                      onClick={() => startEdit(cat)}
+                      aria-label={`Sửa danh mục ${cat.name}`}
+                      className="min-h-[44px] rounded-lg border px-3 text-sm"
+                    >
+                      Sửa
+                    </button>
+                    {confirmingId === cat.id ? (
+                      <>
+                        <button
+                          ref={confirmButtonRef}
+                          onClick={() => handleDelete(cat.id)}
+                          aria-label={`Xác nhận xóa danh mục ${cat.name}`}
+                          aria-describedby={`confirm-hint-${cat.id}`}
+                          className="min-h-[44px] min-w-[54px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
+                        >
+                          Xóa?
+                        </button>
+                        <span id={`confirm-hint-${cat.id}`} className="sr-only">
+                          Nhấn lần nữa để xác nhận xóa
+                        </span>
+                      </>
+                    ) : (
+                      <button
+                        disabled={hasProducts}
+                        onClick={() => requestDeleteConfirm(cat.id)}
+                        aria-label={`Xóa danh mục ${cat.name}`}
+                        aria-describedby={
+                          hasProducts ? `del-hint-${cat.id}` : undefined
+                        }
+                        className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Xóa
+                      </button>
+                    )}
+                    {hasProducts && (
+                      <span id={`del-hint-${cat.id}`} className="sr-only">
+                        Xóa hết sản phẩm trước khi xóa danh mục
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          )
+          );
+        })}
+
+        {categories.length === 0 && !addingNew && (
+          <div className="rounded-xl border border-dashed py-8 text-center text-muted-foreground">
+            <p className="text-sm font-medium">Chưa có danh mục nào</p>
+            <p className="mt-1 text-xs">
+              Tạo danh mục đầu tiên để bắt đầu thêm sản phẩm vào menu
+            </p>
+          </div>
         )}
 
         {addingNew ? (
-          <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm">
+          <div
+            role="group"
+            aria-label="Thêm danh mục mới"
+            className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm"
+          >
             <input
+              ref={newNameInputRef}
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               maxLength={50}
-              className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              disabled={creating}
+              aria-label="Tên danh mục mới"
+              className="min-h-[44px] flex-1 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
               placeholder="Tên danh mục mới"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
-                if (e.key === "Escape") setAddingNew(false);
+                if (e.key === "Escape" && !creatingRef.current) cancelAdd();
               }}
             />
             <input
               type="number"
               value={newSortOrder}
-              onChange={(e) => setNewSortOrder(Number(e.target.value))}
+              onChange={(e) => setNewSortOrder(parseSortOrder(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape" && !creatingRef.current) cancelAdd();
+              }}
               min={0}
-              className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              title="Thứ tự"
+              max={9999}
+              disabled={creating}
+              aria-label="Thứ tự hiển thị"
+              className="min-h-[44px] w-16 rounded-lg border px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             />
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="min-h-[44px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              aria-label="Thêm danh mục mới"
+              className="min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
-              Thêm
+              {creating ? (
+                <Loader2
+                  size={16}
+                  aria-hidden="true"
+                  className="animate-spin"
+                />
+              ) : (
+                "Thêm"
+              )}
             </button>
+            {creating && (
+              <span id={addCancelHintId} className="sr-only">
+                Đang xử lý, vui lòng chờ
+              </span>
+            )}
             <button
-              onClick={() => setAddingNew(false)}
-              className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
+              onClick={cancelAdd}
+              disabled={creating}
+              aria-label="Hủy thêm danh mục"
+              aria-describedby={creating ? addCancelHintId : undefined}
+              className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
             >
               Hủy
             </button>
           </div>
         ) : (
           <button
+            ref={addTriggerRef}
             onClick={() => setAddingNew(true)}
+            aria-label="Thêm danh mục mới"
             className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
           >
-            + Thêm danh mục
+            <span aria-hidden="true">+</span> Thêm danh mục
           </button>
         )}
       </div>

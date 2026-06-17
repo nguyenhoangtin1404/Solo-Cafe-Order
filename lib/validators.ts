@@ -14,31 +14,33 @@ const trimmedOptionalString = (max: number) =>
     .string()
     .nullable()
     .optional()
-    .transform((v) =>
-      v == null || v === undefined ? undefined : v.trim() || undefined
-    )
+    .transform((v) => (v == null ? undefined : v.trim() || undefined))
     .pipe(z.string().min(1).max(max).optional())
     .transform((v) => v ?? null);
 
-export const orderItemSchema = z.object({
-  product_id: z.string().uuid(),
-  quantity: z.number().int().min(1).max(99),
-  selected_option_value_ids: z
-    .preprocess((val) => (val == null ? [] : val), z.array(z.string().uuid()))
-    .default([]),
-  note: trimmedOptionalString(MAX_ITEM_NOTE_LENGTH),
-});
+export const orderItemSchema = z
+  .object({
+    product_id: z.string().uuid(),
+    quantity: z.number().int().min(1).max(99),
+    selected_option_value_ids: z
+      .preprocess((val) => (val == null ? [] : val), z.array(z.string().uuid()))
+      .default([]),
+    note: trimmedOptionalString(MAX_ITEM_NOTE_LENGTH),
+  })
+  .strict();
 
-export const submitOrderSchema = z.object({
-  // Server phải KHÔNG dùng giá từ client — luôn resolve price từ DB khi insert order
-  // null = khách không nhập (anonymous order / no note)
-  pickup_name: trimmedOptionalString(MAX_PICKUP_NAME_LENGTH),
-  note: trimmedOptionalString(MAX_ORDER_NOTE_LENGTH),
-  payment_method: z
-    .enum([PAYMENT_METHOD.CASH, PAYMENT_METHOD.BANK_TRANSFER])
-    .default(PAYMENT_METHOD.CASH),
-  items: z.array(orderItemSchema).min(1).max(50),
-});
+export const submitOrderSchema = z
+  .object({
+    // Server phải KHÔNG dùng giá từ client — luôn resolve price từ DB khi insert order
+    // null = khách không nhập (anonymous order / no note)
+    pickup_name: trimmedOptionalString(MAX_PICKUP_NAME_LENGTH),
+    note: trimmedOptionalString(MAX_ORDER_NOTE_LENGTH),
+    payment_method: z
+      .enum([PAYMENT_METHOD.CASH, PAYMENT_METHOD.BANK_TRANSFER])
+      .default(PAYMENT_METHOD.CASH),
+    items: z.array(orderItemSchema).min(1).max(50),
+  })
+  .strict();
 
 export type SubmitOrderInput = z.infer<typeof submitOrderSchema>;
 
@@ -60,20 +62,25 @@ export const cancelBodySchema = z
   .strict();
 export type CancelBodyInput = z.infer<typeof cancelBodySchema>;
 
-export const createCategorySchema = z.object({
-  name: z
-    .string()
-    .transform((s) => s.trim())
-    .pipe(
-      z
-        .string()
-        .min(1, "Tên danh mục không được để trống.")
-        .max(50, "Tên danh mục tối đa 50 ký tự.")
-    ),
-  sort_order: z.number().int().min(0).max(9999).default(0),
-});
+export const createCategorySchema = z
+  .object({
+    name: z
+      .string()
+      .transform((s) => s.trim())
+      .pipe(
+        z
+          .string()
+          .min(1, "Tên danh mục không được để trống.")
+          .max(50, "Tên danh mục tối đa 50 ký tự.")
+      ),
+    sort_order: z.number().int().min(0).max(9999).default(0),
+  })
+  .strict();
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
+// Higher limit than createCategorySchema (9999) so existing categories with
+// sort_order > 9999 can be name-edited without the current value being rejected.
+// Capped at 999999 as a practical application-level guard.
 export const updateCategorySchema = z
   .object({
     name: z
@@ -86,8 +93,9 @@ export const updateCategorySchema = z
           .max(50, "Tên danh mục tối đa 50 ký tự.")
       )
       .optional(),
-    sort_order: z.number().int().min(0).max(9999).optional(),
+    sort_order: z.number().int().min(0).max(999999).optional(),
   })
+  .strict()
   .refine((d) => d.name !== undefined || d.sort_order !== undefined, {
     message: "Cần ít nhất một trường để cập nhật.",
   });
