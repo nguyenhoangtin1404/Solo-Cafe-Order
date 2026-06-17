@@ -133,10 +133,12 @@ export async function updateProduct(
   const product = await productRepo.updateProduct(id, {
     ...data,
     ...(data.name !== undefined && { name: sanitizeText(data.name, 100) }),
-    ...(data.description !== undefined &&
-      data.description !== null && {
-        description: sanitizeText(data.description, 500) || null,
-      }),
+    ...(data.description !== undefined && {
+      description:
+        data.description !== null
+          ? sanitizeText(data.description, 500) || null
+          : null,
+    }),
   });
   if (!product) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);

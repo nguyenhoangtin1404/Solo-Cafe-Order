@@ -48,6 +48,7 @@ export function ProductsSection({
   const deleteTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>(
     {}
   );
+  const addTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -215,11 +216,16 @@ export function ProductsSection({
 
                   <div className="ml-3 flex shrink-0 items-center gap-2">
                     {product.pending ? (
-                      <Loader2
-                        size={16}
-                        aria-hidden="true"
-                        className="animate-spin text-muted-foreground"
-                      />
+                      <>
+                        <span className="sr-only">
+                          Đang cập nhật {product.name}…
+                        </span>
+                        <Loader2
+                          size={16}
+                          aria-hidden="true"
+                          className="animate-spin text-muted-foreground"
+                        />
+                      </>
                     ) : (
                       <>
                         {/* Availability toggle */}
@@ -313,8 +319,18 @@ export function ProductsSection({
                 onSuccess={(product) => {
                   closeForm();
                   onProductCreated(product);
+                  setTimeout(
+                    () => addTriggerRefs.current[category.id]?.focus(),
+                    0
+                  );
                 }}
-                onCancel={closeForm}
+                onCancel={() => {
+                  closeForm();
+                  setTimeout(
+                    () => addTriggerRefs.current[category.id]?.focus(),
+                    0
+                  );
+                }}
               />
             )}
 
@@ -322,6 +338,9 @@ export function ProductsSection({
             {addingToCategoryId !== category.id && (
               <button
                 type="button"
+                ref={(el) => {
+                  addTriggerRefs.current[category.id] = el;
+                }}
                 onClick={() => openAdd(category.id)}
                 aria-label={`Thêm sản phẩm vào ${category.name}`}
                 className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
