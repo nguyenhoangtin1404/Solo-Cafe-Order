@@ -55,8 +55,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       );
     }
 
-    const result = await deleteProduct(id);
-    return Response.json(result);
+    await deleteProduct(id);
+    return new Response(null, { status: 204 });
   } catch (err) {
     return handleRouteError(err);
   }

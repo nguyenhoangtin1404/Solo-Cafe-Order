@@ -121,7 +121,7 @@ export const createProductSchema = z
       .int("Giá phải là số nguyên.")
       .min(1, "Giá phải lớn hơn 0."),
     is_available: z.boolean().default(true),
-    image_url: trimmedOptionalString(2000),
+    image_url: z.string().url("URL ảnh không hợp lệ.").nullable().optional(),
   })
   .strict();
 export type CreateProductInput = z.infer<typeof createProductSchema>;

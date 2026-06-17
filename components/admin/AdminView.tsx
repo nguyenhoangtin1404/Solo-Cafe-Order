@@ -22,8 +22,12 @@ interface Props {
   categories: Category[];
 }
 
-export function AdminView({ groups: initial, categories }: Props) {
+export function AdminView({
+  groups: initial,
+  categories: initialCategories,
+}: Props) {
   const [groups, setGroups] = useState<AdminViewGroup[]>(initial);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [toggleStatusMessage, setToggleStatusMessage] = useState("");
   const togglingIdsRef = useRef<Set<string>>(new Set());
   const toggleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,10 +59,14 @@ export function AdminView({ groups: initial, categories }: Props) {
         (a, b) => a.category.sort_order - b.category.sort_order
       )
     );
+    setCategories((prev) =>
+      [...prev, category].sort((a, b) => a.sort_order - b.sort_order)
+    );
   }
 
   function handleCategoryDeleted(id: string) {
     setGroups((prev) => prev.filter((g) => g.category.id !== id));
+    setCategories((prev) => prev.filter((c) => c.id !== id));
   }
 
   function handleCategoryUpdated(category: Category) {
@@ -66,6 +74,11 @@ export function AdminView({ groups: initial, categories }: Props) {
       prev
         .map((g) => (g.category.id === category.id ? { ...g, category } : g))
         .sort((a, b) => a.category.sort_order - b.category.sort_order)
+    );
+    setCategories((prev) =>
+      prev
+        .map((c) => (c.id === category.id ? category : c))
+        .sort((a, b) => a.sort_order - b.sort_order)
     );
   }
 

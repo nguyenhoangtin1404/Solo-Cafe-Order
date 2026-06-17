@@ -143,6 +143,7 @@ export function ProductForm({
             disabled={submitting}
             aria-label="Tên sản phẩm"
             aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "pf-name-error" : undefined}
             placeholder="Tên sản phẩm *"
             className={inputCls}
             onKeyDown={(e) => {
@@ -150,7 +151,11 @@ export function ProductForm({
               if (e.key === "Escape") onCancel();
             }}
           />
-          {errors.name && <p className={errorCls}>{errors.name}</p>}
+          {errors.name && (
+            <p id="pf-name-error" className={errorCls}>
+              {errors.name}
+            </p>
+          )}
         </div>
 
         {/* Description */}
@@ -187,6 +192,7 @@ export function ProductForm({
               disabled={submitting}
               aria-label="Giá (VND)"
               aria-invalid={!!errors.price}
+              aria-describedby={errors.price ? "pf-price-error" : undefined}
               placeholder="Giá (VND) *"
               className={inputCls}
               onKeyDown={(e) => {
@@ -194,7 +200,11 @@ export function ProductForm({
                 if (e.key === "Escape") onCancel();
               }}
             />
-            {errors.price && <p className={errorCls}>{errors.price}</p>}
+            {errors.price && (
+              <p id="pf-price-error" className={errorCls}>
+                {errors.price}
+              </p>
+            )}
           </div>
 
           {/* Category */}
@@ -209,6 +219,7 @@ export function ProductForm({
               disabled={submitting}
               aria-label="Danh mục"
               aria-invalid={!!errors.category_id}
+              aria-describedby={errors.category_id ? "pf-cat-error" : undefined}
               className={`${inputCls} bg-background`}
             >
               <option value="">-- Chọn danh mục --</option>
@@ -219,7 +230,9 @@ export function ProductForm({
               ))}
             </select>
             {errors.category_id && (
-              <p className={errorCls}>{errors.category_id}</p>
+              <p id="pf-cat-error" className={errorCls}>
+                {errors.category_id}
+              </p>
             )}
           </div>
         </div>
