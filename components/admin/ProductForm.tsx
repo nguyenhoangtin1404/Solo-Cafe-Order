@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
@@ -53,7 +53,12 @@ export function ProductForm({
   const [formAlert, setFormAlert] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
+
+  useEffect(() => {
+    nameInputRef.current?.focus();
+  }, []);
 
   function validate(): FormErrors {
     const errs: FormErrors = {};
@@ -123,11 +128,11 @@ export function ProductForm({
 
   return (
     <div
-      role="group"
-      aria-label={mode === "create" ? "Thêm sản phẩm mới" : "Sửa sản phẩm"}
+      role="form"
+      aria-labelledby={`${uid}-form-title`}
       className="rounded-xl border bg-card px-4 py-4 shadow-sm"
     >
-      <h3 className="mb-3 text-sm font-semibold">
+      <h3 id={`${uid}-form-title`} className="mb-3 text-sm font-semibold">
         {mode === "create" ? "Thêm sản phẩm mới" : "Sửa sản phẩm"}
       </h3>
       <div
@@ -143,7 +148,7 @@ export function ProductForm({
         {/* Name */}
         <div>
           <input
-            autoFocus
+            ref={nameInputRef}
             value={name}
             onChange={(e) => {
               setName(e.target.value);
@@ -243,6 +248,10 @@ export function ProductForm({
                 errors.category_id ? `${uid}-cat-error` : undefined
               }
               className={`${inputCls} bg-background`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+                if (e.key === "Escape") onCancel();
+              }}
             >
               <option value="">-- Chọn danh mục --</option>
               {categories.map((cat) => (

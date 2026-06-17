@@ -45,6 +45,9 @@ export function ProductsSection({
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const deleteTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>(
+    {}
+  );
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -96,6 +99,7 @@ export function ProductsSection({
       setConfirmingProductId(null);
       confirmTimerRef.current = null;
       announceStatus("Đã hủy xóa sản phẩm.");
+      setTimeout(() => deleteTriggerRefs.current[id]?.focus(), 0);
     }, 3000);
   }
 
@@ -119,6 +123,7 @@ export function ProductsSection({
       }
       onProductDeleted(id, categoryId);
       delete editTriggerRefs.current[id];
+      delete deleteTriggerRefs.current[id];
       announceStatus("Đã xóa sản phẩm.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
@@ -226,6 +231,7 @@ export function ProductsSection({
 
                         {/* Edit */}
                         <button
+                          type="button"
                           ref={(el) => {
                             editTriggerRefs.current[product.id] = el;
                           }}
@@ -252,6 +258,9 @@ export function ProductsSection({
                         ) : (
                           <button
                             type="button"
+                            ref={(el) => {
+                              deleteTriggerRefs.current[product.id] = el;
+                            }}
                             onClick={() => requestDeleteConfirm(product.id)}
                             aria-label={`Xóa sản phẩm ${product.name}`}
                             className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive"
@@ -267,7 +276,7 @@ export function ProductsSection({
             )}
 
             {/* Empty state */}
-            {products.length === 0 && addingToCategoryId !== category.id && (
+            {products.length === 0 && (
               <div className="rounded-xl border border-dashed py-6 text-center text-muted-foreground">
                 <p className="text-sm">Chưa có sản phẩm trong danh mục này</p>
               </div>

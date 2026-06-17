@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type {
   AdminCategoryGroup,
@@ -47,8 +47,10 @@ export function AdminView({
     }, 3000);
   }
 
-  const productCounts = Object.fromEntries(
-    groups.map((g) => [g.category.id, g.products.length])
+  const productCounts = useMemo(
+    () =>
+      Object.fromEntries(groups.map((g) => [g.category.id, g.products.length])),
+    [groups]
   );
 
   // ── Category callbacks ────────────────────────────────────────────────────
@@ -101,7 +103,6 @@ export function AdminView({
     const productName =
       groups.flatMap((g) => g.products).find((p) => p.id === productId)?.name ??
       "";
-    setPending(productId, true);
     // Optimistic update
     setGroups((prev) =>
       prev.map((g) => ({
