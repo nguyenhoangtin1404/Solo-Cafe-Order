@@ -109,6 +109,7 @@ export function AdminView({
     if (togglingIdsRef.current.has(productId)) return;
     togglingIdsRef.current.add(productId);
     const productName = productNames[productId] ?? "";
+    announceToggle(`Đang cập nhật ${productName}…`);
     // Optimistic update
     setGroups((prev) =>
       prev.map((g) => ({

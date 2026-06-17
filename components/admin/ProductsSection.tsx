@@ -178,9 +178,8 @@ export function ProductsSection({
                   onSuccess={(updated) => {
                     closeForm();
                     onProductUpdated(product.category_id, updated);
-                    setTimeout(
-                      () => editTriggerRefs.current[updated.id]?.focus(),
-                      0
+                    requestAnimationFrame(() =>
+                      editTriggerRefs.current[updated.id]?.focus()
                     );
                   }}
                   onCancel={() => {
@@ -216,16 +215,11 @@ export function ProductsSection({
 
                   <div className="ml-3 flex shrink-0 items-center gap-2">
                     {product.pending ? (
-                      <>
-                        <span className="sr-only">
-                          Đang cập nhật {product.name}…
-                        </span>
-                        <Loader2
-                          size={16}
-                          aria-hidden="true"
-                          className="animate-spin text-muted-foreground"
-                        />
-                      </>
+                      <Loader2
+                        size={16}
+                        aria-hidden="true"
+                        className="animate-spin text-muted-foreground"
+                      />
                     ) : (
                       <>
                         {/* Availability toggle */}

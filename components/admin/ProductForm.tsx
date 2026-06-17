@@ -71,6 +71,31 @@ export function ProductForm({
     return { errors, parsedPrice };
   }
 
+  async function callProductApi(parsedPrice: number): Promise<AdminProduct> {
+    const url =
+      mode === "create"
+        ? "/api/products"
+        : `/api/products/${initialData?.id ?? ""}`;
+    const res = await fetch(url, {
+      method: mode === "create" ? "POST" : "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category_id: categoryId,
+        name: name.trim(),
+        description: description.trim() || null,
+        price: parsedPrice,
+        is_available: isAvailable,
+      }),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      product?: AdminProduct;
+      message?: string;
+    };
+    if (!res.ok) throw new Error(data.message ?? "Lưu thất bại.");
+    if (!data.product) throw new Error("Phản hồi không hợp lệ.");
+    return data.product;
+  }
+
   async function handleSubmit() {
     const { errors: errs, parsedPrice } = validate();
     setErrors(errs);
@@ -81,39 +106,13 @@ export function ProductForm({
       return;
     }
     setFormAlert("");
-    if (submittingRef.current) return;
+    if (parsedPrice === null || submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
-
     try {
-      const body = {
-        category_id: categoryId,
-        name: name.trim(),
-        description: description.trim() || null,
-        price: parsedPrice,
-        is_available: isAvailable,
-      };
-
-      const url =
-        mode === "create"
-          ? "/api/products"
-          : `/api/products/${initialData?.id ?? ""}`;
-      const method = mode === "create" ? "POST" : "PATCH";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = (await res.json().catch(() => ({}))) as {
-        product?: AdminProduct;
-        message?: string;
-      };
-      if (!res.ok) throw new Error(data.message ?? "Lưu thất bại.");
-      if (!data.product) throw new Error("Phản hồi không hợp lệ.");
+      const product = await callProductApi(parsedPrice);
       setFormAlert("");
-      onSuccess(data.product);
+      onSuccess(product);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Lưu thất bại.";
       setFormAlert(msg);
@@ -251,6 +250,7 @@ export function ProductForm({
               }
               className={`${inputCls} bg-background`}
               onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
                 if (e.key === "Escape") onCancel();
               }}
             >
