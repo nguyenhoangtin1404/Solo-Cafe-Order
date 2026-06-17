@@ -30,7 +30,13 @@ export async function getProductWithOptions(
 
 export type AdminProduct = Pick<
   Product,
-  "id" | "category_id" | "name" | "description" | "price" | "image_url" | "is_available"
+  | "id"
+  | "category_id"
+  | "name"
+  | "description"
+  | "price"
+  | "image_url"
+  | "is_available"
 >;
 
 export type AdminCategoryGroup = {
@@ -41,7 +47,15 @@ export type AdminCategoryGroup = {
 export async function getAdminProducts(): Promise<AdminProduct[]> {
   const products = await productRepo.findAllForAdminFlat();
   return products.map(
-    ({ id, category_id, name, description, price, image_url, is_available }) => ({
+    ({
+      id,
+      category_id,
+      name,
+      description,
+      price,
+      image_url,
+      is_available,
+    }) => ({
       id,
       category_id,
       name,

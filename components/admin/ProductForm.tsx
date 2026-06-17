@@ -35,10 +35,7 @@ export function ProductForm({
   onCancel,
 }: ProductFormProps) {
   const defaultCategory =
-    initialData?.category_id ??
-    defaultCategoryId ??
-    categories[0]?.id ??
-    "";
+    initialData?.category_id ?? defaultCategoryId ?? categories[0]?.id ?? "";
 
   const [name, setName] = useState(initialData?.name ?? "");
   const [description, setDescription] = useState(
@@ -256,7 +253,11 @@ export function ProductForm({
             className="min-h-[44px] flex-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {submitting ? (
-              <Loader2 size={16} aria-hidden="true" className="mx-auto animate-spin" />
+              <Loader2
+                size={16}
+                aria-hidden="true"
+                className="mx-auto animate-spin"
+              />
             ) : mode === "create" ? (
               "Thêm sản phẩm"
             ) : (

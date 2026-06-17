@@ -18,7 +18,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const id = await resolveId(params);
     if (!id) {
-      return errorResponse("VALIDATION_ERROR", "ID sản phẩm không hợp lệ.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "ID sản phẩm không hợp lệ.",
+        400
+      );
     }
 
     const body = await req.json().catch(() => null);
@@ -44,7 +48,11 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
     const id = await resolveId(params);
     if (!id) {
-      return errorResponse("VALIDATION_ERROR", "ID sản phẩm không hợp lệ.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "ID sản phẩm không hợp lệ.",
+        400
+      );
     }
 
     const result = await deleteProduct(id);

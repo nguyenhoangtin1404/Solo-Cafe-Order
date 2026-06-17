@@ -86,15 +86,17 @@ export function AdminView({ groups: initial, categories }: Props) {
     if (togglingIdsRef.current.has(productId)) return;
     togglingIdsRef.current.add(productId);
     const productName =
-      groups.flatMap((g) => g.products).find((p) => p.id === productId)
-        ?.name ?? "";
+      groups.flatMap((g) => g.products).find((p) => p.id === productId)?.name ??
+      "";
     setPending(productId, true);
     // Optimistic update
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
         products: g.products.map((p) =>
-          p.id === productId ? { ...p, is_available: newValue, pending: true } : p
+          p.id === productId
+            ? { ...p, is_available: newValue, pending: true }
+            : p
         ),
       }))
     );
@@ -106,7 +108,9 @@ export function AdminView({ groups: initial, categories }: Props) {
         body: JSON.stringify({ is_available: newValue }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(body.message ?? "Cập nhật thất bại.");
       }
       setPending(productId, false);
@@ -144,8 +148,14 @@ export function AdminView({ groups: initial, categories }: Props) {
   function handleProductUpdated(oldCategoryId: string, product: AdminProduct) {
     setGroups((prev) =>
       prev.map((g) => {
-        if (g.category.id === oldCategoryId && g.category.id !== product.category_id) {
-          return { ...g, products: g.products.filter((p) => p.id !== product.id) };
+        if (
+          g.category.id === oldCategoryId &&
+          g.category.id !== product.category_id
+        ) {
+          return {
+            ...g,
+            products: g.products.filter((p) => p.id !== product.id),
+          };
         }
         if (g.category.id === product.category_id) {
           const exists = g.products.some((p) => p.id === product.id);

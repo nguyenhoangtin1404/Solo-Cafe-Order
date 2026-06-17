@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
-import type { AdminProduct, AdminCategoryGroup } from "@/lib/services/product.service";
+import type {
+  AdminProduct,
+  AdminCategoryGroup,
+} from "@/lib/services/product.service";
 import { ProductForm } from "./ProductForm";
 
 type AdminViewGroup = {
@@ -30,8 +33,12 @@ export function ProductsSection({
   onProductDeleted,
 }: Props) {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [addingToCategoryId, setAddingToCategoryId] = useState<string | null>(null);
-  const [confirmingProductId, setConfirmingProductId] = useState<string | null>(null);
+  const [addingToCategoryId, setAddingToCategoryId] = useState<string | null>(
+    null
+  );
+  const [confirmingProductId, setConfirmingProductId] = useState<string | null>(
+    null
+  );
   const [statusMessage, setStatusMessage] = useState("");
 
   const deletingIdsRef = useRef<Set<string>>(new Set());
@@ -42,8 +49,10 @@ export function ProductsSection({
 
   useEffect(() => {
     return () => {
-      if (confirmTimerRef.current !== null) clearTimeout(confirmTimerRef.current);
-      if (announceTimerRef.current !== null) clearTimeout(announceTimerRef.current);
+      if (confirmTimerRef.current !== null)
+        clearTimeout(confirmTimerRef.current);
+      if (announceTimerRef.current !== null)
+        clearTimeout(announceTimerRef.current);
     };
   }, []);
 
@@ -52,7 +61,8 @@ export function ProductsSection({
   }, [confirmingProductId]);
 
   function announceStatus(message: string) {
-    if (announceTimerRef.current !== null) clearTimeout(announceTimerRef.current);
+    if (announceTimerRef.current !== null)
+      clearTimeout(announceTimerRef.current);
     setStatusMessage(message);
     announceTimerRef.current = setTimeout(() => {
       setStatusMessage("");
@@ -101,7 +111,9 @@ export function ProductsSection({
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(body.message ?? "Xóa thất bại.");
       }
       onProductDeleted(id, categoryId);
@@ -140,11 +152,17 @@ export function ProductsSection({
                   onSuccess={(updated) => {
                     closeForm();
                     onProductUpdated(product.category_id, updated);
-                    setTimeout(() => editTriggerRefs.current[updated.id]?.focus(), 0);
+                    setTimeout(
+                      () => editTriggerRefs.current[updated.id]?.focus(),
+                      0
+                    );
                   }}
                   onCancel={() => {
                     closeForm();
-                    setTimeout(() => editTriggerRefs.current[product.id]?.focus(), 0);
+                    setTimeout(
+                      () => editTriggerRefs.current[product.id]?.focus(),
+                      0
+                    );
                   }}
                 />
               ) : (
@@ -155,7 +173,9 @@ export function ProductsSection({
                   <div className="min-w-0">
                     <p
                       className={`truncate font-medium ${
-                        !product.is_available ? "text-muted-foreground line-through" : ""
+                        !product.is_available
+                          ? "text-muted-foreground line-through"
+                          : ""
                       }`}
                     >
                       {product.name}
@@ -170,7 +190,11 @@ export function ProductsSection({
 
                   <div className="ml-3 flex shrink-0 items-center gap-2">
                     {product.pending ? (
-                      <Loader2 size={16} aria-hidden="true" className="animate-spin text-muted-foreground" />
+                      <Loader2
+                        size={16}
+                        aria-hidden="true"
+                        className="animate-spin text-muted-foreground"
+                      />
                     ) : (
                       <>
                         {/* Availability toggle */}
@@ -178,7 +202,9 @@ export function ProductsSection({
                           role="switch"
                           aria-checked={product.is_available}
                           aria-label={`${product.name}: bật/tắt hiển thị`}
-                          onClick={() => onToggle(product.id, !product.is_available)}
+                          onClick={() =>
+                            onToggle(product.id, !product.is_available)
+                          }
                           className="relative flex min-h-[44px] w-11 shrink-0 cursor-pointer items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <span
@@ -188,7 +214,9 @@ export function ProductsSection({
                           >
                             <span
                               className={`block h-5 w-5 rounded-full bg-background shadow-lg transition-transform ${
-                                product.is_available ? "translate-x-5" : "translate-x-0.5"
+                                product.is_available
+                                  ? "translate-x-5"
+                                  : "translate-x-0.5"
                               }`}
                             />
                           </span>
@@ -196,7 +224,9 @@ export function ProductsSection({
 
                         {/* Edit */}
                         <button
-                          ref={(el) => { editTriggerRefs.current[product.id] = el; }}
+                          ref={(el) => {
+                            editTriggerRefs.current[product.id] = el;
+                          }}
                           onClick={() => openEdit(product)}
                           aria-label={`Sửa sản phẩm ${product.name}`}
                           className="min-h-[44px] rounded-lg border px-3 text-sm"
@@ -208,7 +238,9 @@ export function ProductsSection({
                         {confirmingProductId === product.id ? (
                           <button
                             ref={confirmButtonRef}
-                            onClick={() => handleDelete(product.id, product.category_id)}
+                            onClick={() =>
+                              handleDelete(product.id, product.category_id)
+                            }
                             aria-label={`Xác nhận xóa sản phẩm ${product.name}`}
                             className="min-h-[44px] rounded-lg border border-destructive bg-destructive px-3 text-sm font-medium text-destructive-foreground"
                           >

@@ -116,7 +116,10 @@ export const createProductSchema = z
     category_id: z.string().uuid("ID danh mục không hợp lệ."),
     name: productNameField,
     description: trimmedOptionalString(500),
-    price: z.number().int("Giá phải là số nguyên.").min(1, "Giá phải lớn hơn 0."),
+    price: z
+      .number()
+      .int("Giá phải là số nguyên.")
+      .min(1, "Giá phải lớn hơn 0."),
     is_available: z.boolean().default(true),
     image_url: trimmedOptionalString(2000),
   })
@@ -127,14 +130,21 @@ export const updateProductSchema = z
   .object({
     category_id: z.string().uuid("ID danh mục không hợp lệ.").optional(),
     name: productNameField.optional(),
-    description: z.string().max(500, "Mô tả tối đa 500 ký tự.").nullable().optional(),
-    price: z.number().int("Giá phải là số nguyên.").min(1, "Giá phải lớn hơn 0.").optional(),
+    description: z
+      .string()
+      .max(500, "Mô tả tối đa 500 ký tự.")
+      .nullable()
+      .optional(),
+    price: z
+      .number()
+      .int("Giá phải là số nguyên.")
+      .min(1, "Giá phải lớn hơn 0.")
+      .optional(),
     is_available: z.boolean().optional(),
     image_url: z.string().url().nullable().optional(),
   })
   .strict()
-  .refine(
-    (d) => Object.values(d).some((v) => v !== undefined),
-    { message: "Cần ít nhất một trường để cập nhật." }
-  );
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "Cần ít nhất một trường để cập nhật.",
+  });
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
