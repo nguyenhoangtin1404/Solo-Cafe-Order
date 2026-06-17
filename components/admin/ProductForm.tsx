@@ -60,17 +60,6 @@ export function ProductForm({
     nameInputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (
-      mode === "create" &&
-      !defaultCategoryId &&
-      categoryId === "" &&
-      categories.length > 0
-    ) {
-      setCategoryId(categories[0].id);
-    }
-  }, [categories, mode, defaultCategoryId, categoryId]);
-
   function validate(): { errors: FormErrors; parsedPrice: number | null } {
     const errors: FormErrors = {};
     if (!name.trim()) errors.name = "Tên sản phẩm không được để trống.";
