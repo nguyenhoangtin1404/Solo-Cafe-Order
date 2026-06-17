@@ -318,7 +318,7 @@ export function ProductsSection({
                 aria-label={`Thêm sản phẩm vào ${category.name}`}
                 className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:border-foreground hover:text-foreground"
               >
-                <span aria-hidden="true">+</span>{" "}Thêm sản phẩm
+                <span aria-hidden="true">+</span> Thêm sản phẩm
               </button>
             )}
           </div>
