@@ -188,7 +188,14 @@ export function AdminView({ groups: initial, categories }: Props) {
                       if (!product.pending)
                         handleToggle(product.id, !product.is_available);
                     }}
-                    className={`relative ml-4 flex min-h-[44px] w-11 shrink-0 cursor-pointer items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring${product.pending ? " cursor-not-allowed opacity-50" : ""}`}
+                    onKeyDown={(e) => {
+                      if (
+                        product.pending &&
+                        (e.key === " " || e.key === "Enter")
+                      )
+                        e.preventDefault();
+                    }}
+                    className={`relative ml-4 flex min-h-[44px] w-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring${product.pending ? " cursor-not-allowed opacity-50" : " cursor-pointer"}`}
                   >
                     <span
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${

@@ -343,6 +343,10 @@ export function CategoriesSection({
                 onClick={() => handleUpdate(cat.id)}
                 aria-disabled={cat.pending || undefined}
                 aria-label={`Lưu danh mục ${cat.name}`}
+                onKeyDown={(e) => {
+                  if (cat.pending && (e.key === "Enter" || e.key === " "))
+                    e.preventDefault();
+                }}
                 className={`min-h-[44px] min-w-[54px] rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground${cat.pending ? " cursor-not-allowed opacity-50" : ""}`}
               >
                 {cat.pending ? (
@@ -356,15 +360,13 @@ export function CategoriesSection({
                 )}
               </button>
               <button
-                onClick={() => {
-                  if (!cat.pending) cancelEdit();
-                }}
-                aria-disabled={cat.pending || undefined}
+                onClick={cancelEdit}
+                disabled={cat.pending}
                 aria-label={`Hủy chỉnh sửa ${cat.name}`}
                 aria-describedby={
                   cat.pending ? `edit-pending-hint-${cat.id}` : undefined
                 }
-                className={`min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground${cat.pending ? " cursor-not-allowed opacity-50" : ""}`}
+                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
               >
                 Hủy
               </button>
