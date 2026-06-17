@@ -22,6 +22,13 @@ export async function POST(req: NextRequest) {
     await requireOwner();
 
     const body = await req.json().catch(() => null);
+    if (body === null) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Request body bị thiếu hoặc không phải JSON.",
+        400
+      );
+    }
     const parsed = createProductSchema.safeParse(body);
     if (!parsed.success) {
       return errorResponse(

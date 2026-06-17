@@ -151,7 +151,7 @@ export const updateProductSchema = z
       .pipe(
         z
           .string()
-          .min(1)
+          .min(1, "Mô tả không được là chuỗi rỗng.")
           .max(500, "Mô tả tối đa 500 ký tự.")
           .nullable()
           .optional()
@@ -165,7 +165,7 @@ export const updateProductSchema = z
     is_available: z.boolean().optional(),
     image_url: z
       .string()
-      .url()
+      .url("URL ảnh không hợp lệ.")
       .refine(
         (u) => /^https?:\/\//i.test(u),
         "URL ảnh phải bắt đầu bằng http:// hoặc https://."

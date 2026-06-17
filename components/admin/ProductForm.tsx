@@ -50,6 +50,7 @@ export function ProductForm({
     initialData?.is_available ?? true
   );
   const [errors, setErrors] = useState<FormErrors>({});
+  const [formAlert, setFormAlert] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const uid = useId();
@@ -68,7 +69,13 @@ export function ProductForm({
   async function handleSubmit() {
     const errs = validate();
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      setFormAlert(
+        Object.values(errs)[0] ?? "Vui lòng kiểm tra lại thông tin."
+      );
+      return;
+    }
+    setFormAlert("");
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
@@ -123,6 +130,14 @@ export function ProductForm({
       <h3 className="mb-3 text-sm font-semibold">
         {mode === "create" ? "Thêm sản phẩm mới" : "Sửa sản phẩm"}
       </h3>
+      <div
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {formAlert}
+      </div>
 
       <div className="space-y-3">
         {/* Name */}
@@ -263,6 +278,13 @@ export function ProductForm({
             onClick={handleSubmit}
             disabled={submitting}
             aria-busy={submitting}
+            aria-label={
+              submitting
+                ? "Đang lưu..."
+                : mode === "create"
+                  ? "Thêm sản phẩm"
+                  : "Lưu thay đổi"
+            }
             className="min-h-[44px] flex-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {submitting ? (

@@ -95,6 +95,7 @@ export function ProductsSection({
     confirmTimerRef.current = setTimeout(() => {
       setConfirmingProductId(null);
       confirmTimerRef.current = null;
+      announceStatus("Đã hủy xóa sản phẩm.");
     }, 3000);
   }
 
@@ -238,6 +239,7 @@ export function ProductsSection({
                         {/* Delete */}
                         {confirmingProductId === product.id ? (
                           <button
+                            type="button"
                             ref={confirmButtonRef}
                             onClick={() =>
                               handleDelete(product.id, product.category_id)
@@ -249,6 +251,7 @@ export function ProductsSection({
                           </button>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => requestDeleteConfirm(product.id)}
                             aria-label={`Xóa sản phẩm ${product.name}`}
                             className="min-h-[44px] rounded-lg border border-destructive px-3 text-sm text-destructive"

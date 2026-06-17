@@ -26,6 +26,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const body = await req.json().catch(() => null);
+    if (body === null) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Request body bị thiếu hoặc không phải JSON.",
+        400
+      );
+    }
     const parsed = updateProductSchema.safeParse(body);
     if (!parsed.success) {
       return errorResponse(

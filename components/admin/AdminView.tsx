@@ -199,7 +199,7 @@ export function AdminView({
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {toggleStatusMessage}
       </div>
-      <header role="banner" className="border-b px-4 py-3">
+      <header className="border-b px-4 py-3">
         <h1 className="text-lg font-bold">Quản lý menu</h1>
       </header>
 
