@@ -22,6 +22,7 @@ interface FormErrors {
 }
 
 function parsePrice(raw: string): number | null {
+  if (/[a-zA-Z]/.test(raw)) return null;
   const n = Number(raw.replace(/[^\d]/g, ""));
   return Number.isInteger(n) && n > 0 ? n : null;
 }
@@ -255,6 +256,7 @@ export function ProductForm({
         {/* Actions */}
         <div className="flex gap-2 pt-1">
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={submitting}
             className="min-h-[44px] flex-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
@@ -272,6 +274,7 @@ export function ProductForm({
             )}
           </button>
           <button
+            type="button"
             onClick={onCancel}
             disabled={submitting}
             className="min-h-[44px] rounded-lg border px-4 text-sm text-muted-foreground disabled:opacity-50"

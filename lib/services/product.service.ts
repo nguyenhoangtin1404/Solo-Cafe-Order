@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import type { CreateProductInput, UpdateProductInput } from "@/lib/validators";
 import * as categoryRepo from "@/lib/repositories/category.repository";
 import * as productRepo from "@/lib/repositories/product.repository";
+import { sanitizeText } from "@/lib/utils/sanitize";
 
 export type CategoryWithProducts = Category & {
   products: ProductWithOptions[];
@@ -109,7 +110,13 @@ export async function createProduct(
   if (!category) {
     throw new AppError("CATEGORY_NOT_FOUND", "Danh mục không tồn tại.", 404);
   }
-  const product = await productRepo.createProduct(data);
+  const product = await productRepo.createProduct({
+    ...data,
+    name: sanitizeText(data.name, 100),
+    description: data.description
+      ? sanitizeText(data.description, 500) || null
+      : data.description,
+  });
   return toAdminProduct(product);
 }
 
@@ -123,7 +130,13 @@ export async function updateProduct(
       throw new AppError("CATEGORY_NOT_FOUND", "Danh mục không tồn tại.", 404);
     }
   }
-  const product = await productRepo.updateProduct(id, data);
+  const product = await productRepo.updateProduct(id, {
+    ...data,
+    ...(data.name !== undefined && { name: sanitizeText(data.name, 100) }),
+    ...(data.description != null && {
+      description: sanitizeText(data.description, 500) || null,
+    }),
+  });
   if (!product) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
   }
