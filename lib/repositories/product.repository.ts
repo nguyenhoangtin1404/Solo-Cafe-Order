@@ -125,3 +125,74 @@ export async function countActiveByCategory(
   if (error) throw error;
   return count ?? 0;
 }
+
+export async function createProduct(data: {
+  category_id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  is_available: boolean;
+  image_url?: string | null;
+}): Promise<Product> {
+  const supabase = createAdminSupabaseClient();
+  const { data: row, error } = await supabase
+    .from("products")
+    .insert(data)
+    .select(
+      "id, category_id, name, description, price, image_url, is_available, created_at, deleted_at"
+    )
+    .single();
+
+  if (error) throw error;
+  return row as Product;
+}
+
+type ProductUpdateFields = {
+  category_id?: string;
+  name?: string;
+  description?: string | null;
+  price?: number;
+  is_available?: boolean;
+  image_url?: string | null;
+};
+
+export async function updateProduct(
+  id: string,
+  fields: ProductUpdateFields
+): Promise<Product | null> {
+  // Only send defined fields — omitted keys stay unchanged in DB
+  const patch = Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined)
+  );
+  if (Object.keys(patch).length === 0) return null;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .update(patch)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select(
+      "id, category_id, name, description, price, image_url, is_available, created_at, deleted_at"
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as Product | null) ?? null;
+}
+
+export async function softDeleteProduct(
+  id: string
+): Promise<{ id: string; deleted_at: string } | null> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id, deleted_at")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { id: string; deleted_at: string } | null) ?? null;
+}
