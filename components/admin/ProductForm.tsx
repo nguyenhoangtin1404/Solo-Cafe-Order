@@ -434,7 +434,7 @@ export function ProductForm({
         {/* Options (edit mode only) */}
         {mode === "edit" && initialData && (
           <div className="border-t pt-3">
-            <OptionsEditor productId={initialData.id} />
+            <OptionsEditor key={initialData.id} productId={initialData.id} />
           </div>
         )}
 
