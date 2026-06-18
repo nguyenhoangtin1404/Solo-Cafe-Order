@@ -1,7 +1,10 @@
 import "server-only";
 /**
  * DANGER: Client này bypass RLS hoàn toàn.
- * Chỉ import trong Route Handlers (app/api/**) hoặc server services/repositories — KHÔNG dùng trong Client Components.
+ * Chỉ dùng trong Route Handlers (app/api/**) hoặc server services/repositories.
+ * KHÔNG dùng trong Client Components (server-only enforce điều này tại build time).
+ * KHÔNG dùng trong Server Component pages — server-only KHÔNG ngăn Server Components
+ * import module này; query sẽ bypass toàn bộ RLS policies mà không có cảnh báo.
  * Mọi query qua client này có quyền đọc/ghi toàn bộ DB không qua policy.
  */
 import { createClient } from "@supabase/supabase-js";
