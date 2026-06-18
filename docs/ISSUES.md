@@ -1,7 +1,7 @@
 # GitHub Issues — Solo Cafe Order
 
 > Reviewed by: PM · PO · Tech Lead · Tester · Senior Dev (round 2 — cross-checked vs API_CONTRACT, DB_SCHEMA, DOMAIN, REALTIME, TESTING docs)
-> Last updated: 2026-06-02
+> Last updated: 2026-06-18
 > Total: 41 issues · 3 milestones
 
 ---
@@ -32,7 +32,7 @@
 
 ## Milestone 1 — Foundation
 
-### #1 · Project scaffolding
+### #16 · Project scaffolding
 
 **Labels:** `setup`
 **Blocked by:** —
@@ -43,8 +43,8 @@
 - TailwindCSS + shadcn/ui init (bao gồm Toaster cho toast notifications)
 - ESLint + Prettier config
 - `next.config.js` — `images.remotePatterns` cho Supabase Storage URL, security headers
-- `.env.example` đầy đủ **6 biến base** (thêm `NEXT_PUBLIC_APP_URL` cho QR link) — 4 bank vars bổ sung trong #40
-  - Vercel deploy cần đủ 10 biến — xem #34 để không thiếu khi setup production
+- `.env.example` đầy đủ **6 biến base** (thêm `NEXT_PUBLIC_APP_URL` cho QR link) — 4 bank vars bổ sung trong #115
+  - Vercel deploy cần đủ 10 biến — xem #118 để không thiếu khi setup production
 - Folder structure theo CLAUDE.md (`app/`, `components/`, `lib/`, `hooks/`, `types/`, `supabase/`)
 
 **AC:**
@@ -56,10 +56,10 @@
 
 ---
 
-### #2 · Supabase client setup
+### #17 · Supabase client setup
 
 **Labels:** `setup`, `backend`
-**Blocked by:** #1
+**Blocked by:** #16
 
 **Scope:**
 
@@ -76,7 +76,7 @@
 
 ---
 
-### #3 · DB migration: Products & Categories
+### #18 · DB migration: Products & Categories
 
 **Labels:** `database`
 **Blocked by:** —
@@ -98,10 +98,10 @@
 
 ---
 
-### #4 · DB migration: Orders + DB function + trigger
+### #19 · DB migration: Orders + DB function + trigger
 
 **Labels:** `database`
-**Blocked by:** #3
+**Blocked by:** #18
 
 **Scope:**
 
@@ -122,10 +122,10 @@
 
 ---
 
-### #5 · RLS policies
+### #20 · RLS policies
 
 **Labels:** `database`, `security`
-**Blocked by:** #3, #4
+**Blocked by:** #18, #19
 
 **Scope** (`supabase/policies.sql`):
 
@@ -154,11 +154,11 @@
 
 ---
 
-### #6 · Supabase Storage bucket setup
+### #21 · Supabase Storage bucket setup
 
 **Labels:** `setup`, `security`
 **Blocked by:** —
-**Note:** Prerequisite của #29 (image upload)
+**Note:** Prerequisite của #114 (image upload)
 
 **Scope:**
 
@@ -175,10 +175,10 @@
 
 ---
 
-### #7 · Seed data
+### #22 · Seed data
 
 **Labels:** `database`
-**Blocked by:** #3, #4
+**Blocked by:** #18, #19
 
 **Scope** (`supabase/seed.sql`):
 
@@ -197,10 +197,10 @@
 
 ---
 
-### #8 · TypeScript types + shared infrastructure
+### #23 · TypeScript types + shared infrastructure
 
 **Labels:** `setup`, `backend`
-**Blocked by:** #3, #4
+**Blocked by:** #18, #19
 
 **Scope:**
 
@@ -212,7 +212,7 @@
   - `submitOrderSchema`: items (array, min 1), pickup_name (string, max 50, optional), **order note** (string, max **500**, optional), payment_method (enum cash|bank_transfer, default cash)
   - `orderItemSchema`: item note (string, max **200**, optional) — phân biệt với order-level note
   - `updateStatusSchema`: status (enum making|done|cancelled)
-  - `cancelOrderSchema`: order_code (string, required) — validate URL path param format, không phải body (#16 cancel không cần body)
+  - `cancelOrderSchema`: order_code (string, required) — validate URL path param format, không phải body (#42 cancel không cần body)
   - `selectedOptionSchema`: option_id, value_ids (array — validate select=1 value, multi≥0)
 
 **AC:**
@@ -224,10 +224,10 @@
 
 ---
 
-### #9 · Owner auth + middleware
+### #24 · Owner auth + middleware
 
 **Labels:** `backend`, `frontend`, `security`
-**Blocked by:** #2
+**Blocked by:** #17
 
 **Scope:**
 
@@ -246,10 +246,10 @@
 
 ---
 
-### #35 · Service role client + API auth helper
+### #25 · Service role client + API auth helper
 
 **Labels:** `setup`, `backend`, `security`
-**Blocked by:** #2
+**Blocked by:** #17
 
 **Scope:**
 
@@ -265,10 +265,10 @@
 
 ---
 
-### #36 · Realtime publication migration
+### #26 · Realtime publication migration
 
 **Labels:** `database`
-**Blocked by:** #4
+**Blocked by:** #19
 
 **Scope:**
 
@@ -285,10 +285,10 @@
 
 ## Milestone 2 — Core Order Loop
 
-### #10 · Product & Category repository + service
+### #36 · Product & Category repository + service
 
 **Labels:** `backend`
-**Blocked by:** #2, #3, #8, #35
+**Blocked by:** #17, #18, #23, #25
 
 **Scope:**
 
@@ -309,10 +309,10 @@
 
 ---
 
-### #11 · GET /api/menu
+### #37 · GET /api/menu
 
 **Labels:** `backend`
-**Blocked by:** #10
+**Blocked by:** #36
 
 **Scope:**
 
@@ -330,10 +330,10 @@
 
 ---
 
-### #12 · Order repository
+### #38 · Order repository
 
 **Labels:** `backend`
-**Blocked by:** #2, #4, #8, #35
+**Blocked by:** #17, #19, #23, #25
 
 **Scope:**
 
@@ -355,10 +355,10 @@
 
 ---
 
-### #13 · Order service
+### #39 · Order service
 
 **Labels:** `backend`
-**Blocked by:** #10, #12
+**Blocked by:** #36, #38
 
 **Scope:**
 
@@ -369,7 +369,7 @@
     - Tính `unit_price = product.price + sum(option_value.extra_price)` từ DB — không nhận price từ client
     - Snapshot `product_name`, `unit_price`, `selected_options` vào order_items
     - Tính `wait_estimate`: `countPending() × 3` phút, trả `{ min, max }` (± 2 phút)
-      - MVP đơn giản: đếm tất cả orders `new` + `making` tại thời điểm submit — dùng `countPending()` từ #12 (không trừ vị trí trong queue)
+      - MVP đơn giản: đếm tất cả orders `new` + `making` tại thời điểm submit — dùng `countPending()` từ #38 (không trừ vị trí trong queue)
     - Validate `payment_method` ∈ `[cash, bank_transfer]`
   - `cancelOrder(order_code)` — chỉ khi `status = 'new'`, set `status = 'cancelled'`
   - `updateStatus(id, newStatus)` — validate transition hợp lệ
@@ -396,10 +396,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #14 · POST /api/orders
+### #40 · POST /api/orders
 
 **Labels:** `backend`, `security`
-**Blocked by:** #13, #40
+**Blocked by:** #39, #115
 
 **Scope:**
 
@@ -435,10 +435,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #15 · PATCH /api/orders/[id]/status
+### #41 · PATCH /api/orders/[id]/status
 
 **Labels:** `backend`, `security`
-**Blocked by:** #13, #35
+**Blocked by:** #39, #25
 
 **Scope:**
 
@@ -456,10 +456,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #16 · POST /api/orders/[code]/cancel
+### #42 · POST /api/orders/[code]/cancel
 
 **Labels:** `backend`
-**Blocked by:** #13
+**Blocked by:** #39
 
 **Scope:**
 
@@ -479,10 +479,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #17 · GET /api/orders/[code]
+### #43 · GET /api/orders/[code]
 
 **Labels:** `backend`
-**Blocked by:** #12
+**Blocked by:** #38
 
 **Scope:**
 
@@ -500,10 +500,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #18 · GET /api/orders
+### #44 · GET /api/orders
 
 **Labels:** `backend`, `security`
-**Blocked by:** #12, #35
+**Blocked by:** #38, #25
 
 **Scope:**
 
@@ -525,10 +525,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #19 · Custom hooks
+### #45 · Custom hooks
 
 **Labels:** `frontend`
-**Blocked by:** #2, #8
+**Blocked by:** #17, #23
 
 **Scope:**
 
@@ -546,10 +546,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #37 · Jest setup + unit tests
+### #54 · Jest setup + unit tests
 
 **Labels:** `backend`
-**Blocked by:** #8, #13
+**Blocked by:** #23, #39
 
 **Scope** (theo `docs/TESTING.md`):
 
@@ -570,10 +570,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #20 · Menu page
+### #46 · Menu page
 
 **Labels:** `frontend`
-**Blocked by:** #11, #19
+**Blocked by:** #37, #45
 
 **Scope:**
 
@@ -595,10 +595,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #21 · Cart page
+### #47 · Cart page
 
 **Labels:** `frontend`
-**Blocked by:** #14, #19
+**Blocked by:** #40, #45
 
 **Scope:**
 
@@ -621,17 +621,17 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #22 · Order success screen
+### #48 · Order success screen
 
 **Labels:** `frontend`
-**Blocked by:** #21
+**Blocked by:** #47
 
 **Scope:**
 
 - `app/order-success/page.tsx`
 - Nhận data từ submit response (lưu sessionStorage, không qua URL param)
 - Hiển thị: order_code (lớn, dễ đọc), pickup_name, items snapshot, wait_estimate
-- Nếu `payment_method = bank_transfer`: hiển thị block thông tin tài khoản ngân hàng từ `bank_transfer_info` trong submit response (không đọc env client-side — xem #40)
+- Nếu `payment_method = bank_transfer`: hiển thị block thông tin tài khoản ngân hàng từ `bank_transfer_info` trong submit response (không đọc env client-side — xem #115)
 - Link đến `/order/[code]` để tracking
 - Nút "Đặt thêm" → về `/menu`
 
@@ -645,10 +645,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #23 · Order tracking page
+### #49 · Order tracking page
 
 **Labels:** `frontend`
-**Blocked by:** #17, #19
+**Blocked by:** #43, #45
 
 **Scope:**
 
@@ -669,10 +669,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #24a · Dashboard — Realtime spike (làm trước, đầu M2)
+### #50 · Dashboard — Realtime spike (làm trước, đầu M2)
 
 **Labels:** `backend`, `frontend`
-**Blocked by:** #36, #19
+**Blocked by:** #26, #45
 
 **Note:** Spike nhỏ validate Realtime hoạt động trước khi build full UI. Nếu Realtime có vấn đề → phát hiện sớm.
 
@@ -690,10 +690,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #24b · Dashboard — order list + status actions
+### #51 · Dashboard — order list + status actions
 
 **Labels:** `frontend`, `backend`
-**Blocked by:** #24a, #15, #18
+**Blocked by:** #50, #41, #44
 
 **Scope:**
 
@@ -712,10 +712,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #25 · Dashboard — sound + filter tabs
+### #52 · Dashboard — sound + filter tabs
 
 **Labels:** `frontend`, `ux`
-**Blocked by:** #24b
+**Blocked by:** #51
 
 **Scope:**
 
@@ -740,10 +740,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #26 · Loading & empty states
+### #53 · Loading & empty states
 
 **Labels:** `frontend`, `ux`
-**Blocked by:** #20, #21, #23, #24b
+**Blocked by:** #46, #47, #49, #51
 
 **Scope:**
 
@@ -761,10 +761,10 @@ new     → cancelled (owner hoặc customer)
 
 ## Milestone 3 — Admin + Ship
 
-### #27 · Admin — product list + availability toggle
+### #76 · Admin — product list + availability toggle
 
 **Labels:** `frontend`, `backend`
-**Blocked by:** #10, #35
+**Blocked by:** #36, #25
 
 **Scope:**
 
@@ -782,10 +782,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #28 · Admin — add/edit product (fields only)
+### #111 · Admin — add/edit product (fields only)
 
 **Labels:** `frontend`, `backend`
-**Blocked by:** #10, #27
+**Blocked by:** #36, #76
 
 **Scope:**
 
@@ -804,12 +804,12 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #38 · Admin — product options management
+### #113 · Admin — product options management
 
 **Labels:** `frontend`, `backend`
-**Blocked by:** #28
+**Blocked by:** #111
 
-**Scope:** (tách từ #28 — đủ phức tạp để là issue riêng)
+**Scope:** (tách từ #111 — đủ phức tạp để là issue riêng)
 
 > ⚠️ **Prerequisite:** `POST/PATCH/DELETE /api/products/[id]/options` **chưa có trong `docs/API_CONTRACT.md`** — cần bổ sung contract trước khi implement. Implement theo contract đã thống nhất, không tự định nghĩa API path.
 
@@ -826,10 +826,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #29 · Admin — image upload
+### #114 · Admin — image upload
 
 **Labels:** `frontend`, `backend`
-**Blocked by:** #6, #28
+**Blocked by:** #21, #111
 
 **Scope:**
 
@@ -847,10 +847,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #39 · Admin — category management
+### #81 · Admin — category management
 
 **Labels:** `frontend`, `backend`
-**Blocked by:** #10, #35
+**Blocked by:** #36, #25
 
 **Scope:**
 
@@ -867,11 +867,11 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #40 · Bank transfer env vars + config
+### #115 · Bank transfer env vars + config
 
 **Labels:** `setup`, `backend`
-**Blocked by:** #1
-**Note:** Prerequisite của #14 (POST /api/orders trả bank_transfer_info) và #22 (success screen bank block)
+**Blocked by:** #16
+**Note:** Prerequisite của #40 (POST /api/orders trả bank_transfer_info) và #48 (success screen bank block)
 
 **Scope:**
 
@@ -881,7 +881,7 @@ new     → cancelled (owner hoặc customer)
   - `BANK_ACCOUNT_NAME` (server-only)
   - `NEXT_PUBLIC_BANK_QR_IMAGE_URL` (public — server đọc và đưa vào `bank_transfer_info.qr_image_url` trong API response; client chỉ render URL nhận được)
 - `lib/config/bank.ts` — đọc env, export `getBankTransferInfo()` (server-side only)
-- Set đủ trên Vercel Dashboard (thêm vào #34)
+- Set đủ trên Vercel Dashboard (thêm vào #118)
 
 **AC:**
 
@@ -891,10 +891,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #30 · PWA manifest + meta tags
+### #116 · PWA manifest + meta tags
 
 **Labels:** `ux`, `deploy`
-**Blocked by:** #1
+**Blocked by:** #16
 
 **Scope:**
 
@@ -913,10 +913,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #31 · Error pages
+### #79 · Error pages
 
 **Labels:** `frontend`, `ux`
-**Blocked by:** #1
+**Blocked by:** #16
 
 **Scope:**
 
@@ -932,10 +932,10 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #32 · Redirect / → /menu
+### #78 · Redirect / → /menu
 
 **Labels:** `setup`
-**Blocked by:** #1
+**Blocked by:** #16
 
 **Scope:**
 
@@ -948,7 +948,7 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
-### #33 · Smoke test checklist
+### #117 · Smoke test checklist
 
 **Labels:** `deploy`
 **Blocked by:** tất cả feature issues
@@ -997,14 +997,14 @@ new     → cancelled (owner hoặc customer)
 
 - [ ] `npm run build` → 0 errors, 0 type errors
 - [ ] `npm run lint` → 0 errors
-- [ ] `npm test` → tất cả unit tests pass (sau #37)
+- [ ] `npm test` → tất cả unit tests pass (sau #54)
 
 ---
 
-### #34 · Deploy to Vercel
+### #118 · Deploy to Vercel
 
 **Labels:** `deploy`
-**Blocked by:** #33
+**Blocked by:** #117
 
 **Scope:**
 
@@ -1026,7 +1026,7 @@ new     → cancelled (owner hoặc customer)
 **AC:**
 
 - `npm run build` clean (0 errors)
-- `npm test -- --ci` pass (sau khi #37 hoàn thành — thêm job `test` vào `.github/workflows/ci.yml`)
+- `npm test -- --ci` pass (sau khi #54 hoàn thành — thêm job `test` vào `.github/workflows/ci.yml`)
 - App live, Realtime hoạt động trên production
 - Vercel preview deploy tự động khi push branch mới
 
@@ -1035,35 +1035,35 @@ new     → cancelled (owner hoặc customer)
 ## Dependency Graph
 
 ```
-#1  → #2, #8, #30, #31, #32, #40
-#2  → #9, #10, #12, #19, #35
-#3  → #5, #7, #10
-#4  → #5, #7, #12, #36
-#35 → #10, #12, #15, #18, #27, #39
-#36 → #19, #24a
-#8  → #13, #37
-#10 → #11, #13, #27, #28, #39
-#12 → #13, #17, #18
-#13 → #14, #15, #16, #37
-#14 → #21
-#15 → #24b, #27
-#16 → #23
-#17 → #23
-#18 → #24b
-#19 → #20, #21, #23, #24a
-#24a → #24b
-#24b → #25
-#11 → #20
-#20 → #26
-#21 → #22, #26
-#23 → #26
-#24b → #26
-#6  → #29
-#28 → #29, #38
-#40 → #14, #22, #34
-#20, #21, #22, #23, #24b, #25, #26 → #33
-#27, #28, #29, #30, #31, #32, #38, #39, #40 → #33
-#33 → #34
+#16  → #17, #23, #116, #79, #78, #115
+#17  → #24, #36, #38, #45, #25
+#18  → #20, #22, #36
+#19  → #20, #22, #38, #26
+#25 → #36, #38, #41, #44, #76, #81
+#26 → #45, #50
+#23  → #39, #54
+#36 → #37, #39, #76, #111, #81
+#38 → #39, #43, #44
+#39 → #40, #41, #42, #54
+#40 → #47
+#41 → #51, #76
+#42 → #49
+#43 → #49
+#44 → #51
+#45 → #46, #47, #49, #50
+#50 → #51
+#51 → #52
+#37 → #46
+#46 → #53
+#47 → #48, #53
+#49 → #53
+#51 → #53
+#21  → #114
+#111 → #114, #113
+#115 → #40, #48, #118
+#46, #47, #48, #49, #51, #52, #53 → #117
+#76, #111, #114, #116, #79, #78, #113, #81, #115 → #117
+#117 → #118
 ```
 
 ---
@@ -1073,6 +1073,7 @@ new     → cancelled (owner hoặc customer)
 | Version | Thay đổi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | v1      | 35 issues ban đầu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| v2      | +5 issues mới (#35–#39); sửa #3 (extension), #4 (xóa deleted_at orders, thêm payment_method, TZ), #5 (RLS scope + service_role note), #7 (idempotent seed), #8 (payment_method types/validators), #9 (API 401 AC), #10 (listAllForAdmin), #12 (xóa softDelete, fix cancel model), #13 (xóa making→cancelled, option validation), #14 (wait_estimate string, payment_method), #15 (thêm requireOwner), #16 (POST cancel, không DELETE), #17 (không expose UUID), #18 (filter hôm nay, pagination note), #19 (align REALTIME.md, reconnect), #21 (payment_method radio, max length), #22 (bank block, đặt thêm), #23 (cancel API đúng path), #24 (tách spike #24a + #24b), #25 (Web Audio unlock), #27 (fix API path), #28 (scope chỉ fields), #29 (fix API path), #32 (blocked by #1), #33 (thêm payment/security/build checks), #34 (6 env vars); cập nhật dependency graph |
-| v3      | +1 issue mới (#40 bank env vars); sửa #3 (deleted_at cho product_options/values), #5 (SELECT policy orders anon rõ ràng), #8 (order note max 500 vs item note max 200), #11 (bỏ is_available khỏi response), #13 (countPending(), clarify formula), #14 (bank_transfer_info trong response, RATE_LIMITED body), #17 (bỏ wait_estimate khỏi GET by code), #18 (cursor pagination, default behavior), #25 (banner sound + title badge + tab Xong = done+cancelled), #28 (soft delete = DELETE /api/products/:id), #34 (10 env vars), #38 (prerequisite API_CONTRACT update), #39 (AC: 422 CATEGORY_HAS_PRODUCTS); cập nhật dependency graph                                                                                                                                                                                                                                   |
-| v3.1    | sửa #33 (tách bullet payment_method=momo vs rate-limit), #21 (order note max 500 không phải 200), #18 (cursor dùng uuid_v7 khớp API_CONTRACT)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| v2      | +5 issues mới (#25–#81); sửa #18 (extension), #19 (xóa deleted_at orders, thêm payment_method, TZ), #20 (RLS scope + service_role note), #22 (idempotent seed), #23 (payment_method types/validators), #24 (API 401 AC), #36 (listAllForAdmin), #38 (xóa softDelete, fix cancel model), #39 (xóa making→cancelled, option validation), #40 (wait_estimate string, payment_method), #41 (thêm requireOwner), #42 (POST cancel, không DELETE), #43 (không expose UUID), #44 (filter hôm nay, pagination note), #45 (align REALTIME.md, reconnect), #47 (payment_method radio, max length), #48 (bank block, đặt thêm), #49 (cancel API đúng path), #24 (tách spike #50 + #51), #52 (Web Audio unlock), #76 (fix API path), #111 (scope chỉ fields), #114 (fix API path), #78 (blocked by #16), #117 (thêm payment/security/build checks), #118 (6 env vars); cập nhật dependency graph |
+| v3      | +1 issue mới (#115 bank env vars); sửa #18 (deleted_at cho product_options/values), #20 (SELECT policy orders anon rõ ràng), #23 (order note max 500 vs item note max 200), #37 (bỏ is_available khỏi response), #39 (countPending(), clarify formula), #40 (bank_transfer_info trong response, RATE_LIMITED body), #43 (bỏ wait_estimate khỏi GET by code), #44 (cursor pagination, default behavior), #52 (banner sound + title badge + tab Xong = done+cancelled), #111 (soft delete = DELETE /api/products/:id), #118 (10 env vars), #113 (prerequisite API_CONTRACT update), #81 (AC: 422 CATEGORY_HAS_PRODUCTS); cập nhật dependency graph                                                                                                                                                                                                                                   |
+| v3.1    | sửa #117 (tách bullet payment_method=momo vs rate-limit), #47 (order note max 500 không phải 200), #44 (cursor dùng uuid_v7 khớp API_CONTRACT)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| v4      | Tạo 6 issues còn thiếu trên GitHub (#113 product options, #114 image upload, #115 bank transfer config, #116 PWA manifest, #117 smoke test, #118 deploy); cập nhật toàn bộ số issue trong doc sang số GitHub thực tế                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
