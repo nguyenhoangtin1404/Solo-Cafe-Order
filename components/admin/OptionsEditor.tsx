@@ -559,7 +559,8 @@ export function OptionsEditor({ productId }: Props) {
                 placeholder="Tên value *"
                 className={`${inputCls} flex-1`}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !savingValue) submitAddValue(option.id);
+                  if (e.key === "Enter" && !savingValue)
+                    submitAddValue(option.id);
                   if (e.key === "Escape" && !savingValue) {
                     setAddingValueForOptionId(null);
                     setValueDraft(emptyValue());
@@ -578,7 +579,8 @@ export function OptionsEditor({ productId }: Props) {
                 placeholder="+giá"
                 className={`${inputCls} w-24`}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !savingValue) submitAddValue(option.id);
+                  if (e.key === "Enter" && !savingValue)
+                    submitAddValue(option.id);
                   if (e.key === "Escape" && !savingValue) {
                     setAddingValueForOptionId(null);
                     setValueDraft(emptyValue());
