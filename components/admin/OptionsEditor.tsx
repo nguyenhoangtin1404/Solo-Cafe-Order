@@ -406,8 +406,9 @@ export function OptionsEditor({ productId }: Props) {
                       type: option.type,
                     });
                   }}
+                  disabled={deletingIds.has(option.id)}
                   aria-label={`Sửa option ${option.name}`}
-                  className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border text-muted-foreground hover:text-foreground"
+                  className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border text-muted-foreground hover:text-foreground disabled:opacity-50"
                 >
                   <Pencil size={14} aria-hidden="true" />
                 </button>
@@ -523,8 +524,9 @@ export function OptionsEditor({ productId }: Props) {
                             extra_price: String(value.extra_price),
                           });
                         }}
+                        disabled={deletingIds.has(value.id)}
                         aria-label={`Sửa value ${value.name}`}
-                        className="flex min-h-[44px] w-9 items-center justify-center text-muted-foreground hover:text-foreground"
+                        className="flex min-h-[44px] w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
                       >
                         <Pencil size={13} aria-hidden="true" />
                       </button>
@@ -648,7 +650,7 @@ export function OptionsEditor({ productId }: Props) {
             className={`${inputCls} flex-1`}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !savingOption) submitAddOption();
-              if (e.key === "Escape") {
+              if (e.key === "Escape" && !savingOption) {
                 setAddingOption(false);
                 setOptionDraft(emptyOption());
               }

@@ -230,11 +230,11 @@ export async function deleteOption(
   productId: string,
   optionId: string
 ): Promise<{ id: string; deleted_at: string }> {
+  await productRepo.softDeleteOptionValuesByOptionId(optionId);
   const result = await productRepo.softDeleteProductOption(optionId, productId);
   if (!result) {
     throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
   }
-  await productRepo.softDeleteOptionValuesByOptionId(optionId);
   return result;
 }
 
