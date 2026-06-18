@@ -219,10 +219,14 @@ export async function updateProductOption(
   productId: string,
   fields: { name?: string; type?: "select" | "multi" }
 ): Promise<ProductOption | null> {
+  const patch = Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined)
+  );
+  if (Object.keys(patch).length === 0) return null;
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("product_options")
-    .update(fields)
+    .update(patch)
     .eq("id", optionId)
     .eq("product_id", productId)
     .is("deleted_at", null)

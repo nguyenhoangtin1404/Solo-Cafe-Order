@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -31,7 +31,6 @@ function parseExtraPrice(raw: string): number | null {
 }
 
 export function OptionsEditor({ productId }: Props) {
-  const uid = useId();
   const [options, setOptions] = useState<ProductOptionWithValues[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +57,8 @@ export function OptionsEditor({ productId }: Props) {
   const addValueInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch(`/api/products/${productId}`)
+    const controller = new AbortController();
+    fetch(`/api/products/${productId}`, { signal: controller.signal })
       .then(
         (r) =>
           r.json() as Promise<{
@@ -66,8 +66,11 @@ export function OptionsEditor({ productId }: Props) {
           }>
       )
       .then((data) => setOptions(data.product?.options ?? []))
-      .catch(() => toast.error("Không tải được options."))
+      .catch((err) => {
+        if (err.name !== "AbortError") toast.error("Không tải được options.");
+      })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [productId]);
 
   useEffect(() => {
@@ -251,6 +254,7 @@ export function OptionsEditor({ productId }: Props) {
   }
 
   async function handleDeleteValue(optionId: string, valueId: string) {
+    if (!window.confirm("Xóa value này?")) return;
     try {
       const res = await fetch(
         `/api/products/${productId}/options/${optionId}/values/${valueId}`,
@@ -603,7 +607,7 @@ export function OptionsEditor({ productId }: Props) {
 
       {/* Add option group */}
       {addingOption ? (
-        <div className="flex gap-2" id={`${uid}-add-option`}>
+        <div className="flex gap-2">
           <input
             ref={addOptionInputRef}
             value={optionDraft.name}
