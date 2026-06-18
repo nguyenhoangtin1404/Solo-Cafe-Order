@@ -8,8 +8,9 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://vibe-cafe.vercel.app";
+const appUrl = (
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://vibe-cafe.vercel.app"
+).replace(/\/$/, "");
 
 export const viewport: Viewport = {
   themeColor: "#000000",
