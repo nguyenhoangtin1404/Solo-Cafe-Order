@@ -1,6 +1,19 @@
-import type { Category, Product, ProductWithOptions } from "@/types/product";
+import type {
+  Category,
+  Product,
+  ProductOption,
+  ProductOptionValue,
+  ProductWithOptions,
+} from "@/types/product";
 import { AppError } from "@/lib/errors";
-import type { CreateProductInput, UpdateProductInput } from "@/lib/validators";
+import type {
+  CreateProductInput,
+  CreateProductOptionInput,
+  CreateProductOptionValueInput,
+  UpdateProductInput,
+  UpdateProductOptionInput,
+  UpdateProductOptionValueInput,
+} from "@/lib/validators";
 import * as categoryRepo from "@/lib/repositories/category.repository";
 import * as productRepo from "@/lib/repositories/product.repository";
 import { sanitizeText } from "@/lib/utils/sanitize";
@@ -169,6 +182,106 @@ export async function deleteProduct(
   const result = await productRepo.softDeleteProduct(id);
   if (!result) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  return result;
+}
+
+// ── Product Options ───────────────────────────────────────────────────────────
+
+export async function createOption(
+  productId: string,
+  data: CreateProductOptionInput
+): Promise<ProductOption> {
+  const product = await productRepo.findByIdWithOptions(productId);
+  if (!product) {
+    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  return productRepo.createProductOption(productId, data);
+}
+
+export async function updateOption(
+  productId: string,
+  optionId: string,
+  data: UpdateProductOptionInput
+): Promise<ProductOption> {
+  const result = await productRepo.updateProductOption(
+    optionId,
+    productId,
+    data
+  );
+  if (!result) {
+    throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
+  }
+  return result;
+}
+
+export async function deleteOption(
+  productId: string,
+  optionId: string
+): Promise<{ id: string; deleted_at: string }> {
+  await productRepo.softDeleteOptionValuesByOptionId(optionId);
+  const result = await productRepo.softDeleteProductOption(optionId, productId);
+  if (!result) {
+    throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
+  }
+  return result;
+}
+
+// ── Product Option Values ─────────────────────────────────────────────────────
+
+async function requireOption(
+  productId: string,
+  optionId: string
+): Promise<void> {
+  const product = await productRepo.findByIdWithOptions(productId);
+  if (!product) {
+    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  const option = product.options.find((o) => o.id === optionId);
+  if (!option) {
+    throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
+  }
+}
+
+export async function createOptionValue(
+  productId: string,
+  optionId: string,
+  data: CreateProductOptionValueInput
+): Promise<ProductOptionValue> {
+  await requireOption(productId, optionId);
+  return productRepo.createProductOptionValue(optionId, data);
+}
+
+export async function updateOptionValue(
+  productId: string,
+  optionId: string,
+  valueId: string,
+  data: UpdateProductOptionValueInput
+): Promise<ProductOptionValue> {
+  await requireOption(productId, optionId);
+  const result = await productRepo.updateProductOptionValue(
+    valueId,
+    optionId,
+    data
+  );
+  if (!result) {
+    throw new AppError("VALUE_NOT_FOUND", "Value không tồn tại.", 404);
+  }
+  return result;
+}
+
+export async function deleteOptionValue(
+  productId: string,
+  optionId: string,
+  valueId: string
+): Promise<{ id: string; deleted_at: string }> {
+  await requireOption(productId, optionId);
+  const result = await productRepo.softDeleteProductOptionValue(
+    valueId,
+    optionId
+  );
+  if (!result) {
+    throw new AppError("VALUE_NOT_FOUND", "Value không tồn tại.", 404);
   }
   return result;
 }

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { Category } from "@/types/product";
 import type { AdminProduct } from "@/lib/services/product.service";
 import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE_MB } from "@/lib/constants";
+import { OptionsEditor } from "./OptionsEditor";
 
 const ALLOWED_MIME = new Set<string>(ALLOWED_IMAGE_MIME_TYPES);
 const MAX_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
@@ -429,6 +430,13 @@ export function ProductForm({
           />
           Hiển thị trên menu
         </label>
+
+        {/* Options (edit mode only) */}
+        {mode === "edit" && initialData && (
+          <div className="border-t pt-3">
+            <OptionsEditor productId={initialData.id} />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2 pt-1">

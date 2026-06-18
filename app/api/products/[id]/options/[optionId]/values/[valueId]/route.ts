@@ -1,0 +1,84 @@
+import { type NextRequest } from "next/server";
+import { z } from "zod";
+import { requireOwner } from "@/lib/auth/requireOwner";
+import { errorResponse, handleRouteError } from "@/lib/errors";
+import { updateProductOptionValueSchema } from "@/lib/validators";
+import {
+  deleteOptionValue,
+  updateOptionValue,
+} from "@/lib/services/product.service";
+
+type Params = {
+  params: Promise<{ id: string; optionId: string; valueId: string }>;
+};
+
+async function resolveParams(params: Params["params"]) {
+  const { id, optionId, valueId } = await params;
+  const uuid = z.string().uuid();
+  if (
+    !uuid.safeParse(id).success ||
+    !uuid.safeParse(optionId).success ||
+    !uuid.safeParse(valueId).success
+  ) {
+    return null;
+  }
+  return { productId: id, optionId, valueId };
+}
+
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    await requireOwner();
+
+    const ids = await resolveParams(params);
+    if (!ids) {
+      return errorResponse("VALIDATION_ERROR", "ID không hợp lệ.", 400);
+    }
+
+    const body = await req.json().catch(() => null);
+    if (body === null) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "Request body bị thiếu hoặc không phải JSON.",
+        400
+      );
+    }
+    const parsed = updateProductOptionValueSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        parsed.error.errors[0]?.message ?? "Dữ liệu không hợp lệ.",
+        400
+      );
+    }
+
+    const value = await updateOptionValue(
+      ids.productId,
+      ids.optionId,
+      ids.valueId,
+      parsed.data
+    );
+    return Response.json({ value });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  try {
+    await requireOwner();
+
+    const ids = await resolveParams(params);
+    if (!ids) {
+      return errorResponse("VALIDATION_ERROR", "ID không hợp lệ.", 400);
+    }
+
+    const result = await deleteOptionValue(
+      ids.productId,
+      ids.optionId,
+      ids.valueId
+    );
+    return Response.json(result);
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}

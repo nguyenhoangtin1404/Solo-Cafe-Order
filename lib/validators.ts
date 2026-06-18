@@ -178,3 +178,81 @@ export const updateProductSchema = z
     message: "Cần ít nhất một trường để cập nhật.",
   });
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+const optionNameField = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(
+    z
+      .string()
+      .min(1, "Tên option không được để trống.")
+      .max(50, "Tên option tối đa 50 ký tự.")
+  );
+
+const optionValueNameField = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(
+    z
+      .string()
+      .min(1, "Tên value không được để trống.")
+      .max(50, "Tên value tối đa 50 ký tự.")
+  );
+
+const extraPriceField = z
+  .number()
+  .int("Giá thêm phải là số nguyên.")
+  .min(0, "Giá thêm không được âm.")
+  .max(500_000, "Giá thêm tối đa 500,000đ.");
+
+export const createProductOptionSchema = z
+  .object({
+    name: optionNameField,
+    type: z.enum(["select", "multi"], {
+      errorMap: () => ({ message: "type phải là 'select' hoặc 'multi'." }),
+    }),
+  })
+  .strict();
+export type CreateProductOptionInput = z.infer<
+  typeof createProductOptionSchema
+>;
+
+export const updateProductOptionSchema = z
+  .object({
+    name: optionNameField.optional(),
+    type: z
+      .enum(["select", "multi"], {
+        errorMap: () => ({ message: "type phải là 'select' hoặc 'multi'." }),
+      })
+      .optional(),
+  })
+  .strict()
+  .refine((d) => d.name !== undefined || d.type !== undefined, {
+    message: "Cần ít nhất một trường để cập nhật.",
+  });
+export type UpdateProductOptionInput = z.infer<
+  typeof updateProductOptionSchema
+>;
+
+export const createProductOptionValueSchema = z
+  .object({
+    name: optionValueNameField,
+    extra_price: extraPriceField,
+  })
+  .strict();
+export type CreateProductOptionValueInput = z.infer<
+  typeof createProductOptionValueSchema
+>;
+
+export const updateProductOptionValueSchema = z
+  .object({
+    name: optionValueNameField.optional(),
+    extra_price: extraPriceField.optional(),
+  })
+  .strict()
+  .refine((d) => d.name !== undefined || d.extra_price !== undefined, {
+    message: "Cần ít nhất một trường để cập nhật.",
+  });
+export type UpdateProductOptionValueInput = z.infer<
+  typeof updateProductOptionValueSchema
+>;
