@@ -135,11 +135,13 @@ export function ProductForm({
   }
 
   function clearImage() {
+    uploadIdRef.current++; // invalidate any in-flight upload
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     previewUrlRef.current = null;
     setImagePreview(null);
     setImageUrl(null);
     setImageError("");
+    setUploading(false);
   }
 
   function validate(): { errors: FormErrors; parsedPrice: number | null } {

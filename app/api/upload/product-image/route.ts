@@ -38,7 +38,11 @@ export async function POST(req: NextRequest) {
 
     const cl = Number(req.headers.get("content-length") ?? NaN);
     if (!Number.isNaN(cl) && cl > MAX_BYTES) {
-      return errorResponse("VALIDATION_ERROR", "File không được vượt quá 2MB.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "File không được vượt quá 2MB.",
+        400
+      );
     }
 
     const formData = await req.formData().catch(() => null);
