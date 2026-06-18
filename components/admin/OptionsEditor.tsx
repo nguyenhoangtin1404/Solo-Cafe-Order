@@ -167,6 +167,10 @@ export function OptionsEditor({ productId }: Props) {
         throw new Error(data.message ?? "Xóa thất bại.");
       }
       setOptions((prev) => prev.filter((o) => o.id !== optionId));
+      setAddingValueForOptionId((cur) => (cur === optionId ? null : cur));
+      setValueDraft((cur) =>
+        addingValueForOptionId === optionId ? emptyValue() : cur
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
     } finally {
@@ -612,8 +616,9 @@ export function OptionsEditor({ productId }: Props) {
                   setAddingValueForOptionId(null);
                   setValueDraft(emptyValue());
                 }}
+                disabled={savingValue}
                 aria-label="Hủy thêm value"
-                className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border"
+                className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border disabled:opacity-50"
               >
                 <X size={14} aria-hidden="true" />
               </button>
@@ -690,8 +695,9 @@ export function OptionsEditor({ productId }: Props) {
               setAddingOption(false);
               setOptionDraft(emptyOption());
             }}
+            disabled={savingOption}
             aria-label="Hủy thêm option"
-            className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border"
+            className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border disabled:opacity-50"
           >
             <X size={14} aria-hidden="true" />
           </button>
