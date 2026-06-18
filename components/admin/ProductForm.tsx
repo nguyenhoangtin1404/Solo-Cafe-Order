@@ -94,6 +94,10 @@ export function ProductForm({
       setImageError("Chỉ chấp nhận JPG, PNG, WebP.");
       return;
     }
+    if (file.size === 0) {
+      setImageError("File trống, vui lòng chọn lại.");
+      return;
+    }
     if (file.size > MAX_BYTES) {
       setImageError("File không được vượt quá 2MB.");
       return;
@@ -454,7 +458,7 @@ export function ProductForm({
           <button
             type="button"
             onClick={onCancel}
-            disabled={submitting}
+            disabled={submitting || uploading}
             aria-label={
               mode === "create" ? "Hủy thêm sản phẩm" : "Hủy sửa sản phẩm"
             }
