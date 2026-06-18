@@ -26,7 +26,9 @@ const emptyOption = (): OptionDraft => ({ name: "", type: "select" });
 const emptyValue = (): ValueDraft => ({ name: "", extra_price: "0" });
 
 function parseExtraPrice(raw: string): number | null {
-  const n = Number(raw.trim());
+  const trimmed = raw.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
   return Number.isInteger(n) && n >= 0 && n <= 500_000 ? n : null;
 }
 
@@ -534,7 +536,7 @@ export function OptionsEditor({ productId }: Props) {
                 placeholder="Tên value *"
                 className={`${inputCls} flex-1`}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") submitAddValue(option.id);
+                  if (e.key === "Enter" && !savingValue) submitAddValue(option.id);
                   if (e.key === "Escape") {
                     setAddingValueForOptionId(null);
                     setValueDraft(emptyValue());
@@ -553,7 +555,7 @@ export function OptionsEditor({ productId }: Props) {
                 placeholder="+giá"
                 className={`${inputCls} w-24`}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") submitAddValue(option.id);
+                  if (e.key === "Enter" && !savingValue) submitAddValue(option.id);
                   if (e.key === "Escape") {
                     setAddingValueForOptionId(null);
                     setValueDraft(emptyValue());
@@ -620,7 +622,7 @@ export function OptionsEditor({ productId }: Props) {
             placeholder="Tên option *"
             className={`${inputCls} flex-1`}
             onKeyDown={(e) => {
-              if (e.key === "Enter") submitAddOption();
+              if (e.key === "Enter" && !savingOption) submitAddOption();
               if (e.key === "Escape") {
                 setAddingOption(false);
                 setOptionDraft(emptyOption());

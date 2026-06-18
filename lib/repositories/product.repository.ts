@@ -291,10 +291,14 @@ export async function updateProductOptionValue(
   optionId: string,
   fields: { name?: string; extra_price?: number }
 ): Promise<ProductOptionValue | null> {
+  const patch = Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined)
+  );
+  if (Object.keys(patch).length === 0) return null;
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("product_option_values")
-    .update(fields)
+    .update(patch)
     .eq("id", valueId)
     .eq("option_id", optionId)
     .is("deleted_at", null)

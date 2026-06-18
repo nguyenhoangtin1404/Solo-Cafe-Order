@@ -196,7 +196,14 @@ export async function createOption(
   if (!product) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
   }
-  return productRepo.createProductOption(productId, data);
+  const sanitizedName = sanitizeText(data.name, 50);
+  if (!sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên option không hợp lệ.", 400);
+  }
+  return productRepo.createProductOption(productId, {
+    ...data,
+    name: sanitizedName,
+  });
 }
 
 export async function updateOption(
@@ -204,11 +211,15 @@ export async function updateOption(
   optionId: string,
   data: UpdateProductOptionInput
 ): Promise<ProductOption> {
-  const result = await productRepo.updateProductOption(
-    optionId,
-    productId,
-    data
-  );
+  const sanitizedName =
+    data.name !== undefined ? sanitizeText(data.name, 50) : undefined;
+  if (sanitizedName !== undefined && !sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên option không hợp lệ.", 400);
+  }
+  const result = await productRepo.updateProductOption(optionId, productId, {
+    ...data,
+    ...(sanitizedName !== undefined && { name: sanitizedName }),
+  });
   if (!result) {
     throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
   }
@@ -249,7 +260,14 @@ export async function createOptionValue(
   data: CreateProductOptionValueInput
 ): Promise<ProductOptionValue> {
   await requireOption(productId, optionId);
-  return productRepo.createProductOptionValue(optionId, data);
+  const sanitizedName = sanitizeText(data.name, 50);
+  if (!sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên value không hợp lệ.", 400);
+  }
+  return productRepo.createProductOptionValue(optionId, {
+    ...data,
+    name: sanitizedName,
+  });
 }
 
 export async function updateOptionValue(
@@ -259,11 +277,15 @@ export async function updateOptionValue(
   data: UpdateProductOptionValueInput
 ): Promise<ProductOptionValue> {
   await requireOption(productId, optionId);
-  const result = await productRepo.updateProductOptionValue(
-    valueId,
-    optionId,
-    data
-  );
+  const sanitizedName =
+    data.name !== undefined ? sanitizeText(data.name, 50) : undefined;
+  if (sanitizedName !== undefined && !sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên value không hợp lệ.", 400);
+  }
+  const result = await productRepo.updateProductOptionValue(valueId, optionId, {
+    ...data,
+    ...(sanitizedName !== undefined && { name: sanitizedName }),
+  });
   if (!result) {
     throw new AppError("VALUE_NOT_FOUND", "Value không tồn tại.", 404);
   }
