@@ -63,8 +63,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return errorResponse("VALIDATION_ERROR", "ID không hợp lệ.", 400);
     }
 
-    const result = await deleteOption(ids.productId, ids.optionId);
-    return Response.json(result);
+    await deleteOption(ids.productId, ids.optionId);
+    return new Response(null, { status: 204 });
   } catch (err) {
     return handleRouteError(err);
   }

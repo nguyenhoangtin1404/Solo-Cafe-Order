@@ -365,8 +365,9 @@ export function OptionsEditor({ productId }: Props) {
               <button
                 type="button"
                 onClick={() => setEditingOptionId(null)}
+                disabled={savingEditOption}
                 aria-label="Hủy sửa option"
-                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground"
+                className="min-h-[44px] rounded-lg border px-3 text-sm text-muted-foreground disabled:opacity-50"
               >
                 <X size={14} aria-hidden="true" />
               </button>
@@ -473,8 +474,9 @@ export function OptionsEditor({ productId }: Props) {
                     <button
                       type="button"
                       onClick={() => setEditingValueId(null)}
+                      disabled={savingEditValue}
                       aria-label="Hủy sửa value"
-                      className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border"
+                      className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border disabled:opacity-50"
                     >
                       <X size={14} aria-hidden="true" />
                     </button>
