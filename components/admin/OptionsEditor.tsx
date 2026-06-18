@@ -64,12 +64,12 @@ export function OptionsEditor({ productId }: Props) {
   useEffect(() => {
     const controller = new AbortController();
     fetch(`/api/products/${productId}`, { signal: controller.signal })
-      .then(
-        (r) =>
-          r.json() as Promise<{
-            product?: { options?: ProductOptionWithValues[] };
-          }>
-      )
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<{
+          product?: { options?: ProductOptionWithValues[] };
+        }>;
+      })
       .then((data) => setOptions(data.product?.options ?? []))
       .catch((err) => {
         if (err.name !== "AbortError") toast.error("Không tải được options.");
@@ -144,7 +144,7 @@ export function OptionsEditor({ productId }: Props) {
             : o
         )
       );
-      setEditingOptionId(null);
+      setEditingOptionId((cur) => (cur === optionId ? null : cur));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
     } finally {
@@ -255,7 +255,7 @@ export function OptionsEditor({ productId }: Props) {
             : o
         )
       );
-      setEditingValueId(null);
+      setEditingValueId((cur) => (cur === valueId ? null : cur));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
     } finally {
