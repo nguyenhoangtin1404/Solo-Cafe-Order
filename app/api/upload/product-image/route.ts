@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
         400
       );
     }
-    if (!(await checkMagicBytes(file))) {
+    if (file.size < 12 || !(await checkMagicBytes(file))) {
       return errorResponse("VALIDATION_ERROR", "File không hợp lệ.", 400);
     }
 

@@ -70,6 +70,7 @@ export function ProductForm({
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const uploadIdRef = useRef(0);
+  const abortUploadRef = useRef<AbortController | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
@@ -79,6 +80,7 @@ export function ProductForm({
 
   useEffect(() => {
     return () => {
+      abortUploadRef.current?.abort();
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     };
   }, []);
@@ -109,6 +111,8 @@ export function ProductForm({
     setImagePreview(objUrl);
     setImageUrl(null);
     const id = ++uploadIdRef.current;
+    const controller = new AbortController();
+    abortUploadRef.current = controller;
     setUploading(true);
     try {
       const fd = new FormData();
@@ -116,6 +120,7 @@ export function ProductForm({
       const res = await fetch("/api/upload/product-image", {
         method: "POST",
         body: fd,
+        signal: controller.signal,
       });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
@@ -140,6 +145,8 @@ export function ProductForm({
 
   function clearImage() {
     uploadIdRef.current++; // invalidate any in-flight upload
+    abortUploadRef.current?.abort();
+    abortUploadRef.current = null;
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     previewUrlRef.current = null;
     setImagePreview(null);
