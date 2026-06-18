@@ -1,4 +1,5 @@
-﻿/**
+﻿import "server-only";
+/**
  * DANGER: Client này bypass RLS hoàn toàn.
  * Chỉ import file này trong Route Handlers (app/api/**) — KHÔNG dùng trong Server Components.
  * Mọi query qua client này có quyền đọc/ghi toàn bộ DB không qua policy.
