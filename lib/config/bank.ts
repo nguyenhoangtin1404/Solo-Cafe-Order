@@ -1,5 +1,4 @@
-// Server-side only — do NOT import this in Client Components.
-// Returns null and logs a warning if any required env var is missing.
+import "server-only";
 
 export interface BankTransferInfo {
   bank_name: string;
@@ -8,6 +7,7 @@ export interface BankTransferInfo {
   qr_image_url: string | null;
 }
 
+// Returns null and logs a warning if any required env var is missing.
 export function getBankTransferInfo(): BankTransferInfo | null {
   const bankName = process.env.BANK_NAME;
   const accountNumber = process.env.BANK_ACCOUNT_NUMBER;
