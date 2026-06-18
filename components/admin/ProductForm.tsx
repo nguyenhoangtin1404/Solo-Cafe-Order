@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
 import type { AdminProduct } from "@/lib/services/product.service";
+import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE_MB } from "@/lib/constants";
+
+const ALLOWED_MIME = new Set<string>(ALLOWED_IMAGE_MIME_TYPES);
+const MAX_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
 interface ProductFormProps {
   mode: "create" | "edit";
@@ -53,16 +57,101 @@ export function ProductForm({
   const [isAvailable, setIsAvailable] = useState(
     initialData?.is_available ?? true
   );
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    initialData?.image_url ?? null
+  );
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const previewUrlRef = useRef<string | null>(null);
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [formAlert, setFormAlert] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const abortUploadRef = useRef<AbortController | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
   useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      abortUploadRef.current?.abort();
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setImageError("");
+
+    if (!ALLOWED_MIME.has(file.type)) {
+      setImageError("Chỉ chấp nhận JPG, PNG, WebP.");
+      return;
+    }
+    if (file.size === 0) {
+      setImageError("File trống, vui lòng chọn lại.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setImageError("File không được vượt quá 2MB.");
+      return;
+    }
+
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const objUrl = URL.createObjectURL(file);
+    previewUrlRef.current = objUrl;
+    setImagePreview(objUrl);
+    const prevImageUrl = imageUrl;
+    setImageUrl(null);
+    const controller = new AbortController();
+    abortUploadRef.current = controller;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload/product-image", {
+        method: "POST",
+        body: fd,
+        signal: controller.signal,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        message?: string;
+      };
+      if (!res.ok) throw new Error(data.message ?? "Upload thất bại.");
+      if (!data.url) throw new Error("Phản hồi không hợp lệ.");
+      if (abortUploadRef.current === controller) setImageUrl(data.url);
+    } catch (err) {
+      if (abortUploadRef.current !== controller) return;
+      const msg = err instanceof Error ? err.message : "Upload thất bại.";
+      setImageError(msg);
+      toast.error(msg);
+      URL.revokeObjectURL(objUrl);
+      previewUrlRef.current = null;
+      setImagePreview(null);
+      setImageUrl(prevImageUrl);
+    } finally {
+      if (abortUploadRef.current === controller) setUploading(false);
+    }
+  }
+
+  function clearImage() {
+    abortUploadRef.current?.abort();
+    abortUploadRef.current = null;
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = null;
+    setImagePreview(null);
+    setImageUrl(null);
+    setImageError("");
+    setUploading(false);
+  }
 
   function validate(): { errors: FormErrors; parsedPrice: number | null } {
     const errors: FormErrors = {};
@@ -89,6 +178,7 @@ export function ProductForm({
         description: description.trim() || null,
         price: parsedPrice,
         is_available: isAvailable,
+        image_url: imageUrl,
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {
@@ -110,7 +200,7 @@ export function ProductForm({
       return;
     }
     setFormAlert("");
-    if (parsedPrice === null || submittingRef.current) return;
+    if (parsedPrice === null || submittingRef.current || uploading) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
@@ -273,6 +363,61 @@ export function ProductForm({
           </div>
         </div>
 
+        {/* Image */}
+        <div>
+          <p className="mb-1 text-xs text-muted-foreground">
+            Ảnh sản phẩm (JPG/PNG/WebP, tối đa 2MB)
+          </p>
+          <div className="flex items-start gap-3">
+            {(imagePreview ?? imageUrl) && (
+              <div className="relative shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imagePreview ?? imageUrl ?? ""}
+                  alt="Preview ảnh sản phẩm"
+                  className="h-20 w-20 rounded-lg object-cover"
+                />
+                {!uploading && (
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    disabled={submitting}
+                    aria-label="Xóa ảnh"
+                    className="absolute -right-3 -top-3 flex h-11 w-11 items-center justify-center"
+                  >
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                      <X size={10} aria-hidden="true" />
+                    </span>
+                  </button>
+                )}
+                {uploading && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40">
+                    <Loader2
+                      size={20}
+                      className="animate-spin text-white"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            <label
+              className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm text-muted-foreground hover:border-foreground hover:text-foreground${submitting || uploading ? " pointer-events-none opacity-50" : ""}`}
+            >
+              <ImageIcon size={16} aria-hidden="true" />
+              {uploading ? "Đang upload..." : "Chọn ảnh"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                disabled={submitting || uploading}
+                onChange={handleFileChange}
+              />
+            </label>
+          </div>
+          {imageError && <p className={errorCls}>{imageError}</p>}
+        </div>
+
         {/* Is available */}
         <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
           <input
@@ -290,14 +435,16 @@ export function ProductForm({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || uploading}
             aria-busy={submitting}
             aria-label={
               submitting
                 ? "Đang lưu..."
-                : mode === "create"
-                  ? "Thêm sản phẩm"
-                  : "Lưu thay đổi"
+                : uploading
+                  ? "Đang upload ảnh..."
+                  : mode === "create"
+                    ? "Thêm sản phẩm"
+                    : "Lưu thay đổi"
             }
             className="min-h-[44px] flex-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
@@ -316,7 +463,7 @@ export function ProductForm({
           <button
             type="button"
             onClick={onCancel}
-            disabled={submitting}
+            disabled={submitting || uploading}
             aria-label={
               mode === "create" ? "Hủy thêm sản phẩm" : "Hủy sửa sản phẩm"
             }
