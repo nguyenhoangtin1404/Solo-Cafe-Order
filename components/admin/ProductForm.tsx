@@ -5,9 +5,10 @@ import { ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
 import type { AdminProduct } from "@/lib/services/product.service";
+import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE_MB } from "@/lib/constants";
 
-const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 2 * 1024 * 1024;
+const ALLOWED_MIME = new Set<string>(ALLOWED_IMAGE_MIME_TYPES);
+const MAX_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
 interface ProductFormProps {
   mode: "create" | "edit";
@@ -68,6 +69,7 @@ export function ProductForm({
   const [formAlert, setFormAlert] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const uploadIdRef = useRef(0);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
@@ -101,6 +103,8 @@ export function ProductForm({
     const objUrl = URL.createObjectURL(file);
     previewUrlRef.current = objUrl;
     setImagePreview(objUrl);
+    setImageUrl(null);
+    const id = ++uploadIdRef.current;
     setUploading(true);
     try {
       const fd = new FormData();
@@ -115,16 +119,18 @@ export function ProductForm({
       };
       if (!res.ok) throw new Error(data.message ?? "Upload thất bại.");
       if (!data.url) throw new Error("Phản hồi không hợp lệ.");
-      setImageUrl(data.url);
+      if (id === uploadIdRef.current) setImageUrl(data.url);
     } catch (err) {
+      if (id !== uploadIdRef.current) return;
       const msg = err instanceof Error ? err.message : "Upload thất bại.";
       setImageError(msg);
       toast.error(msg);
       URL.revokeObjectURL(objUrl);
       previewUrlRef.current = null;
       setImagePreview(null);
+      setImageUrl(null);
     } finally {
-      setUploading(false);
+      if (id === uploadIdRef.current) setUploading(false);
     }
   }
 
@@ -183,7 +189,7 @@ export function ProductForm({
       return;
     }
     setFormAlert("");
-    if (parsedPrice === null || submittingRef.current) return;
+    if (parsedPrice === null || submittingRef.current || uploading) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
@@ -366,9 +372,11 @@ export function ProductForm({
                     onClick={clearImage}
                     disabled={submitting}
                     aria-label="Xóa ảnh"
-                    className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                    className="absolute -right-3 -top-3 flex h-11 w-11 items-center justify-center"
                   >
-                    <X size={10} aria-hidden="true" />
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                      <X size={10} aria-hidden="true" />
+                    </span>
                   </button>
                 )}
                 {uploading && (
@@ -416,14 +424,16 @@ export function ProductForm({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || uploading}
             aria-busy={submitting}
             aria-label={
               submitting
                 ? "Đang lưu..."
-                : mode === "create"
-                  ? "Thêm sản phẩm"
-                  : "Lưu thay đổi"
+                : uploading
+                  ? "Đang upload ảnh..."
+                  : mode === "create"
+                    ? "Thêm sản phẩm"
+                    : "Lưu thay đổi"
             }
             className="min-h-[44px] flex-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
