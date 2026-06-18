@@ -319,7 +319,8 @@ export function OptionsEditor({ productId }: Props) {
                 aria-label="Tên option"
                 className={`${inputCls} flex-1`}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") submitEditOption(option.id);
+                  if (e.key === "Enter" && !savingEditOption)
+                    submitEditOption(option.id);
                   if (e.key === "Escape") setEditingOptionId(null);
                 }}
               />
@@ -427,7 +428,7 @@ export function OptionsEditor({ productId }: Props) {
                       aria-label="Tên value"
                       className={`${inputCls} flex-1`}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter")
+                        if (e.key === "Enter" && !savingEditValue)
                           submitEditValue(option.id, value.id);
                         if (e.key === "Escape") setEditingValueId(null);
                       }}
@@ -447,7 +448,7 @@ export function OptionsEditor({ productId }: Props) {
                       placeholder="+giá"
                       className={`${inputCls} w-24`}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter")
+                        if (e.key === "Enter" && !savingEditValue)
                           submitEditValue(option.id, value.id);
                         if (e.key === "Escape") setEditingValueId(null);
                       }}
