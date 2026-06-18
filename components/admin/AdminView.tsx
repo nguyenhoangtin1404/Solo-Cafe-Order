@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type {
   AdminCategoryGroup,
@@ -8,10 +8,11 @@ import type {
 } from "@/lib/services/product.service";
 import type { Category } from "@/types/product";
 import { CategoriesSection } from "./CategoriesSection";
+import { ProductsSection } from "./ProductsSection";
 
 type AdminProductState = AdminProduct & { pending?: boolean };
 
-type AdminViewGroup = {
+export type AdminViewGroup = {
   category: AdminCategoryGroup["category"];
   products: AdminProductState[];
 };
@@ -21,10 +22,13 @@ interface Props {
   categories: Category[];
 }
 
-export function AdminView({ groups: initial, categories }: Props) {
+export function AdminView({
+  groups: initial,
+  categories: initialCategories,
+}: Props) {
   const [groups, setGroups] = useState<AdminViewGroup[]>(initial);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [toggleStatusMessage, setToggleStatusMessage] = useState("");
-  // Synchronous guard against concurrent PATCH requests on the same product.
   const togglingIdsRef = useRef<Set<string>>(new Set());
   const toggleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -43,10 +47,21 @@ export function AdminView({ groups: initial, categories }: Props) {
     }, 3000);
   }
 
-  // Derived from live groups state so it stays accurate after toggle/delete.
-  const productCounts = Object.fromEntries(
-    groups.map((g) => [g.category.id, g.products.length])
+  const productCounts = useMemo(
+    () =>
+      Object.fromEntries(groups.map((g) => [g.category.id, g.products.length])),
+    [groups]
   );
+
+  const productNames = useMemo(
+    () =>
+      Object.fromEntries(
+        groups.flatMap((g) => g.products).map((p) => [p.id, p.name])
+      ),
+    [groups]
+  );
+
+  // ── Category callbacks ────────────────────────────────────────────────────
 
   function handleCategoryCreated(category: Category) {
     setGroups((prev) =>
@@ -54,10 +69,14 @@ export function AdminView({ groups: initial, categories }: Props) {
         (a, b) => a.category.sort_order - b.category.sort_order
       )
     );
+    setCategories((prev) =>
+      [...prev, category].sort((a, b) => a.sort_order - b.sort_order)
+    );
   }
 
   function handleCategoryDeleted(id: string) {
     setGroups((prev) => prev.filter((g) => g.category.id !== id));
+    setCategories((prev) => prev.filter((c) => c.id !== id));
   }
 
   function handleCategoryUpdated(category: Category) {
@@ -66,14 +85,32 @@ export function AdminView({ groups: initial, categories }: Props) {
         .map((g) => (g.category.id === category.id ? { ...g, category } : g))
         .sort((a, b) => a.category.sort_order - b.category.sort_order)
     );
+    setCategories((prev) =>
+      prev
+        .map((c) => (c.id === category.id ? category : c))
+        .sort((a, b) => a.sort_order - b.sort_order)
+    );
+  }
+
+  // ── Product callbacks ─────────────────────────────────────────────────────
+
+  function setPending(productId: string, pending: boolean) {
+    setGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        products: g.products.map((p) =>
+          p.id === productId ? { ...p, pending } : p
+        ),
+      }))
+    );
   }
 
   async function handleToggle(productId: string, newValue: boolean) {
     if (togglingIdsRef.current.has(productId)) return;
     togglingIdsRef.current.add(productId);
-    const productName =
-      groups.flatMap((g) => g.products).find((p) => p.id === productId)?.name ??
-      "";
+    const productName = productNames[productId] ?? "";
+    announceToggle(`Đang cập nhật ${productName}…`);
+    // Optimistic update
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
@@ -91,25 +128,18 @@ export function AdminView({ groups: initial, categories }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_available: newValue }),
       });
-
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
           message?: string;
         };
         throw new Error(body.message ?? "Cập nhật thất bại.");
       }
-      setGroups((prev) =>
-        prev.map((g) => ({
-          ...g,
-          products: g.products.map((p) =>
-            p.id === productId ? { ...p, pending: false } : p
-          ),
-        }))
-      );
+      setPending(productId, false);
       announceToggle(
         `${productName}: ${newValue ? "đang hiển thị trên menu" : "đã ẩn khỏi menu"}.`
       );
     } catch (err) {
+      // Rollback
       setGroups((prev) =>
         prev.map((g) => ({
           ...g,
@@ -120,10 +150,61 @@ export function AdminView({ groups: initial, categories }: Props) {
           ),
         }))
       );
+      announceToggle(`Cập nhật ${productName} thất bại.`);
       toast.error(err instanceof Error ? err.message : "Cập nhật thất bại.");
     } finally {
       togglingIdsRef.current.delete(productId);
     }
+  }
+
+  function handleProductCreated(product: AdminProduct) {
+    if (!groups.some((g) => g.category.id === product.category_id)) {
+      toast.error("Danh mục không còn tồn tại. Vui lòng tải lại trang.");
+      return;
+    }
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.category.id === product.category_id
+          ? { ...g, products: [...g.products, product] }
+          : g
+      )
+    );
+  }
+
+  function handleProductUpdated(oldCategoryId: string, product: AdminProduct) {
+    setGroups((prev) =>
+      prev.map((g) => {
+        if (
+          g.category.id === oldCategoryId &&
+          g.category.id !== product.category_id
+        ) {
+          return {
+            ...g,
+            products: g.products.filter((p) => p.id !== product.id),
+          };
+        }
+        if (g.category.id === product.category_id) {
+          const exists = g.products.some((p) => p.id === product.id);
+          return {
+            ...g,
+            products: exists
+              ? g.products.map((p) => (p.id === product.id ? product : p))
+              : [...g.products, product],
+          };
+        }
+        return g;
+      })
+    );
+  }
+
+  function handleProductDeleted(id: string, categoryId: string) {
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.category.id === categoryId
+          ? { ...g, products: g.products.filter((p) => p.id !== id) }
+          : g
+      )
+    );
   }
 
   return (
@@ -131,7 +212,7 @@ export function AdminView({ groups: initial, categories }: Props) {
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {toggleStatusMessage}
       </div>
-      <header role="banner" className="border-b px-4 py-3">
+      <header className="border-b px-4 py-3">
         <h1 className="text-lg font-bold">Quản lý menu</h1>
       </header>
 
@@ -144,78 +225,14 @@ export function AdminView({ groups: initial, categories }: Props) {
           onCategoryUpdated={handleCategoryUpdated}
         />
 
-        {groups.map(({ category, products }) => (
-          <section
-            key={category.id}
-            aria-labelledby={`cat-group-${category.id}`}
-          >
-            <h2
-              id={`cat-group-${category.id}`}
-              className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-            >
-              {category.name}
-            </h2>
-            <div className="space-y-2">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
-                >
-                  <div className="min-w-0">
-                    <p
-                      className={`truncate font-medium ${
-                        !product.is_available
-                          ? "text-muted-foreground line-through"
-                          : ""
-                      }`}
-                    >
-                      {product.name}
-                      {!product.is_available && (
-                        <span className="sr-only"> (không có sẵn)</span>
-                      )}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {product.price.toLocaleString("vi-VN")}đ
-                    </p>
-                  </div>
-
-                  <button
-                    role="switch"
-                    aria-checked={product.is_available}
-                    aria-label={`${product.name}: bật/tắt hiển thị trên menu`}
-                    aria-disabled={product.pending || undefined}
-                    onClick={() => {
-                      if (!product.pending)
-                        handleToggle(product.id, !product.is_available);
-                    }}
-                    onKeyDown={(e) => {
-                      if (
-                        product.pending &&
-                        (e.key === " " || e.key === "Enter")
-                      )
-                        e.preventDefault();
-                    }}
-                    className={`relative ml-4 flex min-h-[44px] w-11 shrink-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring${product.pending ? " cursor-not-allowed opacity-50" : " cursor-pointer"}`}
-                  >
-                    <span
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        product.is_available ? "bg-primary" : "bg-input"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                          product.is_available
-                            ? "translate-x-5"
-                            : "translate-x-0.5"
-                        }`}
-                      />
-                    </span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
+        <ProductsSection
+          groups={groups}
+          categories={categories}
+          onToggle={handleToggle}
+          onProductCreated={handleProductCreated}
+          onProductUpdated={handleProductUpdated}
+          onProductDeleted={handleProductDeleted}
+        />
       </main>
     </div>
   );

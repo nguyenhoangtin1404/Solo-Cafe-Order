@@ -1,7 +1,9 @@
 import type { Category, Product, ProductWithOptions } from "@/types/product";
 import { AppError } from "@/lib/errors";
+import type { CreateProductInput, UpdateProductInput } from "@/lib/validators";
 import * as categoryRepo from "@/lib/repositories/category.repository";
 import * as productRepo from "@/lib/repositories/product.repository";
+import { sanitizeText } from "@/lib/utils/sanitize";
 
 export type CategoryWithProducts = Category & {
   products: ProductWithOptions[];
@@ -29,7 +31,13 @@ export async function getProductWithOptions(
 
 export type AdminProduct = Pick<
   Product,
-  "id" | "category_id" | "name" | "price" | "image_url" | "is_available"
+  | "id"
+  | "category_id"
+  | "name"
+  | "description"
+  | "price"
+  | "image_url"
+  | "is_available"
 >;
 
 export type AdminCategoryGroup = {
@@ -40,10 +48,19 @@ export type AdminCategoryGroup = {
 export async function getAdminProducts(): Promise<AdminProduct[]> {
   const products = await productRepo.findAllForAdminFlat();
   return products.map(
-    ({ id, category_id, name, price, image_url, is_available }) => ({
+    ({
       id,
       category_id,
       name,
+      description,
+      price,
+      image_url,
+      is_available,
+    }) => ({
+      id,
+      category_id,
+      name,
+      description,
       price,
       image_url,
       is_available,
@@ -68,6 +85,86 @@ export async function setProductAvailability(
   isAvailable: boolean
 ): Promise<{ id: string; is_available: boolean }> {
   const result = await productRepo.updateAvailability(id, isAvailable);
+  if (!result) {
+    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  return result;
+}
+
+function toAdminProduct(p: Product): AdminProduct {
+  return {
+    id: p.id,
+    category_id: p.category_id,
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    image_url: p.image_url,
+    is_available: p.is_available,
+  };
+}
+
+export async function createProduct(
+  data: CreateProductInput
+): Promise<AdminProduct> {
+  const category = await categoryRepo.findCategoryById(data.category_id);
+  if (!category) {
+    throw new AppError("CATEGORY_NOT_FOUND", "Danh mục không tồn tại.", 404);
+  }
+  const sanitizedName = sanitizeText(data.name, 100);
+  if (!sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên sản phẩm không hợp lệ.", 400);
+  }
+  const product = await productRepo.createProduct({
+    ...data,
+    name: sanitizedName,
+    description: data.description
+      ? sanitizeText(data.description, 500) || null
+      : data.description,
+    ...(data.image_url != null && {
+      image_url: data.image_url.replace(/\0/g, ""),
+    }),
+  });
+  return toAdminProduct(product);
+}
+
+export async function updateProduct(
+  id: string,
+  data: UpdateProductInput
+): Promise<AdminProduct> {
+  if (data.category_id !== undefined) {
+    const category = await categoryRepo.findCategoryById(data.category_id);
+    if (!category) {
+      throw new AppError("CATEGORY_NOT_FOUND", "Danh mục không tồn tại.", 404);
+    }
+  }
+  const sanitizedName =
+    data.name !== undefined ? sanitizeText(data.name, 100) : undefined;
+  if (sanitizedName !== undefined && !sanitizedName) {
+    throw new AppError("VALIDATION_ERROR", "Tên sản phẩm không hợp lệ.", 400);
+  }
+  const product = await productRepo.updateProduct(id, {
+    ...data,
+    ...(sanitizedName !== undefined && { name: sanitizedName }),
+    ...(data.description !== undefined && {
+      description:
+        data.description !== null
+          ? sanitizeText(data.description, 500) || null
+          : null,
+    }),
+    ...(data.image_url != null && {
+      image_url: data.image_url.replace(/\0/g, ""),
+    }),
+  });
+  if (!product) {
+    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  return toAdminProduct(product);
+}
+
+export async function deleteProduct(
+  id: string
+): Promise<{ id: string; deleted_at: string }> {
+  const result = await productRepo.softDeleteProduct(id);
   if (!result) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
   }
