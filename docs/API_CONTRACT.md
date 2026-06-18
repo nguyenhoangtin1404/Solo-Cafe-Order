@@ -397,7 +397,7 @@ Cập nhật option group. Tất cả fields optional.
 
 Soft delete option group và tất cả values bên trong (`deleted_at = now()`).
 
-**Response 200**: `{ "id": "uuid", "deleted_at": "2025-01-01T10:00:00Z" }`
+**Response 204**: No content.
 
 **Errors**: `404 OPTION_NOT_FOUND`, `401 UNAUTHORIZED`
 
@@ -431,7 +431,7 @@ Cập nhật option value. Tất cả fields optional.
 
 Soft delete option value.
 
-**Response 200**: `{ "id": "uuid", "deleted_at": "2025-01-01T10:00:00Z" }`
+**Response 204**: No content.
 
 **Errors**: `404 VALUE_NOT_FOUND`, `401 UNAUTHORIZED`
 

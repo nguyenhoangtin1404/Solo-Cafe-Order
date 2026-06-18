@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type {
+  ProductOption,
   ProductOptionWithValues,
   ProductOptionValue,
 } from "@/types/product";
@@ -55,6 +56,8 @@ export function OptionsEditor({ productId }: Props) {
   const [editValueDraft, setEditValueDraft] = useState<ValueDraft>(emptyValue);
   const [savingEditValue, setSavingEditValue] = useState(false);
 
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
   const addOptionInputRef = useRef<HTMLInputElement>(null);
   const addValueInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +101,7 @@ export function OptionsEditor({ productId }: Props) {
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
-        option?: ProductOptionWithValues;
+        option?: ProductOption;
         message?: string;
       };
       if (!res.ok) throw new Error(data.message ?? "Thêm option thất bại.");
@@ -151,12 +154,11 @@ export function OptionsEditor({ productId }: Props) {
 
   async function handleDeleteOption(optionId: string) {
     if (!window.confirm("Xóa option này và tất cả values bên trong?")) return;
+    setDeletingIds((s) => new Set(s).add(optionId));
     try {
       const res = await fetch(
         `/api/products/${productId}/options/${optionId}`,
-        {
-          method: "DELETE",
-        }
+        { method: "DELETE" }
       );
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as {
@@ -167,6 +169,12 @@ export function OptionsEditor({ productId }: Props) {
       setOptions((prev) => prev.filter((o) => o.id !== optionId));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
+    } finally {
+      setDeletingIds((s) => {
+        const n = new Set(s);
+        n.delete(optionId);
+        return n;
+      });
     }
   }
 
@@ -257,6 +265,7 @@ export function OptionsEditor({ productId }: Props) {
 
   async function handleDeleteValue(optionId: string, valueId: string) {
     if (!window.confirm("Xóa value này?")) return;
+    setDeletingIds((s) => new Set(s).add(valueId));
     try {
       const res = await fetch(
         `/api/products/${productId}/options/${optionId}/values/${valueId}`,
@@ -277,6 +286,12 @@ export function OptionsEditor({ productId }: Props) {
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
+    } finally {
+      setDeletingIds((s) => {
+        const n = new Set(s);
+        n.delete(valueId);
+        return n;
+      });
     }
   }
 
@@ -321,7 +336,8 @@ export function OptionsEditor({ productId }: Props) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !savingEditOption)
                     submitEditOption(option.id);
-                  if (e.key === "Escape") setEditingOptionId(null);
+                  if (e.key === "Escape" && !savingEditOption)
+                    setEditingOptionId(null);
                 }}
               />
               <select
@@ -398,8 +414,9 @@ export function OptionsEditor({ productId }: Props) {
                 <button
                   type="button"
                   onClick={() => handleDeleteOption(option.id)}
+                  disabled={deletingIds.has(option.id)}
                   aria-label={`Xóa option ${option.name}`}
-                  className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border border-destructive text-destructive"
+                  className="flex min-h-[44px] w-11 items-center justify-center rounded-lg border border-destructive text-destructive disabled:opacity-50"
                 >
                   <Trash2 size={14} aria-hidden="true" />
                 </button>
@@ -431,7 +448,8 @@ export function OptionsEditor({ productId }: Props) {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !savingEditValue)
                           submitEditValue(option.id, value.id);
-                        if (e.key === "Escape") setEditingValueId(null);
+                        if (e.key === "Escape" && !savingEditValue)
+                          setEditingValueId(null);
                       }}
                     />
                     <input
@@ -451,7 +469,8 @@ export function OptionsEditor({ productId }: Props) {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !savingEditValue)
                           submitEditValue(option.id, value.id);
-                        if (e.key === "Escape") setEditingValueId(null);
+                        if (e.key === "Escape" && !savingEditValue)
+                          setEditingValueId(null);
                       }}
                     />
                     <button
@@ -512,8 +531,9 @@ export function OptionsEditor({ productId }: Props) {
                       <button
                         type="button"
                         onClick={() => handleDeleteValue(option.id, value.id)}
+                        disabled={deletingIds.has(value.id)}
                         aria-label={`Xóa value ${value.name}`}
-                        className="flex min-h-[44px] w-9 items-center justify-center text-destructive"
+                        className="flex min-h-[44px] w-9 items-center justify-center text-destructive disabled:opacity-50"
                       >
                         <Trash2 size={13} aria-hidden="true" />
                       </button>
