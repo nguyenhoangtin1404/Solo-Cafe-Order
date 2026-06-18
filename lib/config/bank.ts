@@ -1,4 +1,4 @@
-// Server-side only — do NOT import this in Client Components.
+import "server-only";
 // Returns null and logs a warning if any required env var is missing.
 
 export interface BankTransferInfo {
