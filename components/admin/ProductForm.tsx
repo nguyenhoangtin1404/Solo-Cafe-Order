@@ -69,7 +69,6 @@ export function ProductForm({
   const [formAlert, setFormAlert] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const uploadIdRef = useRef(0);
   const abortUploadRef = useRef<AbortController | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
@@ -109,8 +108,8 @@ export function ProductForm({
     const objUrl = URL.createObjectURL(file);
     previewUrlRef.current = objUrl;
     setImagePreview(objUrl);
+    const prevImageUrl = imageUrl;
     setImageUrl(null);
-    const id = ++uploadIdRef.current;
     const controller = new AbortController();
     abortUploadRef.current = controller;
     setUploading(true);
@@ -128,23 +127,22 @@ export function ProductForm({
       };
       if (!res.ok) throw new Error(data.message ?? "Upload thất bại.");
       if (!data.url) throw new Error("Phản hồi không hợp lệ.");
-      if (id === uploadIdRef.current) setImageUrl(data.url);
+      if (abortUploadRef.current === controller) setImageUrl(data.url);
     } catch (err) {
-      if (id !== uploadIdRef.current) return;
+      if (abortUploadRef.current !== controller) return;
       const msg = err instanceof Error ? err.message : "Upload thất bại.";
       setImageError(msg);
       toast.error(msg);
       URL.revokeObjectURL(objUrl);
       previewUrlRef.current = null;
       setImagePreview(null);
-      setImageUrl(null);
+      setImageUrl(prevImageUrl);
     } finally {
-      if (id === uploadIdRef.current) setUploading(false);
+      if (abortUploadRef.current === controller) setUploading(false);
     }
   }
 
   function clearImage() {
-    uploadIdRef.current++; // invalidate any in-flight upload
     abortUploadRef.current?.abort();
     abortUploadRef.current = null;
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
