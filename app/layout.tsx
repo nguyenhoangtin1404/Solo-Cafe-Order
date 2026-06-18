@@ -35,6 +35,7 @@ export const metadata: Metadata = {
     siteName: "Vibe Cafe",
     locale: "vi_VN",
     type: "website",
+    images: [{ url: `${appUrl}/icons/icon-512.png`, width: 512, height: 512, alt: "Vibe Cafe" }],
   },
   icons: {
     apple: "/icons/icon-192.png",
