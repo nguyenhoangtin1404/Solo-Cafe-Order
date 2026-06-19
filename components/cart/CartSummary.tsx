@@ -132,7 +132,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
               onClick={() => setPaymentMethod(value)}
               className={`min-h-[44px] flex-1 rounded-xl border py-3 text-sm font-medium transition-colors ${
                 paymentMethod === value
-                  ? "border-primary bg-primary/5 text-primary"
+                  ? "border-primary bg-primary/5 text-foreground"
                   : "border-border"
               }`}
             >
@@ -142,7 +142,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl bg-secondary p-4">
+      <div className="flex items-center justify-between rounded-xl bg-secondary p-4 text-secondary-foreground">
         <span className="font-medium">Tổng cộng</span>
         <span className="text-lg font-bold">
           {total.toLocaleString("vi-VN")}đ

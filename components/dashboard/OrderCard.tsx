@@ -94,8 +94,8 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
           <span
             className={`rounded-full px-2 py-0.5 text-xs ${
               order.payment_method === PAYMENT_METHOD.BANK_TRANSFER
-                ? "bg-blue-100 text-blue-700"
-                : "bg-green-100 text-green-700"
+                ? "bg-secondary/15 text-secondary"
+                : "bg-status-done/15 text-status-done"
             }`}
           >
             {order.payment_method === PAYMENT_METHOD.BANK_TRANSFER
@@ -132,7 +132,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
               {order.status === ORDER_STATUS.MAKING && (
                 <button
                   onClick={() => onStatusUpdate(order.id, ORDER_STATUS.DONE)}
-                  className="min-h-[44px] rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-95"
+                  className="min-h-[44px] rounded-lg bg-status-done px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-95"
                 >
                   Hoàn thành
                 </button>

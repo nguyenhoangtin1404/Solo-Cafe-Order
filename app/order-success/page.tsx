@@ -50,7 +50,7 @@ export default function OrderSuccessPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <div className="flex flex-1 flex-col items-center px-4 py-8">
-        <CheckCircle size={56} className="text-green-500" />
+        <CheckCircle size={56} className="text-status-done" />
         <h1 className="mt-3 text-2xl font-bold">Đặt hàng thành công!</h1>
 
         <div className="mt-3 text-center">
@@ -69,7 +69,7 @@ export default function OrderSuccessPage() {
           </p>
         )}
 
-        <div className="mt-3 flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-amber-700">
+        <div className="mt-3 flex items-center gap-2 rounded-full bg-status-new/10 px-4 py-2 text-status-new">
           <Clock size={16} />
           <span className="text-sm font-medium">
             Khoảng {data.wait_estimate}
@@ -109,11 +109,11 @@ export default function OrderSuccessPage() {
           </div>
 
           {data.bank_transfer_info && (
-            <div className="space-y-2 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-              <p className="font-semibold text-blue-900">
+            <div className="space-y-2 rounded-2xl border border-secondary/30 bg-card p-4">
+              <p className="font-semibold text-secondary">
                 Thông tin chuyển khoản
               </p>
-              <div className="space-y-1 text-sm text-blue-800">
+              <div className="space-y-1 text-sm text-foreground">
                 <p>
                   Ngân hàng:{" "}
                   <span className="font-medium">

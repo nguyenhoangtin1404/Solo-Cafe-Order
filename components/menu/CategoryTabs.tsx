@@ -64,7 +64,7 @@ export function CategoryTabs({ categories }: Props) {
           className={`min-h-[44px] shrink-0 rounded-full px-4 text-sm font-medium transition-colors ${
             activeId === cat.id
               ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground"
+              : "bg-muted text-muted-foreground"
           }`}
         >
           {cat.name}

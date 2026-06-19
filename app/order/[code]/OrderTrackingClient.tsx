@@ -64,7 +64,7 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <Link
           href="/menu"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
         >
           <ArrowLeft size={20} />
         </Link>
@@ -78,12 +78,12 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
         <div className="rounded-2xl bg-card p-5 text-center shadow-sm">
           {status === ORDER_STATUS.CANCELLED ? (
             <>
-              <XCircle size={48} className="mx-auto text-red-500" />
+              <XCircle size={48} className="mx-auto text-destructive" />
               <p className="mt-2 text-lg font-semibold">Đã hủy</p>
             </>
           ) : status === ORDER_STATUS.DONE ? (
             <>
-              <CheckCircle size={48} className="mx-auto text-green-500" />
+              <CheckCircle size={48} className="mx-auto text-status-done" />
               <p className="mt-2 text-lg font-semibold">Sẵn sàng lấy đồ! 🎉</p>
               {current.pickup_name && (
                 <p className="text-muted-foreground">
@@ -144,22 +144,22 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
         )}
 
         {showConfirm && status === ORDER_STATUS.NEW && (
-          <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4">
-            <p className="font-medium text-red-700">Xác nhận hủy đơn?</p>
+          <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+            <p className="font-medium text-destructive">Xác nhận hủy đơn?</p>
             <p className="text-sm text-muted-foreground">
               Đơn đang chờ xử lý. Bạn có chắc muốn hủy không?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="min-h-[44px] flex-1 rounded-xl bg-secondary py-2.5 text-sm font-medium"
+                className="min-h-[44px] flex-1 rounded-xl bg-secondary py-2.5 text-sm font-medium text-secondary-foreground"
               >
                 Không hủy
               </button>
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="min-h-[44px] flex-1 rounded-xl bg-destructive py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                className="min-h-[44px] flex-1 rounded-xl bg-destructive py-2.5 text-sm font-medium text-destructive-foreground disabled:opacity-50"
               >
                 {cancelling ? "Đang hủy..." : "Xác nhận hủy"}
               </button>
@@ -177,10 +177,10 @@ function ConnectionStatus({
   status: "connected" | "connecting" | "disconnected";
 }) {
   if (status === "connected")
-    return <p className="text-xs text-green-600">● Live</p>;
+    return <p className="text-xs text-status-done">● Live</p>;
   if (status === "connecting")
-    return <p className="text-xs text-amber-500">● Đang kết nối...</p>;
-  return <p className="text-xs text-red-500">● Mất kết nối</p>;
+    return <p className="text-xs text-status-new">● Đang kết nối...</p>;
+  return <p className="text-xs text-destructive">● Mất kết nối</p>;
 }
 
 function ProgressSteps({ currentStep }: { currentStep: number }) {
@@ -192,10 +192,10 @@ function ProgressSteps({ currentStep }: { currentStep: number }) {
             <div
               className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
                 i < currentStep
-                  ? "bg-green-500 text-white"
+                  ? "bg-status-done text-white"
                   : i === currentStep
                     ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground"
+                    : "bg-muted text-muted-foreground"
               }`}
             >
               {i < currentStep ? "✓" : i + 1}
@@ -211,7 +211,7 @@ function ProgressSteps({ currentStep }: { currentStep: number }) {
           {i < STEPS.length - 1 && (
             <div
               className={`mb-5 h-0.5 w-10 ${
-                i < currentStep ? "bg-green-500" : "bg-border"
+                i < currentStep ? "bg-status-done" : "bg-border"
               }`}
             />
           )}
