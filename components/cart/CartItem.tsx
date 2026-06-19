@@ -18,7 +18,7 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
         <button
           onClick={() => onRemove(index)}
           aria-label="Xóa món"
-          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full bg-secondary"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
         >
           <X size={14} />
         </button>
@@ -40,7 +40,7 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
             onClick={() => onUpdateQty(index, item.quantity - 1)}
             aria-label="Giảm số lượng"
             disabled={item.quantity <= 1}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary disabled:opacity-40"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary text-secondary-foreground disabled:opacity-40"
           >
             <Minus size={14} />
           </button>
@@ -51,7 +51,7 @@ export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
             onClick={() => onUpdateQty(index, item.quantity + 1)}
             aria-label="Tăng số lượng"
             disabled={item.quantity >= 99}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary disabled:opacity-40"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-secondary text-secondary-foreground disabled:opacity-40"
           >
             <Plus size={14} />
           </button>

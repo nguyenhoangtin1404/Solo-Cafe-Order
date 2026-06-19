@@ -43,12 +43,12 @@ function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4"
+      className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-4"
     >
       <div className="space-y-1">
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-foreground"
         >
           Email
         </label>
@@ -59,14 +59,14 @@ function LoginForm() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-sm"
+          className="w-full px-3 py-2.5 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
         />
       </div>
 
       <div className="space-y-1">
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-foreground"
         >
           Mật khẩu
         </label>
@@ -77,12 +77,12 @@ function LoginForm() {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-sm"
+          className="w-full px-3 py-2.5 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
         />
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}
@@ -90,7 +90,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 bg-black text-white rounded-xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+        className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
       >
         {loading ? "Đang đăng nhập..." : "Đăng nhập"}
       </button>
@@ -100,10 +100,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold text-center mb-2">☕ Vibe Cafe</h1>
-        <p className="text-sm text-gray-500 text-center mb-8">
+        <p className="text-sm text-muted-foreground text-center mb-8">
           Đăng nhập để quản lý quán
         </p>
         <Suspense>

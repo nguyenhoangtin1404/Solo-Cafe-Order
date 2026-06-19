@@ -53,7 +53,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
       >
         <span className="text-xl font-bold leading-none">+</span>
         {cartCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
             {cartCount > 9 ? "9+" : cartCount}
           </span>
         )}

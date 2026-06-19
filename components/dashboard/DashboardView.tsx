@@ -306,7 +306,7 @@ export function DashboardView({ initialOrders }: Props) {
         {!unlocked && (
           <button
             onClick={unlock}
-            className="w-full border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800"
+            className="w-full border-b border-status-new/30 bg-status-new/10 px-4 py-2 text-center text-sm text-status-new"
           >
             Nhấn để bật thông báo âm thanh khi có đơn mới 🔔
           </button>
@@ -321,7 +321,7 @@ export function DashboardView({ initialOrders }: Props) {
                 onClick={() => handleTabChange(tab.id)}
                 className={`relative flex min-h-[44px] items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? "border-b-2 border-primary text-primary"
+                    ? "border-b-2 border-primary text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -339,7 +339,7 @@ export function DashboardView({ initialOrders }: Props) {
                 )}
                 {/* Red dot for unread new orders */}
                 {tab.id === "new" && unreadCount > 0 && activeTab !== "new" && (
-                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
                 )}
               </button>
             ))}
@@ -411,7 +411,7 @@ type ConnectionStatusProps = {
 function ConnectionStatus({ status }: ConnectionStatusProps) {
   if (status === "connected") {
     return (
-      <span className="flex items-center gap-1.5 text-sm text-green-600">
+      <span className="flex items-center gap-1.5 text-sm text-status-done">
         <Wifi size={14} />
         Live
       </span>
@@ -419,7 +419,7 @@ function ConnectionStatus({ status }: ConnectionStatusProps) {
   }
   if (status === "connecting") {
     return (
-      <span className="flex items-center gap-1.5 text-sm text-yellow-600">
+      <span className="flex items-center gap-1.5 text-sm text-status-new">
         <Loader2 size={14} className="animate-spin" />
         Đang kết nối...
       </span>

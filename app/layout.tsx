@@ -13,7 +13,7 @@ const appUrl = (
 ).replace(/\/$/, "");
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#ffb000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1, // prevents iOS auto-zoom on input focus
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Vibe Cafe",
   },
   openGraph: {

@@ -100,7 +100,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
           >
             <X size={16} />
           </button>
@@ -145,7 +145,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               aria-label="Giảm số lượng"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
             >
               <Minus size={16} />
             </button>
@@ -153,7 +153,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             <button
               onClick={() => setQty((q) => Math.min(99, q + 1))}
               aria-label="Tăng số lượng"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
             >
               <Plus size={16} />
             </button>
@@ -198,11 +198,11 @@ function OptionGroup({
                 <span
                   className={`flex h-4 w-4 shrink-0 items-center justify-center border-2 ${
                     option.type === "select" ? "rounded-full" : "rounded-sm"
-                  } ${on ? "border-primary bg-primary text-white" : "border-muted-foreground"}`}
+                  } ${on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}
                 >
                   {on &&
                     (option.type === "select" ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                     ) : (
                       <span className="text-[9px] font-bold leading-none">
                         ✓

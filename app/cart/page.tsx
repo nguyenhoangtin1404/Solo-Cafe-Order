@@ -29,7 +29,7 @@ export default function CartPage() {
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <Link
           href="/menu"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
         >
           <ArrowLeft size={20} />
         </Link>
