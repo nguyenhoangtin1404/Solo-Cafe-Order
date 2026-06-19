@@ -76,12 +76,12 @@
 
 **M3 / Done Checkpoint:**
 
-- [x] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
-- [x] Dashboard nhận order mới realtime < 2 giây + sound
-- [x] Owner cập nhật status → tracking page khách cập nhật ngay
-- [x] Upload ảnh product, toggle availability hoạt động
-- [ ] `npm run build` clean, Lighthouse PWA ≥ 80 — pending smoke test + deploy
-- [ ] App live trên Vercel — #117 smoke test → #118 deploy
+- [ ] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
+- [ ] Dashboard nhận order mới realtime < 2 giây + sound
+- [ ] Owner cập nhật status → tracking page khách cập nhật ngay
+- [ ] Upload ảnh product, toggle availability hoạt động
+- [ ] `npm run build` clean, Lighthouse PWA ≥ 80
+- [ ] App live trên Vercel
 
 ---
 
