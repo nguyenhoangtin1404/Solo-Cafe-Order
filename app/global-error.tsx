@@ -1,7 +1,14 @@
 "use client";
 
+import { Be_Vietnam_Pro } from "next/font/google";
 import { useEffect } from "react";
 import "./globals.css";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: "--font-sans",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export default function GlobalError({
   error,
@@ -15,7 +22,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="vi">
+    <html lang="vi" className={`${beVietnamPro.variable} antialiased`}>
       <body className="min-h-screen flex flex-col items-center justify-center px-4 text-center font-sans">
         <p className="text-lg font-semibold text-foreground">
           Có lỗi nghiêm trọng xảy ra
