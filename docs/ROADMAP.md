@@ -31,10 +31,10 @@
 
 **M1 Checkpoint:**
 
-- [ ] `npm run dev` chạy
-- [ ] `GET /api/menu` trả categories + products (test bằng curl)
-- [ ] `/login` → redirect `/dashboard` (owner account đã tạo trên Supabase)
-- [ ] `/dashboard` không auth → redirect `/login`
+- [x] `npm run dev` chạy
+- [x] `GET /api/menu` trả categories + products (test bằng curl)
+- [x] `/login` → redirect `/dashboard` (owner account đã tạo trên Supabase)
+- [x] `/dashboard` không auth → redirect `/login`
 
 ---
 
@@ -52,10 +52,10 @@
 
 **M2-backend Checkpoint:**
 
-- [ ] `POST /api/orders` → 201 với order_code + wait_estimate string
-- [ ] `POST /api/orders` lần 11/phút → 429 RATE_LIMITED
-- [ ] Supabase Dashboard: insert order → console log event trong < 2 giây (#50 spike pass)
-- [ ] `npm test` → OrderService tests pass
+- [x] `POST /api/orders` → 201 với order_code + wait_estimate string
+- [x] `POST /api/orders` lần 11/phút → 429 RATE_LIMITED
+- [x] Supabase Dashboard: insert order → console log event trong < 2 giây (#50 spike pass)
+- [x] `npm test` → OrderService tests pass
 
 ---
 

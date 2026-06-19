@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
       {
         source: "/",
         destination: "/menu",
-        permanent: false, // 307 — avoid permanently-cached redirects during active development
+        permanent: true, // 308 Permanent Redirect — mobile browsers cache QR scan destination
       },
     ];
   },
