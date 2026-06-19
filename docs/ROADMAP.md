@@ -31,10 +31,10 @@
 
 **M1 Checkpoint:**
 
-- [ ] `npm run dev` chạy
-- [ ] `GET /api/menu` trả categories + products (test bằng curl)
-- [ ] `/login` → redirect `/dashboard` (owner account đã tạo trên Supabase)
-- [ ] `/dashboard` không auth → redirect `/login`
+- [x] `npm run dev` chạy
+- [x] `GET /api/menu` trả categories + products (test bằng curl)
+- [x] `/login` → redirect `/dashboard` (owner account đã tạo trên Supabase)
+- [x] `/dashboard` không auth → redirect `/login`
 
 ---
 
@@ -52,10 +52,10 @@
 
 **M2-backend Checkpoint:**
 
-- [ ] `POST /api/orders` → 201 với order_code + wait_estimate string
-- [ ] `POST /api/orders` lần 11/phút → 429 RATE_LIMITED
-- [ ] Supabase Dashboard: insert order → console log event trong < 2 giây (#50 spike pass)
-- [ ] `npm test` → OrderService tests pass
+- [x] `POST /api/orders` → 201 với order_code + wait_estimate string
+- [x] `POST /api/orders` lần 11/phút → 429 RATE_LIMITED
+- [x] Supabase Dashboard: insert order → console log event trong < 2 giây (#50 spike pass)
+- [x] `npm test` → OrderService tests pass
 
 ---
 
@@ -76,12 +76,12 @@
 
 **M3 / Done Checkpoint:**
 
-- [ ] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
-- [ ] Dashboard nhận order mới realtime < 2 giây + sound
-- [ ] Owner cập nhật status → tracking page khách cập nhật ngay
-- [ ] Upload ảnh product, toggle availability hoạt động
-- [ ] `npm run build` clean, Lighthouse PWA ≥ 80
-- [ ] App live trên Vercel
+- [x] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
+- [x] Dashboard nhận order mới realtime < 2 giây + sound
+- [x] Owner cập nhật status → tracking page khách cập nhật ngay
+- [x] Upload ảnh product, toggle availability hoạt động
+- [ ] `npm run build` clean, Lighthouse PWA ≥ 80 — pending smoke test + deploy
+- [ ] App live trên Vercel — #117 smoke test → #118 deploy
 
 ---
 
