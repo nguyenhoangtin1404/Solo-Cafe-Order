@@ -196,3 +196,133 @@ export async function softDeleteProduct(
   if (error) throw error;
   return (data as { id: string; deleted_at: string } | null) ?? null;
 }
+
+// ── Product Options ───────────────────────────────────────────────────────────
+
+export async function createProductOption(
+  productId: string,
+  data: { name: string; type: "select" | "multi" }
+): Promise<ProductOption> {
+  const supabase = createAdminSupabaseClient();
+  const { data: row, error } = await supabase
+    .from("product_options")
+    .insert({ product_id: productId, ...data })
+    .select("id, product_id, name, type, deleted_at")
+    .single();
+
+  if (error) throw error;
+  return row as ProductOption;
+}
+
+export async function updateProductOption(
+  optionId: string,
+  productId: string,
+  fields: { name?: string; type?: "select" | "multi" }
+): Promise<ProductOption | null> {
+  const patch = Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined)
+  );
+  if (Object.keys(patch).length === 0) return null;
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_options")
+    .update(patch)
+    .eq("id", optionId)
+    .eq("product_id", productId)
+    .is("deleted_at", null)
+    .select("id, product_id, name, type, deleted_at")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as ProductOption | null) ?? null;
+}
+
+export async function softDeleteProductOption(
+  optionId: string,
+  productId: string
+): Promise<{ id: string; deleted_at: string } | null> {
+  const now = new Date().toISOString();
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_options")
+    .update({ deleted_at: now })
+    .eq("id", optionId)
+    .eq("product_id", productId)
+    .is("deleted_at", null)
+    .select("id, deleted_at")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { id: string; deleted_at: string } | null) ?? null;
+}
+
+export async function softDeleteOptionValuesByOptionId(
+  optionId: string
+): Promise<void> {
+  const supabase = createAdminSupabaseClient();
+  const { error } = await supabase
+    .from("product_option_values")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("option_id", optionId)
+    .is("deleted_at", null);
+
+  if (error) throw error;
+}
+
+// ── Product Option Values ─────────────────────────────────────────────────────
+
+export async function createProductOptionValue(
+  optionId: string,
+  data: { name: string; extra_price: number }
+): Promise<ProductOptionValue> {
+  const supabase = createAdminSupabaseClient();
+  const { data: row, error } = await supabase
+    .from("product_option_values")
+    .insert({ option_id: optionId, ...data })
+    .select("id, option_id, name, extra_price, deleted_at")
+    .single();
+
+  if (error) throw error;
+  return row as ProductOptionValue;
+}
+
+export async function updateProductOptionValue(
+  valueId: string,
+  optionId: string,
+  fields: { name?: string; extra_price?: number }
+): Promise<ProductOptionValue | null> {
+  const patch = Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined)
+  );
+  if (Object.keys(patch).length === 0) return null;
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_option_values")
+    .update(patch)
+    .eq("id", valueId)
+    .eq("option_id", optionId)
+    .is("deleted_at", null)
+    .select("id, option_id, name, extra_price, deleted_at")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as ProductOptionValue | null) ?? null;
+}
+
+export async function softDeleteProductOptionValue(
+  valueId: string,
+  optionId: string
+): Promise<{ id: string; deleted_at: string } | null> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_option_values")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", valueId)
+    .eq("option_id", optionId)
+    .is("deleted_at", null)
+    .select("id, deleted_at")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { id: string; deleted_at: string } | null) ?? null;
+}

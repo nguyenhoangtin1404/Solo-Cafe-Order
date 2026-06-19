@@ -319,6 +319,38 @@ Partial update — tất cả fields optional.
 
 **Response 200**: `{ "id": "uuid", "is_available": false }`
 
+### GET /api/products/:id
+
+Lấy chi tiết product kèm options (admin).
+
+**Response 200**
+
+```json
+{
+  "product": {
+    "id": "uuid",
+    "category_id": "uuid",
+    "name": "Cà Phê Sữa",
+    "price": 35000,
+    "image_url": "https://...",
+    "is_available": true,
+    "options": [
+      {
+        "id": "uuid",
+        "name": "Size",
+        "type": "select",
+        "values": [
+          { "id": "uuid", "name": "M", "extra_price": 0 },
+          { "id": "uuid", "name": "L", "extra_price": 5000 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Errors**: `404 PRODUCT_NOT_FOUND`, `401 UNAUTHORIZED`
+
 ### DELETE /api/products/:id
 
 Soft delete sản phẩm — set `deleted_at = now()`. Không bao giờ hard delete.
@@ -327,9 +359,81 @@ Soft delete sản phẩm — set `deleted_at = now()`. Không bao giờ hard del
 - Snapshot trong `order_items` vẫn còn nguyên (bảo toàn lịch sử)
 - Có thể restore sau này nếu cần
 
-**Response 200**: `{ "id": "uuid", "deleted_at": "2025-01-01T10:00:00Z" }`
+**Response 204**: No content.
 
 **Errors**: `404 PRODUCT_NOT_FOUND`, `401 UNAUTHORIZED`
+
+---
+
+## Protected Endpoints — Product Options (cần Owner auth)
+
+### POST /api/products/:id/options
+
+Thêm option group cho product.
+
+**Request**: `{ "name": "Size", "type": "select" }`
+
+> `type`: `"select"` (chọn đúng 1) | `"multi"` (chọn nhiều)
+
+**Response 201**
+
+```json
+{ "option": { "id": "uuid", "product_id": "uuid", "name": "Size", "type": "select" } }
+```
+
+**Errors**: `400 VALIDATION_ERROR`, `404 PRODUCT_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### PATCH /api/products/:id/options/:optionId
+
+Cập nhật option group. Tất cả fields optional.
+
+**Request**: `{ "name": "Kích cỡ", "type": "multi" }`
+
+**Response 200**: `{ "option": { ... } }`
+
+**Errors**: `400 VALIDATION_ERROR`, `404 OPTION_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### DELETE /api/products/:id/options/:optionId
+
+Soft delete option group và tất cả values bên trong (`deleted_at = now()`).
+
+**Response 204**: No content.
+
+**Errors**: `404 OPTION_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### POST /api/products/:id/options/:optionId/values
+
+Thêm value vào option group.
+
+**Request**: `{ "name": "L", "extra_price": 5000 }`
+
+> `extra_price`: số nguyên ≥ 0, tối đa 500,000.
+
+**Response 201**
+
+```json
+{ "value": { "id": "uuid", "option_id": "uuid", "name": "L", "extra_price": 5000 } }
+```
+
+**Errors**: `400 VALIDATION_ERROR`, `404 OPTION_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### PATCH /api/products/:id/options/:optionId/values/:valueId
+
+Cập nhật option value. Tất cả fields optional.
+
+**Request**: `{ "name": "L", "extra_price": 6000 }`
+
+**Response 200**: `{ "value": { ... } }`
+
+**Errors**: `400 VALIDATION_ERROR`, `404 VALUE_NOT_FOUND`, `401 UNAUTHORIZED`
+
+### DELETE /api/products/:id/options/:optionId/values/:valueId
+
+Soft delete option value.
+
+**Response 204**: No content.
+
+**Errors**: `404 VALUE_NOT_FOUND`, `401 UNAUTHORIZED`
 
 ---
 
