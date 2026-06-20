@@ -21,7 +21,7 @@ const TABS: { id: TabId; label: string; statuses: OrderStatus[] }[] = [
     label: "Tất cả",
     statuses: ["new", "making", "done", "cancelled"],
   },
-  { id: "new", label: "Mới", statuses: ["new"] },
+  { id: "new", label: "Đang chờ", statuses: ["new"] },
   { id: "making", label: "Đang làm", statuses: ["making"] },
   { id: "done", label: "Xong", statuses: ["done", "cancelled"] },
 ];
