@@ -11,11 +11,12 @@ interface Props {
 
 export function MenuCard({ product, cartCount, onClick }: Props) {
   const [imgError, setImgError] = useState(false);
+  const formattedPrice = product.price.toLocaleString("vi-VN");
 
   return (
     <button
       onClick={onClick}
-      aria-label={`Chọn ${product.name}, ${product.price.toLocaleString("vi-VN")}đ`}
+      aria-label={`Chọn ${product.name}, ${formattedPrice}đ`}
       className="relative flex w-full flex-col overflow-hidden rounded-xl bg-card text-left shadow-sm transition-transform active:scale-[0.98]"
     >
       {/* Image */}
@@ -48,7 +49,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
         </p>
         <div className="flex items-center justify-between gap-1">
           <p className="text-sm font-semibold text-primary">
-            {product.price.toLocaleString("vi-VN")}đ
+            {formattedPrice}đ
           </p>
           <div
             aria-hidden="true"

@@ -34,7 +34,10 @@ export function MenuView({ categories }: Props) {
     [cart.items]
   );
 
-  const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
+  const totalQty = useMemo(
+    () => Object.values(cartCountMap).reduce((s, v) => s + v, 0),
+    [cartCountMap]
+  );
 
   const trimmedSearch = search.trim();
   const isSearching = trimmedSearch.length > 0;
@@ -60,7 +63,7 @@ export function MenuView({ categories }: Props) {
       </header>
 
       {/* Search bar */}
-      <div className="px-4 pb-2">
+      <div role="search" className="px-4 pb-2">
         <div className="relative flex items-center">
           <Search
             size={16}
@@ -74,7 +77,11 @@ export function MenuView({ categories }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Escape") setSearch("");
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setSearch("");
+                (e.target as HTMLInputElement).blur();
+              }
             }}
             placeholder="Tìm cà phê, trà, bánh..."
             className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary"
