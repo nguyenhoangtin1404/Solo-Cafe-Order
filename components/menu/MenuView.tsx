@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { Search, ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { CategoryTabs } from "./CategoryTabs";
 import { MenuCard } from "./MenuCard";
@@ -13,8 +13,16 @@ interface Props {
   categories: MenuCategory[];
 }
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Chào buổi sáng! ☀️";
+  if (h < 18) return "Chào buổi chiều! ☕";
+  return "Chào buổi tối! 🌙";
+}
+
 export function MenuView({ categories }: Props) {
   const [selected, setSelected] = useState<MenuProduct | null>(null);
+  const [search, setSearch] = useState("");
   const cart = useCart();
 
   const cartCountForProduct = (productId: string) =>
@@ -25,33 +33,90 @@ export function MenuView({ categories }: Props) {
 
   const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
 
+  const filteredCategories = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return categories;
+    return categories
+      .map((cat) => ({
+        ...cat,
+        products: cat.products.filter((p) =>
+          p.name.toLowerCase().includes(q)
+        ),
+      }))
+      .filter((cat) => cat.products.length > 0);
+  }, [categories, search]);
+
+  const isSearching = search.trim().length > 0;
+
   return (
     <>
-      <header className="border-b px-4 py-4">
+      <header className="px-4 pb-3 pt-4">
         <h1 className="text-xl font-bold">Vibe Cafe ☕</h1>
-        <p className="text-sm text-muted-foreground">Chọn đồ uống yêu thích</p>
+        <p
+          className="text-sm text-muted-foreground"
+          suppressHydrationWarning
+        >
+          {getGreeting()} Bạn muốn uống gì hôm nay?
+        </p>
       </header>
 
-      <CategoryTabs categories={categories} />
+      {/* Search bar */}
+      <div className="px-4 pb-2">
+        <div className="relative flex items-center">
+          <Search
+            size={16}
+            className="absolute left-3 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm cà phê, trà, bánh..."
+            className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-9 text-sm outline-none focus:ring-2 focus:ring-primary"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30"
+              aria-label="Xóa tìm kiếm"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!isSearching && <CategoryTabs categories={categories} />}
 
       <main className="flex-1 space-y-6 px-4 pb-28 pt-4">
-        {categories.map((cat) => (
-          <section key={cat.id} id={`section-${cat.id}`}>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {cat.name}
-            </h2>
-            <div className="space-y-2">
-              {cat.products.map((product) => (
-                <MenuCard
-                  key={product.id}
-                  product={product}
-                  cartCount={cartCountForProduct(product.id)}
-                  onClick={() => setSelected(product)}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+        {filteredCategories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+            <span className="text-4xl">🔍</span>
+            <p className="font-medium">Không tìm thấy món nào</p>
+            <p className="text-sm text-muted-foreground">
+              Thử tìm với từ khóa khác
+            </p>
+          </div>
+        ) : (
+          filteredCategories.map((cat) => (
+            <section key={cat.id} id={`section-${cat.id}`}>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {cat.name}
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {cat.products.map((product) => (
+                  <MenuCard
+                    key={product.id}
+                    product={product}
+                    cartCount={cartCountForProduct(product.id)}
+                    onClick={() => setSelected(product)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
       </main>
 
       {totalQty > 0 && (
