@@ -20,6 +20,13 @@ function getGreeting(): string {
   return "Chào buổi tối! 🌙";
 }
 
+function normalizeSearch(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export function MenuView({ categories }: Props) {
   const [selected, setSelected] = useState<MenuProduct | null>(null);
   const [search, setSearch] = useState("");
@@ -44,12 +51,14 @@ export function MenuView({ categories }: Props) {
   const isSearching = trimmedSearch.length > 0;
 
   const filteredCategories = useMemo(() => {
-    const q = trimmedSearch.toLowerCase();
-    if (!q) return categories;
+    if (!trimmedSearch) return categories;
+    const q = normalizeSearch(trimmedSearch);
     return categories
       .map((cat) => ({
         ...cat,
-        products: cat.products.filter((p) => p.name.toLowerCase().includes(q)),
+        products: cat.products.filter((p) =>
+          normalizeSearch(p.name).includes(q)
+        ),
       }))
       .filter((cat) => cat.products.length > 0);
   }, [categories, trimmedSearch]);

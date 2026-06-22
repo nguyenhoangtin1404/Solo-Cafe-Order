@@ -17,7 +17,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Chọn ${product.name}, ${formattedPrice}đ`}
+      aria-label={`Chọn ${product.name}, ${formattedPrice}đ${cartCount > 0 ? `, đã có ${cartCount} trong giỏ` : ""}`}
       aria-haspopup="dialog"
       className="relative flex w-full flex-col overflow-hidden rounded-xl bg-card text-left shadow-sm transition-transform active:scale-[0.98]"
     >
