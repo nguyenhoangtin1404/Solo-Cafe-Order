@@ -146,7 +146,7 @@ export function MenuView({ categories }: Props) {
             placeholder="Tìm cà phê, trà, bánh..."
             className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
-          {trimmedSearch && (
+          {search && (
             <button
               type="button"
               onClick={clearSearch}
