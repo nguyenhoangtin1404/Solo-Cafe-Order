@@ -17,12 +17,25 @@ function itemKey(
   return `${productId}:${sorted.map((o) => o.valueId).join(",")}:${note ?? ""}`;
 }
 
+let _cachedStr: string | null = null;
+let _cachedItems: CartItem[] = [];
+
 function readCart(): CartItem[] {
   try {
     const stored = localStorage.getItem(CART_KEY);
-    return stored ? (JSON.parse(stored) as CartItem[]) : [];
+    if (stored === _cachedStr) return _cachedItems;
+    _cachedStr = stored;
+    if (stored) {
+      const parsed: unknown = JSON.parse(stored);
+      _cachedItems = Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+    } else {
+      _cachedItems = [];
+    }
+    return _cachedItems;
   } catch {
-    return [];
+    _cachedStr = null;
+    _cachedItems = [];
+    return _cachedItems;
   }
 }
 
@@ -32,17 +45,17 @@ function writeCart(items: CartItem[]): void {
 }
 
 function subscribeCart(onStoreChange: () => void): () => void {
-  const onChange = () => onStoreChange();
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CART_STORAGE_EVENT, onChange);
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(CART_STORAGE_EVENT, onStoreChange);
   return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CART_STORAGE_EVENT, onChange);
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(CART_STORAGE_EVENT, onStoreChange);
   };
 }
 
+const SERVER_SNAPSHOT: CartItem[] = [];
 function getServerCartSnapshot(): CartItem[] {
-  return [];
+  return SERVER_SNAPSHOT;
 }
 
 export function useCart() {
@@ -100,8 +113,7 @@ export function useCart() {
   );
 
   const clear = useCallback(() => {
-    localStorage.removeItem(CART_KEY);
-    window.dispatchEvent(new Event(CART_STORAGE_EVENT));
+    writeCart([]);
   }, []);
 
   const total = items.reduce(

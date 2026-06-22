@@ -2,14 +2,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function MenuCardSkeleton() {
   return (
-    <div className="flex w-full items-center gap-3 rounded-xl bg-card p-3 shadow-sm">
-      <Skeleton className="h-20 w-20 shrink-0 rounded-lg" />
-      <div className="min-w-0 flex-1 space-y-2">
+    <div className="flex flex-col overflow-hidden rounded-xl bg-card shadow-sm">
+      <Skeleton className="aspect-square w-full" />
+      <div className="space-y-2 p-2.5">
         <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-1/2" />
       </div>
-      <Skeleton className="h-11 w-11 shrink-0 rounded-full" />
     </div>
   );
 }
@@ -18,10 +16,15 @@ export default function MenuLoading() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="border-b px-4 py-4">
-        <h1 className="text-xl font-bold">Vibe Cafe ☕</h1>
-        <p className="text-sm text-muted-foreground">Chọn đồ uống yêu thích</p>
+      <header className="px-4 pb-3 pt-4">
+        <Skeleton className="h-7 w-32" />
+        <Skeleton className="mt-1.5 h-4 w-56" />
       </header>
+
+      {/* Search bar skeleton */}
+      <div className="px-4 pb-2">
+        <Skeleton className="h-11 w-full rounded-xl" />
+      </div>
 
       {/* Category tabs skeleton */}
       <div className="sticky top-0 z-10 flex gap-2 overflow-x-hidden bg-background px-4 py-2 shadow-sm">
@@ -36,8 +39,8 @@ export default function MenuLoading() {
         {Array.from({ length: 2 }).map((_, section) => (
           <section key={section}>
             <Skeleton className="mb-3 h-3 w-24" />
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
                 <MenuCardSkeleton key={i} />
               ))}
             </div>

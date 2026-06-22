@@ -306,7 +306,7 @@ export function DashboardView({ initialOrders }: Props) {
         {!unlocked && (
           <button
             onClick={unlock}
-            className="w-full border-b border-status-new/30 bg-status-new/10 px-4 py-2 text-center text-sm text-status-new"
+            className="flex min-h-[44px] w-full items-center justify-center border-b border-status-new/30 bg-status-new/10 px-4 py-2 text-center text-sm text-status-new"
           >
             Nhấn để bật thông báo âm thanh khi có đơn mới 🔔
           </button>
