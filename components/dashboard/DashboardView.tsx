@@ -21,7 +21,7 @@ const TABS: { id: TabId; label: string; statuses: OrderStatus[] }[] = [
     label: "Tất cả",
     statuses: ["new", "making", "done", "cancelled"],
   },
-  { id: "new", label: "Mới", statuses: ["new"] },
+  { id: "new", label: "Đang chờ", statuses: ["new"] },
   { id: "making", label: "Đang làm", statuses: ["making"] },
   { id: "done", label: "Xong", statuses: ["done", "cancelled"] },
 ];
@@ -162,7 +162,7 @@ export function DashboardView({ initialOrders }: Props) {
           freshArrivalSet.forEach((id) => next.add(id));
           return next;
         });
-        // If the owner is already on the "Mới" tab, mark arrivals as seen
+        // If the owner is already on the "Đang chờ" tab, mark arrivals as seen
         // immediately so the unread badge doesn't flash while they're watching.
         if (activeTabRef.current === "new") {
           setSeenNewIds((prev) => {

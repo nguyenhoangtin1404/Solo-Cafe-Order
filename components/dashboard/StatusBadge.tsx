@@ -3,7 +3,7 @@ import type { OrderStatus } from "@/lib/constants";
 
 const CONFIG: Record<OrderStatus, { label: string; className: string }> = {
   [ORDER_STATUS.NEW]: {
-    label: "Mới",
+    label: "Đang chờ",
     className: "bg-status-new/15 text-status-new",
   },
   [ORDER_STATUS.MAKING]: {
