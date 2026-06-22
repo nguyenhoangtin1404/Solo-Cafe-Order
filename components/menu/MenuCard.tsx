@@ -66,7 +66,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
           {product.name}
         </p>
         <div className="flex items-center justify-between gap-1">
-          <p className="text-sm font-semibold text-primary">
+          <p className="text-sm font-semibold text-foreground">
             {formattedPrice}đ
           </p>
           <div
