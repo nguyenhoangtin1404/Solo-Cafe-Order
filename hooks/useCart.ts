@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { CartItem, CartSelectedOption } from "@/types/order";
 
 const CART_KEY = "vibe_cafe_cart";
@@ -112,13 +112,12 @@ export function useCart() {
   );
 
   const clear = useCallback(() => {
-    localStorage.removeItem(CART_KEY);
-    window.dispatchEvent(new Event(CART_STORAGE_EVENT));
+    writeCart([]);
   }, []);
 
-  const total = items.reduce(
-    (sum, item) => sum + item.unitPrice * item.quantity,
-    0
+  const total = useMemo(
+    () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    [items]
   );
 
   return { items, addItem, removeItem, updateQuantity, clear, total };

@@ -192,6 +192,7 @@ function OptionGroup({
           const on = selected.includes(val.id);
           return (
             <button
+              type="button"
               key={val.id}
               onClick={() => onToggle(val.id)}
               className={`flex min-h-[44px] w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
