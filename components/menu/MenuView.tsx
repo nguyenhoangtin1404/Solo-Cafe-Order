@@ -39,9 +39,7 @@ export function MenuView({ categories }: Props) {
     return categories
       .map((cat) => ({
         ...cat,
-        products: cat.products.filter((p) =>
-          p.name.toLowerCase().includes(q)
-        ),
+        products: cat.products.filter((p) => p.name.toLowerCase().includes(q)),
       }))
       .filter((cat) => cat.products.length > 0);
   }, [categories, search]);
@@ -52,10 +50,7 @@ export function MenuView({ categories }: Props) {
     <>
       <header className="px-4 pb-3 pt-4">
         <h1 className="text-xl font-bold">Vibe Cafe ☕</h1>
-        <p
-          className="text-sm text-muted-foreground"
-          suppressHydrationWarning
-        >
+        <p className="text-sm text-muted-foreground" suppressHydrationWarning>
           {getGreeting()} Bạn muốn uống gì hôm nay?
         </p>
       </header>
