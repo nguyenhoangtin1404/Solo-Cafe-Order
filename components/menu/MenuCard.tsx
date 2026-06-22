@@ -15,7 +15,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
   return (
     <button
       onClick={onClick}
-      aria-label={`Chọn ${product.name}`}
+      aria-label={`Chọn ${product.name}, ${product.price.toLocaleString("vi-VN")}đ`}
       className="relative flex w-full flex-col overflow-hidden rounded-xl bg-card text-left shadow-sm transition-transform active:scale-[0.98]"
     >
       {/* Image */}

@@ -36,8 +36,11 @@ export function MenuView({ categories }: Props) {
 
   const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
 
+  const trimmedSearch = search.trim();
+  const isSearching = trimmedSearch.length > 0;
+
   const filteredCategories = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = trimmedSearch.toLowerCase();
     if (!q) return categories;
     return categories
       .map((cat) => ({
@@ -45,9 +48,7 @@ export function MenuView({ categories }: Props) {
         products: cat.products.filter((p) => p.name.toLowerCase().includes(q)),
       }))
       .filter((cat) => cat.products.length > 0);
-  }, [categories, search]);
-
-  const isSearching = search.trim().length > 0;
+  }, [categories, trimmedSearch]);
 
   return (
     <>
@@ -69,8 +70,12 @@ export function MenuView({ categories }: Props) {
           <input
             type="text"
             aria-label="Tìm kiếm món"
+            autoComplete="off"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setSearch("");
+            }}
             placeholder="Tìm cà phê, trà, bánh..."
             className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
