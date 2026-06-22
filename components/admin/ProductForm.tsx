@@ -34,7 +34,11 @@ function parsePrice(raw: string): number | null {
   const commaThousands = /^\d{1,3}(,\d{3})*$/;
   const dotThousands = /^\d{1,3}(\.\d{3})*$/;
   const plainDigits = /^\d+$/;
-  if (!commaThousands.test(trimmed) && !dotThousands.test(trimmed) && !plainDigits.test(trimmed)) {
+  if (
+    !commaThousands.test(trimmed) &&
+    !dotThousands.test(trimmed) &&
+    !plainDigits.test(trimmed)
+  ) {
     return null;
   }
   const n = Number(trimmed.replace(/[^\d]/g, ""));

@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import type { ProductOption, ProductOptionValue, ProductOptionWithValues } from "@/types/product";
+import type {
+  ProductOption,
+  ProductOptionValue,
+  ProductOptionWithValues,
+} from "@/types/product";
 import { OptionRow } from "./OptionRow";
 
 const inputCls =
@@ -54,7 +58,10 @@ export function OptionsEditor({ productId }: Props) {
       const res = await fetch(`/api/products/${productId}/options`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: optionDraft.name.trim(), type: optionDraft.type }),
+        body: JSON.stringify({
+          name: optionDraft.name.trim(),
+          type: optionDraft.type,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         option?: ProductOption;
@@ -123,7 +130,12 @@ export function OptionsEditor({ productId }: Props) {
             setOptions((prev) =>
               prev.map((o) =>
                 o.id === option.id
-                  ? { ...o, values: o.values.map((v) => (v.id === value.id ? value : v)) }
+                  ? {
+                      ...o,
+                      values: o.values.map((v) =>
+                        v.id === value.id ? value : v
+                      ),
+                    }
                   : o
               )
             )
@@ -146,7 +158,9 @@ export function OptionsEditor({ productId }: Props) {
           <input
             ref={addOptionInputRef}
             value={optionDraft.name}
-            onChange={(e) => setOptionDraft((d) => ({ ...d, name: e.target.value }))}
+            onChange={(e) =>
+              setOptionDraft((d) => ({ ...d, name: e.target.value }))
+            }
             maxLength={50}
             disabled={savingOption}
             aria-label="Tên nhóm option mới"
@@ -163,7 +177,10 @@ export function OptionsEditor({ productId }: Props) {
           <select
             value={optionDraft.type}
             onChange={(e) =>
-              setOptionDraft((d) => ({ ...d, type: e.target.value as "select" | "multi" }))
+              setOptionDraft((d) => ({
+                ...d,
+                type: e.target.value as "select" | "multi",
+              }))
             }
             disabled={savingOption}
             aria-label="Kiểu chọn"

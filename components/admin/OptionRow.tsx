@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import type { ProductOption, ProductOptionValue, ProductOptionWithValues } from "@/types/product";
+import type {
+  ProductOption,
+  ProductOptionValue,
+  ProductOptionWithValues,
+} from "@/types/product";
 import { ValueRow } from "./ValueRow";
 import { AddValueForm } from "./AddValueForm";
 
@@ -44,7 +48,9 @@ export function OptionRow({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [pendingType, setPendingType] = useState<"select" | "multi" | null>(null);
+  const [pendingType, setPendingType] = useState<"select" | "multi" | null>(
+    null
+  );
 
   useEffect(() => {
     if (editing) editInputRef.current?.focus();
@@ -57,11 +63,17 @@ export function OptionRow({
     if (!editDraft.name.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/products/${productId}/options/${option.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editDraft.name.trim(), type: editDraft.type }),
-      });
+      const res = await fetch(
+        `/api/products/${productId}/options/${option.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: editDraft.name.trim(),
+            type: editDraft.type,
+          }),
+        }
+      );
       const data = (await res.json().catch(() => ({}))) as {
         option?: Pick<ProductOption, "name" | "type">;
         code?: string;
@@ -92,11 +104,16 @@ export function OptionRow({
     setDeleting(true);
     setConfirming(false);
     try {
-      const res = await fetch(`/api/products/${productId}/options/${option.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/products/${productId}/options/${option.id}`,
+        {
+          method: "DELETE",
+        }
+      );
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(data.message ?? "Xóa thất bại.");
       }
       onDeleted();
@@ -130,7 +147,9 @@ export function OptionRow({
             <input
               ref={editInputRef}
               value={editDraft.name}
-              onChange={(e) => setEditDraft((d) => ({ ...d, name: e.target.value }))}
+              onChange={(e) =>
+                setEditDraft((d) => ({ ...d, name: e.target.value }))
+              }
               maxLength={50}
               disabled={saving}
               aria-label="Tên option"
@@ -145,7 +164,9 @@ export function OptionRow({
             />
             <select
               value={editDraft.type}
-              onChange={(e) => handleTypeChange(e.target.value as "select" | "multi")}
+              onChange={(e) =>
+                handleTypeChange(e.target.value as "select" | "multi")
+              }
               disabled={saving}
               aria-label="Kiểu chọn"
               className={`${inputCls} w-28 bg-background`}
@@ -161,7 +182,11 @@ export function OptionRow({
               className="min-h-[44px] rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
             >
               {saving ? (
-                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                <Loader2
+                  size={14}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 "Lưu"
               )}
@@ -187,7 +212,8 @@ export function OptionRow({
                 if (e.key === "Escape") setPendingType(null);
               }}
             >
-              Thay đổi type sẽ áp dụng cho đơn hàng mới. Đơn hàng đã đặt không bị ảnh hưởng.{" "}
+              Thay đổi type sẽ áp dụng cho đơn hàng mới. Đơn hàng đã đặt không
+              bị ảnh hưởng.{" "}
               <button
                 type="button"
                 className="font-semibold underline"
@@ -224,7 +250,11 @@ export function OptionRow({
               className="min-h-[44px] rounded-lg bg-destructive px-3 text-sm text-destructive-foreground disabled:opacity-50"
             >
               {deleting ? (
-                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                <Loader2
+                  size={14}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 "Xóa"
               )}

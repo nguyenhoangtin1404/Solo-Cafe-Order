@@ -22,7 +22,13 @@ interface Draft {
   extra_price: string;
 }
 
-export function ValueRow({ value, optionId, productId, onUpdated, onDeleted }: Props) {
+export function ValueRow({
+  value,
+  optionId,
+  productId,
+  onUpdated,
+  onDeleted,
+}: Props) {
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft>({
@@ -83,7 +89,9 @@ export function ValueRow({ value, optionId, productId, onUpdated, onDeleted }: P
         { method: "DELETE" }
       );
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         throw new Error(data.message ?? "Xóa thất bại.");
       }
       onDeleted(value.id);
@@ -113,7 +121,9 @@ export function ValueRow({ value, optionId, productId, onUpdated, onDeleted }: P
           type="text"
           inputMode="numeric"
           value={draft.extra_price}
-          onChange={(e) => setDraft((d) => ({ ...d, extra_price: e.target.value }))}
+          onChange={(e) =>
+            setDraft((d) => ({ ...d, extra_price: e.target.value }))
+          }
           disabled={saving}
           aria-label="Giá thêm (VND)"
           placeholder="+giá"
@@ -152,7 +162,9 @@ export function ValueRow({ value, optionId, productId, onUpdated, onDeleted }: P
   if (confirming) {
     return (
       <li className="flex items-center justify-between rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2">
-        <span className="text-sm text-destructive">Xóa &ldquo;{value.name}&rdquo;?</span>
+        <span className="text-sm text-destructive">
+          Xóa &ldquo;{value.name}&rdquo;?
+        </span>
         <div className="flex gap-1">
           <button
             ref={confirmBtnRef}
@@ -195,7 +207,10 @@ export function ValueRow({ value, optionId, productId, onUpdated, onDeleted }: P
         <button
           type="button"
           onClick={() => {
-            setDraft({ name: value.name, extra_price: String(value.extra_price) });
+            setDraft({
+              name: value.name,
+              extra_price: String(value.extra_price),
+            });
             setEditing(true);
           }}
           disabled={deleting}

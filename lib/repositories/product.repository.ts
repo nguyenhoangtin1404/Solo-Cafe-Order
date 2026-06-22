@@ -4,8 +4,13 @@ import type { ProductOption, ProductOptionValue } from "@/types/product";
 
 // Raw shape returned from Supabase join — includes deleted_at for in-memory filtering
 type RawOptionValue = ProductOptionValue & { deleted_at: string | null };
-type RawOption = ProductOption & { deleted_at: string | null; values: RawOptionValue[] };
-type RawProductRow = Omit<ProductWithOptions, "options"> & { options: RawOption[] };
+type RawOption = ProductOption & {
+  deleted_at: string | null;
+  values: RawOptionValue[];
+};
+type RawProductRow = Omit<ProductWithOptions, "options"> & {
+  options: RawOption[];
+};
 
 function filterDeletedNested(raw: RawProductRow): ProductWithOptions {
   return {
@@ -13,11 +18,17 @@ function filterDeletedNested(raw: RawProductRow): ProductWithOptions {
     options: raw.options
       .filter((o) => o.deleted_at === null)
       .map(({ id, product_id, name, type, values }) => ({
-        id, product_id, name, type,
+        id,
+        product_id,
+        name,
+        type,
         values: values
           .filter((v) => v.deleted_at === null)
           .map(({ id: vid, option_id, name: vname, extra_price }) => ({
-            id: vid, option_id, name: vname, extra_price,
+            id: vid,
+            option_id,
+            name: vname,
+            extra_price,
           })),
       })),
   };
@@ -228,11 +239,22 @@ export async function findOptionsByProductId(
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return ((data ?? []) as Array<ProductOption & { values: (ProductOptionValue & { deleted_at: string | null })[] }>).map((o) => ({
+  return (
+    (data ?? []) as Array<
+      ProductOption & {
+        values: (ProductOptionValue & { deleted_at: string | null })[];
+      }
+    >
+  ).map((o) => ({
     ...o,
     values: o.values
       .filter((v) => v.deleted_at === null)
-      .map(({ id, option_id, name, extra_price }) => ({ id, option_id, name, extra_price })),
+      .map(({ id, option_id, name, extra_price }) => ({
+        id,
+        option_id,
+        name,
+        extra_price,
+      })),
   }));
 }
 

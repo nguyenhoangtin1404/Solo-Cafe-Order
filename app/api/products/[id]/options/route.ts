@@ -3,7 +3,10 @@ import { z } from "zod";
 import { requireOwner } from "@/lib/auth/requireOwner";
 import { errorResponse, handleRouteError } from "@/lib/errors";
 import { createProductOptionSchema } from "@/lib/validators";
-import { createOption, getOptionsForProduct } from "@/lib/services/product.service";
+import {
+  createOption,
+  getOptionsForProduct,
+} from "@/lib/services/product.service";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -13,7 +16,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     const { id: productId } = await params;
     if (!z.string().uuid().safeParse(productId).success) {
-      return errorResponse("VALIDATION_ERROR", "ID sản phẩm không hợp lệ.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "ID sản phẩm không hợp lệ.",
+        400
+      );
     }
 
     const options = await getOptionsForProduct(productId);

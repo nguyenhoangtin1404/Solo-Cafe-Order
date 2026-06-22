@@ -23,7 +23,12 @@ interface Props {
   onValueAdded: (value: ProductOptionValue) => void;
 }
 
-export function AddValueForm({ optionId, productId, optionName, onValueAdded }: Props) {
+export function AddValueForm({
+  optionId,
+  productId,
+  optionName,
+  onValueAdded,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [saving, setSaving] = useState(false);
@@ -42,11 +47,14 @@ export function AddValueForm({ optionId, productId, optionName, onValueAdded }: 
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/products/${productId}/options/${optionId}/values`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: draft.name.trim(), extra_price }),
-      });
+      const res = await fetch(
+        `/api/products/${productId}/options/${optionId}/values`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: draft.name.trim(), extra_price }),
+        }
+      );
       const data = (await res.json().catch(() => ({}))) as {
         value?: ProductOptionValue;
         message?: string;
@@ -99,7 +107,9 @@ export function AddValueForm({ optionId, productId, optionName, onValueAdded }: 
         type="text"
         inputMode="numeric"
         value={draft.extra_price}
-        onChange={(e) => setDraft((d) => ({ ...d, extra_price: e.target.value }))}
+        onChange={(e) =>
+          setDraft((d) => ({ ...d, extra_price: e.target.value }))
+        }
         disabled={saving}
         aria-label="Giá thêm (VND)"
         placeholder="+giá"
