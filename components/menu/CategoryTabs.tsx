@@ -7,23 +7,8 @@ interface Props {
   categories: MenuCategory[];
 }
 
-function getVisibleSectionId(categories: MenuCategory[]): string {
-  for (const cat of categories) {
-    const el = document.getElementById(`section-${cat.id}`);
-    if (!el) continue;
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight * 0.4 && rect.bottom > 60) {
-      return cat.id;
-    }
-  }
-  return categories[0]?.id ?? "";
-}
-
 export function CategoryTabs({ categories }: Props) {
-  const [activeId, setActiveId] = useState(() => {
-    if (typeof document === "undefined") return categories[0]?.id ?? "";
-    return getVisibleSectionId(categories);
-  });
+  const [activeId, setActiveId] = useState(categories[0]?.id ?? "");
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

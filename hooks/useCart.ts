@@ -17,7 +17,7 @@ function itemKey(
   return `${productId}:${sorted.map((o) => o.valueId).join(",")}:${note ?? ""}`;
 }
 
-let _cachedStr: string | null | undefined = undefined;
+let _cachedStr: string | null = null;
 let _cachedItems: CartItem[] = [];
 
 function readCart(): CartItem[] {

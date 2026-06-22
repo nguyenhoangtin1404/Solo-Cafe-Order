@@ -73,17 +73,20 @@ export function MenuView({ categories }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const cart = useCart();
 
-  const cartCountMap = useMemo(
+  const { cartCountMap, totalQty } = useMemo(
     () =>
-      cart.items.reduce<Record<string, number>>((acc, i) => {
-        acc[i.productId] = (acc[i.productId] ?? 0) + i.quantity;
-        return acc;
-      }, {}),
-    [cart.items]
-  );
-
-  const totalQty = useMemo(
-    () => cart.items.reduce((s, i) => s + i.quantity, 0),
+      cart.items.reduce<{
+        cartCountMap: Record<string, number>;
+        totalQty: number;
+      }>(
+        (acc, i) => {
+          acc.cartCountMap[i.productId] =
+            (acc.cartCountMap[i.productId] ?? 0) + i.quantity;
+          acc.totalQty += i.quantity;
+          return acc;
+        },
+        { cartCountMap: {}, totalQty: 0 }
+      ),
     [cart.items]
   );
 
