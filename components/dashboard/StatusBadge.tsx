@@ -4,19 +4,19 @@ import type { OrderStatus } from "@/lib/constants";
 const CONFIG: Record<OrderStatus, { label: string; className: string }> = {
   [ORDER_STATUS.NEW]: {
     label: "Đang chờ",
-    className: "bg-status-new/15 text-status-new",
+    className: "bg-amber-100 text-amber-800",
   },
   [ORDER_STATUS.MAKING]: {
     label: "Đang làm",
-    className: "bg-status-making/15 text-status-making",
+    className: "bg-orange-100 text-orange-800",
   },
   [ORDER_STATUS.DONE]: {
     label: "Xong",
-    className: "bg-status-done/15 text-status-done",
+    className: "bg-green-100 text-green-800",
   },
   [ORDER_STATUS.CANCELLED]: {
     label: "Đã hủy",
-    className: "bg-status-cancelled/15 text-status-cancelled",
+    className: "bg-red-100 text-red-700",
   },
 };
 
