@@ -98,6 +98,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-lg font-semibold">{product.name}</h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Đóng"
             className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
@@ -143,6 +144,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
         <div className="flex items-center gap-3 border-t px-4 py-3">
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               aria-label="Giảm số lượng"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
@@ -151,6 +153,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             </button>
             <span className="w-8 text-center font-semibold">{qty}</span>
             <button
+              type="button"
               onClick={() => setQty((q) => Math.min(99, q + 1))}
               aria-label="Tăng số lượng"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
@@ -159,6 +162,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             </button>
           </div>
           <button
+            type="button"
             onClick={handleAdd}
             className="flex flex-1 items-center justify-between rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
           >

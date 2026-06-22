@@ -25,7 +25,12 @@ function readCart(): CartItem[] {
     const stored = localStorage.getItem(CART_KEY);
     if (stored === _cachedStr) return _cachedItems;
     _cachedStr = stored;
-    _cachedItems = stored ? (JSON.parse(stored) as CartItem[]) : [];
+    if (stored) {
+      const parsed: unknown = JSON.parse(stored);
+      _cachedItems = Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+    } else {
+      _cachedItems = [];
+    }
     return _cachedItems;
   } catch {
     _cachedStr = null;
@@ -40,12 +45,11 @@ function writeCart(items: CartItem[]): void {
 }
 
 function subscribeCart(onStoreChange: () => void): () => void {
-  const onChange = () => onStoreChange();
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CART_STORAGE_EVENT, onChange);
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(CART_STORAGE_EVENT, onStoreChange);
   return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CART_STORAGE_EVENT, onChange);
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(CART_STORAGE_EVENT, onStoreChange);
   };
 }
 
