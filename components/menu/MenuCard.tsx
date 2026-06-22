@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { MenuProduct } from "@/types/menu";
 
 interface Props {
@@ -18,10 +18,8 @@ function CardImage({
   name: string;
   cartCount: number;
 }) {
-  const [imgError, setImgError] = useState(false);
-  useEffect(() => {
-    setImgError(false);
-  }, [url]);
+  const [errorUrl, setErrorUrl] = useState<string | null | undefined>(null);
+  const imgError = errorUrl === url;
   return (
     <div className="relative aspect-square w-full overflow-hidden bg-muted">
       {url && !imgError ? (
@@ -31,7 +29,7 @@ function CardImage({
           alt={name}
           loading="lazy"
           className="h-full w-full object-cover"
-          onError={() => setImgError(true)}
+          onError={() => setErrorUrl(url)}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-4xl">
