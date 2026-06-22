@@ -21,7 +21,11 @@ function getGreeting(): string {
 }
 
 function normalizeSearch(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return s
+    .replace(/[đĐ]/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 function EmptyState({ isSearching }: { isSearching: boolean }) {
@@ -79,8 +83,8 @@ export function MenuView({ categories }: Props) {
   );
 
   const totalQty = useMemo(
-    () => Object.values(cartCountMap).reduce((s, v) => s + v, 0),
-    [cartCountMap]
+    () => cart.items.reduce((s, i) => s + i.quantity, 0),
+    [cart.items]
   );
 
   const trimmedSearch = search.trim();
@@ -132,12 +136,14 @@ export function MenuView({ categories }: Props) {
               if (e.key === "Escape") {
                 e.preventDefault();
                 clearSearch();
+              } else if (e.key === "Enter") {
+                inputRef.current?.blur();
               }
             }}
             placeholder="Tìm cà phê, trà, bánh..."
             className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
-          {isSearching && (
+          {search && (
             <button
               type="button"
               onClick={clearSearch}
