@@ -17,12 +17,20 @@ function itemKey(
   return `${productId}:${sorted.map((o) => o.valueId).join(",")}:${note ?? ""}`;
 }
 
+let _cachedStr: string | null | undefined = undefined;
+let _cachedItems: CartItem[] = [];
+
 function readCart(): CartItem[] {
   try {
     const stored = localStorage.getItem(CART_KEY);
-    return stored ? (JSON.parse(stored) as CartItem[]) : [];
+    if (stored === _cachedStr) return _cachedItems;
+    _cachedStr = stored;
+    _cachedItems = stored ? (JSON.parse(stored) as CartItem[]) : [];
+    return _cachedItems;
   } catch {
-    return [];
+    _cachedStr = null;
+    _cachedItems = [];
+    return _cachedItems;
   }
 }
 
