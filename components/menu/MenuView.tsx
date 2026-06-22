@@ -21,10 +21,46 @@ function getGreeting(): string {
 }
 
 function normalizeSearch(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+function EmptyState({ isSearching }: { isSearching: boolean }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+      {isSearching ? (
+        <>
+          <span className="text-4xl">🔍</span>
+          <p className="font-medium">Không tìm thấy món nào</p>
+          <p className="text-sm text-muted-foreground">
+            Thử tìm với từ khóa khác
+          </p>
+        </>
+      ) : (
+        <>
+          <span className="text-4xl">☕</span>
+          <p className="font-medium">Chưa có món nào</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function CartBar({ totalQty, total }: { totalQty: number; total: number }) {
+  if (totalQty === 0) return null;
+  return (
+    <div className="fixed bottom-4 left-4 right-4 z-20">
+      <Link
+        href="/cart"
+        className="flex items-center justify-between rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-lg"
+      >
+        <div className="flex items-center gap-2">
+          <ShoppingCart size={20} />
+          <span className="font-medium">{totalQty} món</span>
+        </div>
+        <span className="font-semibold">{total.toLocaleString("vi-VN")}đ</span>
+      </Link>
+    </div>
+  );
 }
 
 export function MenuView({ categories }: Props) {
@@ -63,6 +99,11 @@ export function MenuView({ categories }: Props) {
       .filter((cat) => cat.products.length > 0);
   }, [categories, trimmedSearch]);
 
+  const clearSearch = () => {
+    setSearch("");
+    inputRef.current?.blur();
+  };
+
   return (
     <>
       <header className="px-4 pb-3 pt-4">
@@ -72,7 +113,6 @@ export function MenuView({ categories }: Props) {
         </p>
       </header>
 
-      {/* Search bar */}
       <div role="search" className="px-4 pb-2">
         <div className="relative flex items-center">
           <Search
@@ -83,6 +123,7 @@ export function MenuView({ categories }: Props) {
           <input
             ref={inputRef}
             type="text"
+            inputMode="search"
             aria-label="Tìm kiếm món"
             autoComplete="off"
             value={search}
@@ -90,8 +131,7 @@ export function MenuView({ categories }: Props) {
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 e.preventDefault();
-                setSearch("");
-                inputRef.current?.blur();
+                clearSearch();
               }
             }}
             placeholder="Tìm cà phê, trà, bánh..."
@@ -100,10 +140,7 @@ export function MenuView({ categories }: Props) {
           {isSearching && (
             <button
               type="button"
-              onClick={() => {
-                setSearch("");
-                inputRef.current?.blur();
-              }}
+              onClick={clearSearch}
               className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-r-xl"
               aria-label="Xóa tìm kiếm"
             >
@@ -119,22 +156,7 @@ export function MenuView({ categories }: Props) {
 
       <main className="flex-1 space-y-6 px-4 pb-28 pt-4">
         {filteredCategories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            {isSearching ? (
-              <>
-                <span className="text-4xl">🔍</span>
-                <p className="font-medium">Không tìm thấy món nào</p>
-                <p className="text-sm text-muted-foreground">
-                  Thử tìm với từ khóa khác
-                </p>
-              </>
-            ) : (
-              <>
-                <span className="text-4xl">☕</span>
-                <p className="font-medium">Chưa có món nào</p>
-              </>
-            )}
-          </div>
+          <EmptyState isSearching={isSearching} />
         ) : (
           filteredCategories.map((cat) => (
             <section key={cat.id} id={`section-${cat.id}`}>
@@ -156,22 +178,7 @@ export function MenuView({ categories }: Props) {
         )}
       </main>
 
-      {totalQty > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 z-20">
-          <Link
-            href="/cart"
-            className="flex items-center justify-between rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-lg"
-          >
-            <div className="flex items-center gap-2">
-              <ShoppingCart size={20} />
-              <span className="font-medium">{totalQty} món</span>
-            </div>
-            <span className="font-semibold">
-              {cart.total.toLocaleString("vi-VN")}đ
-            </span>
-          </Link>
-        </div>
-      )}
+      <CartBar totalQty={totalQty} total={cart.total} />
 
       {selected && (
         <ProductModal
