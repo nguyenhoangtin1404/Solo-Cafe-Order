@@ -179,20 +179,34 @@ export async function updateProduct(
 export async function deleteProduct(
   id: string
 ): Promise<{ id: string; deleted_at: string }> {
+  // Soft-delete the product first; if not found, bail early.
   const result = await productRepo.softDeleteProduct(id);
   if (!result) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
   }
+  // Cascade: soft-delete all child options, then their values.
+  const optionIds = await productRepo.softDeleteOptionsByProductId(id);
+  await productRepo.softDeleteOptionValuesByOptionIds(optionIds);
   return result;
 }
 
 // ── Product Options ───────────────────────────────────────────────────────────
 
+export async function getOptionsForProduct(
+  productId: string
+): Promise<Array<import("@/types/product").ProductOptionWithValues>> {
+  const product = await productRepo.findProductById(productId);
+  if (!product) {
+    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
+  }
+  return productRepo.findOptionsByProductId(productId);
+}
+
 export async function createOption(
   productId: string,
   data: CreateProductOptionInput
 ): Promise<ProductOption> {
-  const product = await productRepo.findByIdWithOptions(productId);
+  const product = await productRepo.findProductById(productId);
   if (!product) {
     throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
   }
@@ -230,11 +244,16 @@ export async function deleteOption(
   productId: string,
   optionId: string
 ): Promise<{ id: string; deleted_at: string }> {
-  await productRepo.softDeleteOptionValuesByOptionId(optionId);
+  // Delete option first so that if deleting values fails, the parent option is
+  // already soft-deleted (deleted_at IS NOT NULL) and invisible to all queries.
+  // Reversing this order (values first) was dangerous: a failure on the second
+  // call would leave an option visible in the admin panel with zero values,
+  // silently blocking order submission for products with select-type options.
   const result = await productRepo.softDeleteProductOption(optionId, productId);
   if (!result) {
     throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
   }
+  await productRepo.softDeleteOptionValuesByOptionId(optionId, productId);
   return result;
 }
 

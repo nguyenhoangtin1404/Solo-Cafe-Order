@@ -2,23 +2,21 @@ import { createAdminSupabaseClient } from "@/lib/supabase-admin";
 import type { Product, ProductWithOptions } from "@/types/product";
 import type { ProductOption, ProductOptionValue } from "@/types/product";
 
-// Raw shape returned from Supabase join — options/values may include deleted rows
-type RawProductRow = Omit<ProductWithOptions, "options"> & {
-  options: Array<
-    ProductOption & {
-      values: ProductOptionValue[];
-    }
-  >;
-};
+// Raw shape returned from Supabase join — includes deleted_at for in-memory filtering
+type RawOptionValue = ProductOptionValue & { deleted_at: string | null };
+type RawOption = ProductOption & { deleted_at: string | null; values: RawOptionValue[] };
+type RawProductRow = Omit<ProductWithOptions, "options"> & { options: RawOption[] };
 
 function filterDeletedNested(raw: RawProductRow): ProductWithOptions {
   return {
     ...raw,
     options: raw.options
       .filter((o) => o.deleted_at === null)
-      .map((o) => ({
+      .map(({ deleted_at: _od, ...o }) => ({
         ...o,
-        values: o.values.filter((v) => v.deleted_at === null),
+        values: o.values
+          .filter((v) => v.deleted_at === null)
+          .map(({ deleted_at: _vd, ...v }) => v),
       })),
   };
 }
@@ -62,6 +60,21 @@ export async function findAllForAdminFlat(): Promise<Product[]> {
 
   if (error) throw error;
   return (data ?? []) as Product[];
+}
+
+export async function findProductById(
+  id: string
+): Promise<{ id: string } | null> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: false })
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { id: string } | null) ?? null;
 }
 
 export async function findByIdWithOptions(
@@ -199,6 +212,45 @@ export async function softDeleteProduct(
 
 // ── Product Options ───────────────────────────────────────────────────────────
 
+export async function findOptionsByProductId(
+  productId: string
+): Promise<Array<ProductOption & { values: ProductOptionValue[] }>> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_options")
+    .select(
+      "id, product_id, name, type, values:product_option_values(id, option_id, name, extra_price, deleted_at)"
+    )
+    .eq("product_id", productId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return ((data ?? []) as Array<ProductOption & { values: (ProductOptionValue & { deleted_at: string | null })[] }>).map((o) => ({
+    ...o,
+    values: o.values
+      .filter((v) => v.deleted_at === null)
+      .map(({ deleted_at: _d, ...v }) => v),
+  }));
+}
+
+export async function findProductOptionById(
+  optionId: string,
+  productId: string
+): Promise<ProductOption | null> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_options")
+    .select("id, product_id, name, type")
+    .eq("id", optionId)
+    .eq("product_id", productId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as ProductOption | null) ?? null;
+}
+
 export async function createProductOption(
   productId: string,
   data: { name: string; type: "select" | "multi" }
@@ -207,7 +259,7 @@ export async function createProductOption(
   const { data: row, error } = await supabase
     .from("product_options")
     .insert({ product_id: productId, ...data })
-    .select("id, product_id, name, type, deleted_at")
+    .select("id, product_id, name, type")
     .single();
 
   if (error) throw error;
@@ -230,7 +282,7 @@ export async function updateProductOption(
     .eq("id", optionId)
     .eq("product_id", productId)
     .is("deleted_at", null)
-    .select("id, product_id, name, type, deleted_at")
+    .select("id, product_id, name, type")
     .maybeSingle();
 
   if (error) throw error;
@@ -256,10 +308,52 @@ export async function softDeleteProductOption(
   return (data as { id: string; deleted_at: string } | null) ?? null;
 }
 
+export async function softDeleteOptionsByProductId(
+  productId: string
+): Promise<string[]> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("product_options")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("product_id", productId)
+    .is("deleted_at", null)
+    .select("id");
+
+  if (error) throw error;
+  return ((data ?? []) as { id: string }[]).map((r) => r.id);
+}
+
+export async function softDeleteOptionValuesByOptionIds(
+  optionIds: string[]
+): Promise<void> {
+  if (optionIds.length === 0) return;
+  const supabase = createAdminSupabaseClient();
+  const { error } = await supabase
+    .from("product_option_values")
+    .update({ deleted_at: new Date().toISOString() })
+    .in("option_id", optionIds)
+    .is("deleted_at", null);
+
+  if (error) throw error;
+}
+
 export async function softDeleteOptionValuesByOptionId(
-  optionId: string
+  optionId: string,
+  productId: string
 ): Promise<void> {
   const supabase = createAdminSupabaseClient();
+  // Verify the option belongs to the given product before bulk-deleting its values.
+  // This prevents phantom soft-deletes if an unvalidated optionId is passed in.
+  const { data: option } = await supabase
+    .from("product_options")
+    .select("id")
+    .eq("id", optionId)
+    .eq("product_id", productId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!option) return; // option doesn't belong to this product — nothing to delete
+
   const { error } = await supabase
     .from("product_option_values")
     .update({ deleted_at: new Date().toISOString() })
@@ -279,7 +373,7 @@ export async function createProductOptionValue(
   const { data: row, error } = await supabase
     .from("product_option_values")
     .insert({ option_id: optionId, ...data })
-    .select("id, option_id, name, extra_price, deleted_at")
+    .select("id, option_id, name, extra_price")
     .single();
 
   if (error) throw error;
@@ -302,7 +396,7 @@ export async function updateProductOptionValue(
     .eq("id", valueId)
     .eq("option_id", optionId)
     .is("deleted_at", null)
-    .select("id, option_id, name, extra_price, deleted_at")
+    .select("id, option_id, name, extra_price")
     .maybeSingle();
 
   if (error) throw error;

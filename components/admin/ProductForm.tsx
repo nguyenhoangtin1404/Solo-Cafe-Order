@@ -29,9 +29,14 @@ interface FormErrors {
 function parsePrice(raw: string): number | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  if (/[^\d.,\s]/.test(trimmed)) return null;
-  if (/[.,]$/.test(trimmed)) return null;
-  if (/[.,]\d{1,2}$/.test(trimmed)) return null;
+  // Accept only well-formed VND integers: plain digits, or digits with
+  // consistent thousands separators (comma or dot, not mixed).
+  const commaThousands = /^\d{1,3}(,\d{3})*$/;
+  const dotThousands = /^\d{1,3}(\.\d{3})*$/;
+  const plainDigits = /^\d+$/;
+  if (!commaThousands.test(trimmed) && !dotThousands.test(trimmed) && !plainDigits.test(trimmed)) {
+    return null;
+  }
   const n = Number(trimmed.replace(/[^\d]/g, ""));
   return Number.isInteger(n) && n > 0 ? n : null;
 }
