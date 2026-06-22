@@ -47,7 +47,7 @@ export function MenuView({ categories }: Props) {
       .filter((cat) => cat.products.length > 0);
   }, [categories, search]);
 
-  const isSearching = filteredCategories !== categories;
+  const isSearching = search.trim().length > 0;
 
   return (
     <>
@@ -68,6 +68,7 @@ export function MenuView({ categories }: Props) {
           />
           <input
             type="text"
+            aria-label="Tìm kiếm món"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm cà phê, trà, bánh..."
@@ -88,18 +89,25 @@ export function MenuView({ categories }: Props) {
         </div>
       </div>
 
-      <div className={isSearching ? "hidden" : undefined}>
-        <CategoryTabs categories={categories} />
-      </div>
+      {!isSearching && <CategoryTabs categories={categories} />}
 
       <main className="flex-1 space-y-6 px-4 pb-28 pt-4">
         {filteredCategories.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <span className="text-4xl">🔍</span>
-            <p className="font-medium">Không tìm thấy món nào</p>
-            <p className="text-sm text-muted-foreground">
-              Thử tìm với từ khóa khác
-            </p>
+            {isSearching ? (
+              <>
+                <span className="text-4xl">🔍</span>
+                <p className="font-medium">Không tìm thấy món nào</p>
+                <p className="text-sm text-muted-foreground">
+                  Thử tìm với từ khóa khác
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="text-4xl">☕</span>
+                <p className="font-medium">Chưa có món nào</p>
+              </>
+            )}
           </div>
         ) : (
           filteredCategories.map((cat) => (
