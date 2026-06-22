@@ -11,7 +11,6 @@ export interface ProductOptionValue {
   option_id: string;
   name: string;
   extra_price: number;
-  deleted_at: string | null;
 }
 
 // Raw DB row — không có values join
@@ -20,7 +19,6 @@ export interface ProductOption {
   product_id: string;
   name: string;
   type: "select" | "multi";
-  deleted_at: string | null;
 }
 
 // Với values đã join — dùng khi fetch product detail / cart
