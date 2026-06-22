@@ -53,8 +53,9 @@ function subscribeCart(onStoreChange: () => void): () => void {
   };
 }
 
+const SERVER_SNAPSHOT: CartItem[] = [];
 function getServerCartSnapshot(): CartItem[] {
-  return [];
+  return SERVER_SNAPSHOT;
 }
 
 export function useCart() {

@@ -18,7 +18,7 @@ function CardImage({
   name: string;
   cartCount: number;
 }) {
-  const [errorUrl, setErrorUrl] = useState<string | null | undefined>(null);
+  const [errorUrl, setErrorUrl] = useState<string | null>(null);
   const imgError = errorUrl === url;
   return (
     <div className="relative aspect-square w-full overflow-hidden bg-muted">

@@ -11,3 +11,11 @@ export function parseExtraPrice(raw: string): number | null {
   const n = Number(trimmed);
   return Number.isInteger(n) && n >= 0 && n <= 500_000 ? n : null;
 }
+
+export function normalizeSearch(s: string): string {
+  return s
+    .replace(/[đĐ]/g, "d")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}

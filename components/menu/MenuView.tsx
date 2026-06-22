@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingCart, X } from "lucide-react";
+import { normalizeSearch } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { CategoryTabs } from "./CategoryTabs";
 import { MenuCard } from "./MenuCard";
@@ -18,14 +19,6 @@ function getGreeting(): string {
   if (h < 12) return "Chào buổi sáng! ☀️";
   if (h < 18) return "Chào buổi chiều! ☕";
   return "Chào buổi tối! 🌙";
-}
-
-function normalizeSearch(s: string): string {
-  return s
-    .replace(/[đĐ]/g, "d")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
 }
 
 function EmptyState({ isSearching }: { isSearching: boolean }) {
