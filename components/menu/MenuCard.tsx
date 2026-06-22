@@ -16,7 +16,7 @@ export function MenuCard({ product, cartCount, onClick }: Props) {
     <button
       onClick={onClick}
       aria-label={`Chọn ${product.name}`}
-      className="relative flex w-full flex-col overflow-hidden rounded-xl bg-card shadow-sm transition-transform active:scale-[0.98]"
+      className="relative flex w-full flex-col overflow-hidden rounded-xl bg-card text-left shadow-sm transition-transform active:scale-[0.98]"
     >
       {/* Image */}
       <div className="relative aspect-square w-full overflow-hidden bg-muted">

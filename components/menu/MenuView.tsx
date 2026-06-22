@@ -25,11 +25,14 @@ export function MenuView({ categories }: Props) {
   const [search, setSearch] = useState("");
   const cart = useCart();
 
-  const cartCountForProduct = (productId: string) =>
-    cart.items.reduce(
-      (sum, i) => (i.productId === productId ? sum + i.quantity : sum),
-      0
-    );
+  const cartCountMap = useMemo(
+    () =>
+      cart.items.reduce<Record<string, number>>((acc, i) => {
+        acc[i.productId] = (acc[i.productId] ?? 0) + i.quantity;
+        return acc;
+      }, {}),
+    [cart.items]
+  );
 
   const totalQty = cart.items.reduce((s, i) => s + i.quantity, 0);
 
@@ -64,19 +67,21 @@ export function MenuView({ categories }: Props) {
             aria-hidden="true"
           />
           <input
-            type="search"
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm cà phê, trà, bánh..."
-            className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-9 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
-          {search && (
+          {isSearching && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30"
+              className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-r-xl"
               aria-label="Xóa tìm kiếm"
             >
-              <X size={12} />
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30">
+                <X size={12} />
+              </span>
             </button>
           )}
         </div>
@@ -104,7 +109,7 @@ export function MenuView({ categories }: Props) {
                   <MenuCard
                     key={product.id}
                     product={product}
-                    cartCount={cartCountForProduct(product.id)}
+                    cartCount={cartCountMap[product.id] ?? 0}
                     onClick={() => setSelected(product)}
                   />
                 ))}
