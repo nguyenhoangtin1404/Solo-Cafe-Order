@@ -12,11 +12,13 @@ function filterDeletedNested(raw: RawProductRow): ProductWithOptions {
     ...raw,
     options: raw.options
       .filter((o) => o.deleted_at === null)
-      .map(({ deleted_at: _od, ...o }) => ({
-        ...o,
-        values: o.values
+      .map(({ id, product_id, name, type, values }) => ({
+        id, product_id, name, type,
+        values: values
           .filter((v) => v.deleted_at === null)
-          .map(({ deleted_at: _vd, ...v }) => v),
+          .map(({ id: vid, option_id, name: vname, extra_price }) => ({
+            id: vid, option_id, name: vname, extra_price,
+          })),
       })),
   };
 }
@@ -230,7 +232,7 @@ export async function findOptionsByProductId(
     ...o,
     values: o.values
       .filter((v) => v.deleted_at === null)
-      .map(({ deleted_at: _d, ...v }) => v),
+      .map(({ id, option_id, name, extra_price }) => ({ id, option_id, name, extra_price })),
   }));
 }
 
