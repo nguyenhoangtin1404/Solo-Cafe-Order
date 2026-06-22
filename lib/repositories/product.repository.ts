@@ -368,13 +368,14 @@ export async function softDeleteOptionValuesByOptionId(
   const supabase = createAdminSupabaseClient();
   // Verify ownership without filtering deleted_at — the option may already be
   // soft-deleted by the time this runs (deleteOption soft-deletes parent first).
-  const { data: option } = await supabase
+  const { data: option, error: ownerErr } = await supabase
     .from("product_options")
     .select("id")
     .eq("id", optionId)
     .eq("product_id", productId)
     .maybeSingle();
 
+  if (ownerErr) throw ownerErr;
   if (!option) return;
 
   const { error } = await supabase

@@ -97,6 +97,7 @@ export function ValueRow({
       onDeleted(value.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xóa thất bại.");
+    } finally {
       setDeleting(false);
     }
   }
