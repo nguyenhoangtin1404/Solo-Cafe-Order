@@ -263,11 +263,7 @@ async function requireOption(
   productId: string,
   optionId: string
 ): Promise<void> {
-  const product = await productRepo.findByIdWithOptions(productId);
-  if (!product) {
-    throw new AppError("PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại.", 404);
-  }
-  const option = product.options.find((o) => o.id === optionId);
+  const option = await productRepo.findProductOptionById(optionId, productId);
   if (!option) {
     throw new AppError("OPTION_NOT_FOUND", "Option không tồn tại.", 404);
   }

@@ -29,7 +29,6 @@ export function OptionsEditor({ productId }: Props) {
   const addOptionInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setLoading(true);
     const controller = new AbortController();
     fetch(`/api/products/${productId}/options`, { signal: controller.signal })
       .then((r) => {

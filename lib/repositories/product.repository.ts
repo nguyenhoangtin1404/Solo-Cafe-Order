@@ -342,17 +342,16 @@ export async function softDeleteOptionValuesByOptionId(
   productId: string
 ): Promise<void> {
   const supabase = createAdminSupabaseClient();
-  // Verify the option belongs to the given product before bulk-deleting its values.
-  // This prevents phantom soft-deletes if an unvalidated optionId is passed in.
+  // Verify ownership without filtering deleted_at — the option may already be
+  // soft-deleted by the time this runs (deleteOption soft-deletes parent first).
   const { data: option } = await supabase
     .from("product_options")
     .select("id")
     .eq("id", optionId)
     .eq("product_id", productId)
-    .is("deleted_at", null)
     .maybeSingle();
 
-  if (!option) return; // option doesn't belong to this product — nothing to delete
+  if (!option) return;
 
   const { error } = await supabase
     .from("product_option_values")
