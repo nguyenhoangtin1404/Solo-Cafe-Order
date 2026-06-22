@@ -47,7 +47,7 @@ export function MenuView({ categories }: Props) {
       .filter((cat) => cat.products.length > 0);
   }, [categories, search]);
 
-  const isSearching = search.trim().length > 0;
+  const isSearching = filteredCategories !== categories;
 
   return (
     <>
@@ -75,6 +75,7 @@ export function MenuView({ categories }: Props) {
           />
           {isSearching && (
             <button
+              type="button"
               onClick={() => setSearch("")}
               className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-r-xl"
               aria-label="Xóa tìm kiếm"
@@ -87,7 +88,9 @@ export function MenuView({ categories }: Props) {
         </div>
       </div>
 
-      {!isSearching && <CategoryTabs categories={categories} />}
+      <div className={isSearching ? "hidden" : undefined}>
+        <CategoryTabs categories={categories} />
+      </div>
 
       <main className="flex-1 space-y-6 px-4 pb-28 pt-4">
         {filteredCategories.length === 0 ? (
