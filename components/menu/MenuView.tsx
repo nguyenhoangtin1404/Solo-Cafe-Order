@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
@@ -23,6 +23,7 @@ function getGreeting(): string {
 export function MenuView({ categories }: Props) {
   const [selected, setSelected] = useState<MenuProduct | null>(null);
   const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const cart = useCart();
 
   const cartCountMap = useMemo(
@@ -71,6 +72,7 @@ export function MenuView({ categories }: Props) {
             aria-hidden="true"
           />
           <input
+            ref={inputRef}
             type="text"
             aria-label="Tìm kiếm món"
             autoComplete="off"
@@ -80,7 +82,7 @@ export function MenuView({ categories }: Props) {
               if (e.key === "Escape") {
                 e.preventDefault();
                 setSearch("");
-                (e.target as HTMLInputElement).blur();
+                inputRef.current?.blur();
               }
             }}
             placeholder="Tìm cà phê, trà, bánh..."
@@ -89,7 +91,10 @@ export function MenuView({ categories }: Props) {
           {isSearching && (
             <button
               type="button"
-              onClick={() => setSearch("")}
+              onClick={() => {
+                setSearch("");
+                inputRef.current?.blur();
+              }}
               className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-r-xl"
               aria-label="Xóa tìm kiếm"
             >
@@ -163,7 +168,7 @@ export function MenuView({ categories }: Props) {
         <ProductModal
           product={selected}
           onClose={() => setSelected(null)}
-          onAdd={(item) => cart.addItem(item)}
+          onAdd={cart.addItem}
         />
       )}
     </>
