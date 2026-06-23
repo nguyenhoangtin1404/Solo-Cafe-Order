@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Phone, User } from "lucide-react";
 import { useOrderTracking } from "@/hooks/useOrderTracking";
@@ -13,6 +13,21 @@ interface Props {
   orderCode: string;
   initialOrder: OrderRow;
   items: OrderItem[];
+}
+
+interface LayoutProps {
+  orderCode: string;
+  current: OrderRow;
+  items: OrderItem[];
+  status: OrderStatus;
+  stepIndex: number;
+  orderTime: string;
+  connectionStatus: "connected" | "connecting" | "disconnected";
+  showConfirm: boolean;
+  cancelling: boolean;
+  onShow: () => void;
+  onDismiss: () => void;
+  onConfirm: () => void;
 }
 
 const STEPS = ["Đang chờ", "Đang pha chế", "Hoàn thành"] as const;
@@ -45,8 +60,15 @@ const STATUS_SUBTITLE: Record<OrderStatus, string> = {
 
 const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? null;
 
+const VALID_STATUSES: string[] = ["new", "making", "done", "cancelled"];
+function isValidStatus(s: string): s is OrderStatus {
+  return VALID_STATUSES.includes(s);
+}
+
 function formatOrderTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("vi-VN", {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "--:--";
+  return d.toLocaleTimeString("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -54,45 +76,135 @@ function formatOrderTime(iso: string): string {
   });
 }
 
-export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
-  const { order, connectionStatus } = useOrderTracking(orderCode, initialOrder);
+function useCancelOrder(orderCode: string, orderId: string) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [localCancelled, setLocalCancelled] = useState(false);
-
-  const current = order ?? initialOrder;
-  const status: OrderStatus = localCancelled
-    ? ORDER_STATUS.CANCELLED
-    : (current.status as OrderStatus);
-  const stepIndex = STEP_STATUSES.indexOf(
-    status as (typeof STEP_STATUSES)[number]
-  );
+  const inFlightRef = useRef(false);
 
   const handleCancel = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setCancelling(true);
+    setShowConfirm(false);
     try {
       const res = await fetch(`/api/orders/${orderCode}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: current.id }),
+        body: JSON.stringify({ order_id: orderId }),
       });
       if (!res.ok) {
-        const err = (await res.json()) as { message?: string };
-        toast.error(err.message ?? "Không thể hủy đơn.");
-        setShowConfirm(false);
+        let errMsg = "Không thể hủy đơn.";
+        try {
+          const body = (await res.json()) as { message?: string };
+          if (body.message) errMsg = body.message;
+        } catch {}
+        toast.error(errMsg);
         return;
       }
       toast.success("Đơn hàng đã được hủy.");
       setLocalCancelled(true);
-      setShowConfirm(false);
     } catch {
       toast.error("Mất kết nối. Vui lòng thử lại.");
-      setShowConfirm(false);
     } finally {
+      inFlightRef.current = false;
       setCancelling(false);
     }
-  }, [orderCode, current.id]);
+  }, [orderCode, orderId]);
 
+  return {
+    showConfirm,
+    setShowConfirm,
+    cancelling,
+    localCancelled,
+    setLocalCancelled,
+    handleCancel,
+  };
+}
+
+export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
+  const { order, connectionStatus } = useOrderTracking(orderCode, initialOrder);
+  const {
+    showConfirm,
+    setShowConfirm,
+    cancelling,
+    localCancelled,
+    setLocalCancelled,
+    handleCancel,
+  } = useCancelOrder(orderCode, (order ?? initialOrder).id);
+
+  const current = order ?? initialOrder;
+  const rawStatus = current.status;
+  const status: OrderStatus = localCancelled
+    ? ORDER_STATUS.CANCELLED
+    : isValidStatus(rawStatus)
+      ? rawStatus
+      : ORDER_STATUS.NEW;
+  const stepIndex = (STEP_STATUSES as ReadonlyArray<OrderStatus>).indexOf(
+    status
+  );
+  const orderTime = useMemo(
+    () => formatOrderTime(current.created_at),
+    [current.created_at]
+  );
+  const handleShow = useCallback(() => setShowConfirm(true), [setShowConfirm]);
+  const handleDismiss = useCallback(
+    () => setShowConfirm(false),
+    [setShowConfirm]
+  );
+  const prevStatusRef = useRef<OrderStatus>(status);
+
+  // Clear optimistic flag once realtime confirms the cancel
+  useEffect(() => {
+    if (localCancelled && current.status === ORDER_STATUS.CANCELLED)
+      setLocalCancelled(false);
+  }, [current.status, localCancelled, setLocalCancelled]);
+
+  // Dismiss confirm dialog if owner moves order past "new" while dialog is open
+  useEffect(() => {
+    if (
+      prevStatusRef.current === ORDER_STATUS.NEW &&
+      status !== ORDER_STATUS.NEW &&
+      showConfirm
+    ) {
+      setShowConfirm(false);
+      toast.info("Đơn hàng đã được xử lý — không thể hủy nữa.");
+    }
+    prevStatusRef.current = status;
+  }, [status, showConfirm, setShowConfirm]);
+
+  return (
+    <OrderTrackingLayout
+      orderCode={orderCode}
+      current={current}
+      items={items}
+      status={status}
+      stepIndex={stepIndex}
+      orderTime={orderTime}
+      connectionStatus={connectionStatus}
+      showConfirm={showConfirm}
+      cancelling={cancelling}
+      onShow={handleShow}
+      onDismiss={handleDismiss}
+      onConfirm={handleCancel}
+    />
+  );
+}
+
+function OrderTrackingLayout({
+  orderCode,
+  current,
+  items,
+  status,
+  stepIndex,
+  orderTime,
+  connectionStatus,
+  showConfirm,
+  cancelling,
+  onShow,
+  onDismiss,
+  onConfirm,
+}: LayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center justify-between border-b px-4 py-3">
@@ -100,53 +212,73 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
         <ConnectionStatus status={connectionStatus} />
       </header>
 
-      <div className="px-4 pt-5">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-sm text-muted-foreground">Đơn hàng</p>
-            <h1 className="text-2xl font-bold tracking-tight">#{orderCode}</h1>
-          </div>
-          <span
-            className={`mt-1 rounded-full px-3 py-1 text-sm font-medium ${STATUS_BADGE_CLASS[status]}`}
-          >
-            {STATUS_LABEL[status]}
-          </span>
-        </div>
-
-        {current.pickup_name && (
-          <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <User size={14} />
-            <span>
-              Gọi tên:{" "}
-              <span className="font-medium text-foreground">
-                {current.pickup_name}
-              </span>
-            </span>
+      <main className="flex flex-1 flex-col">
+        {connectionStatus === "disconnected" && (
+          <div className="flex items-center justify-between border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <span>Mất kết nối. Trạng thái có thể chưa cập nhật.</span>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="ml-4 underline"
+            >
+              Tải lại
+            </button>
           </div>
         )}
-      </div>
 
-      <div className="flex-1 space-y-4 px-4 py-4">
-        <StatusCard
-          status={status}
-          stepIndex={stepIndex}
-          orderTime={formatOrderTime(current.created_at)}
-          pickupName={current.pickup_name}
-        />
+        <div className="px-4 pt-5">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-sm text-muted-foreground">Đơn hàng</p>
+              <h1 className="text-2xl font-bold tracking-tight">
+                #{orderCode}
+              </h1>
+            </div>
+            <span
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className={`mt-1 rounded-full px-3 py-1 text-sm font-medium ${STATUS_BADGE_CLASS[status]}`}
+            >
+              {STATUS_LABEL[status]}
+            </span>
+          </div>
 
-        <OrderItemList items={items} total={current.total_amount} />
+          {current.pickup_name && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <User size={14} aria-hidden="true" />
+              <span>
+                Gọi tên:{" "}
+                <span className="font-medium text-foreground">
+                  {current.pickup_name}
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
 
-        <CancelSection
-          status={status}
-          showConfirm={showConfirm}
-          cancelling={cancelling}
-          onShow={() => setShowConfirm(true)}
-          onDismiss={() => setShowConfirm(false)}
-          onConfirm={handleCancel}
-        />
+        <div className="flex-1 space-y-4 px-4 py-4">
+          <StatusCard
+            status={status}
+            stepIndex={stepIndex}
+            orderTime={orderTime}
+            pickupName={current.pickup_name}
+          />
 
-        <SupportButton phone={SUPPORT_PHONE} />
-      </div>
+          <OrderItemList items={items} total={current.total_amount} />
+
+          <CancelSection
+            status={status}
+            showConfirm={showConfirm}
+            cancelling={cancelling}
+            onShow={onShow}
+            onDismiss={onDismiss}
+            onConfirm={onConfirm}
+          />
+
+          <SupportButton phone={SUPPORT_PHONE} />
+        </div>
+      </main>
     </div>
   );
 }
@@ -167,11 +299,11 @@ function StatusCard({
       <p className="mb-1 text-center text-sm text-muted-foreground">
         Đặt lúc {orderTime}
       </p>
-      <p className="mb-4 text-center font-semibold">
+      <h2 className="mb-4 text-center text-base font-semibold">
         {status === ORDER_STATUS.DONE && pickupName
           ? `Lấy tại quầy nhé ${pickupName} ☕`
           : STATUS_SUBTITLE[status]}
-      </p>
+      </h2>
       {status !== ORDER_STATUS.CANCELLED && (
         <ProgressSteps
           currentStep={stepIndex}
@@ -182,7 +314,7 @@ function StatusCard({
   );
 }
 
-function OrderItemList({
+const OrderItemList = memo(function OrderItemList({
   items,
   total,
 }: {
@@ -191,30 +323,39 @@ function OrderItemList({
 }) {
   return (
     <div className="rounded-2xl border p-4">
-      <p className="mb-3 font-semibold">Chi tiết món</p>
+      <h2 className="mb-3 text-base font-semibold">Chi tiết món</h2>
       <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="font-medium">
-                {item.quantity}× {item.product_name}
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Không có thông tin món.
+          </p>
+        ) : (
+          items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-start justify-between gap-2"
+            >
+              <div className="min-w-0">
+                <p className="font-medium">
+                  {item.quantity}× {item.product_name}
+                </p>
+                {item.selected_options.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {item.selected_options.map((o) => o.value_name).join(", ")}
+                  </p>
+                )}
+                {item.note && (
+                  <p className="text-xs italic text-muted-foreground">
+                    &ldquo;{item.note}&rdquo;
+                  </p>
+                )}
+              </div>
+              <p className="shrink-0 font-medium">
+                {(item.unit_price * item.quantity).toLocaleString("vi-VN")}đ
               </p>
-              {item.selected_options.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {item.selected_options.map((o) => o.value_name).join(", ")}
-                </p>
-              )}
-              {item.note && (
-                <p className="text-xs italic text-muted-foreground">
-                  &ldquo;{item.note}&rdquo;
-                </p>
-              )}
             </div>
-            <p className="shrink-0 font-medium">
-              {(item.unit_price * item.quantity).toLocaleString("vi-VN")}đ
-            </p>
-          </div>
-        ))}
+          ))
+        )}
       </div>
       <div className="mt-3 flex justify-between border-t pt-3 font-semibold">
         <span>Tổng cộng</span>
@@ -222,9 +363,9 @@ function OrderItemList({
       </div>
     </div>
   );
-}
+});
 
-function CancelSection({
+const CancelSection = memo(function CancelSection({
   status,
   showConfirm,
   cancelling,
@@ -243,19 +384,28 @@ function CancelSection({
 
   if (showConfirm) {
     return (
-      <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-        <p className="font-medium text-destructive">Xác nhận hủy đơn?</p>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="cancel-dialog-title"
+        className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+      >
+        <p id="cancel-dialog-title" className="font-medium text-destructive">
+          Xác nhận hủy đơn?
+        </p>
         <p className="text-sm text-muted-foreground">
           Đơn đang chờ xử lý. Bạn có chắc muốn hủy không?
         </p>
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onDismiss}
             className="min-h-[44px] flex-1 rounded-xl bg-secondary py-2.5 text-sm font-medium text-secondary-foreground"
           >
             Không hủy
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={cancelling}
             className="min-h-[44px] flex-1 rounded-xl bg-destructive py-2.5 text-sm font-medium text-destructive-foreground disabled:opacity-50"
@@ -270,6 +420,7 @@ function CancelSection({
   return (
     <div className="space-y-1.5">
       <button
+        type="button"
         onClick={onShow}
         className="min-h-[44px] w-full rounded-xl border border-destructive py-3 font-medium text-destructive"
       >
@@ -280,7 +431,7 @@ function CancelSection({
       </p>
     </div>
   );
-}
+});
 
 function SupportButton({ phone }: { phone: string | null }) {
   const content = (
@@ -317,11 +468,24 @@ function ConnectionStatus({
 }: {
   status: "connected" | "connecting" | "disconnected";
 }) {
-  if (status === "connected")
-    return <p className="text-xs text-status-done">● Live</p>;
-  if (status === "connecting")
-    return <p className="text-xs text-status-new">● Đang kết nối...</p>;
-  return <p className="text-xs text-destructive">● Mất kết nối</p>;
+  const colorClass =
+    status === "connected"
+      ? "text-status-done"
+      : status === "connecting"
+        ? "text-status-new"
+        : "text-destructive";
+  const label =
+    status === "connected"
+      ? "Live"
+      : status === "connecting"
+        ? "Đang kết nối..."
+        : "Mất kết nối";
+  return (
+    <span role="status" className={`text-xs ${colorClass}`}>
+      <span aria-hidden="true">● </span>
+      {label}
+    </span>
+  );
 }
 
 function ProgressSteps({
@@ -332,14 +496,15 @@ function ProgressSteps({
   done: boolean;
 }) {
   return (
-    <div className="flex items-center justify-center">
+    <div role="list" className="flex items-center justify-center">
       {STEPS.map((label, i) => {
         const completed = done || i < currentStep;
         const active = !done && i === currentStep;
         return (
-          <div key={label} className="flex items-center">
+          <div key={label} role="listitem" className="flex items-center">
             <div className="flex flex-col items-center">
               <div
+                aria-hidden="true"
                 className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition-colors ${
                   completed
                     ? "bg-status-done text-white"
@@ -351,6 +516,7 @@ function ProgressSteps({
                 {completed ? "✓" : i + 1}
               </div>
               <p
+                aria-current={active ? "step" : undefined}
                 className={`mt-1.5 max-w-[64px] text-center text-xs leading-tight ${
                   active
                     ? "font-semibold text-foreground"
@@ -364,6 +530,7 @@ function ProgressSteps({
             </div>
             {i < STEPS.length - 1 && (
               <div
+                aria-hidden="true"
                 className={`mb-6 h-0.5 w-10 transition-colors ${
                   done || i < currentStep ? "bg-status-done" : "bg-border"
                 }`}
