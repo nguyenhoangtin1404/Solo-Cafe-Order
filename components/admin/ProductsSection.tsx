@@ -15,6 +15,8 @@ interface Props {
   onProductCreated: (product: AdminProduct) => void;
   onProductUpdated: (oldCategoryId: string, product: AdminProduct) => void;
   onProductDeleted: (id: string, categoryId: string) => void;
+  onCloseGlobalAdd?: () => void;
+  formsResetToken?: number;
 }
 
 export function ProductsSection({
@@ -24,7 +26,10 @@ export function ProductsSection({
   onProductCreated,
   onProductUpdated,
   onProductDeleted,
+  onCloseGlobalAdd,
+  formsResetToken,
 }: Props) {
+  const [failedImgUrls, setFailedImgUrls] = useState<Set<string>>(new Set());
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [addingToCategoryId, setAddingToCategoryId] = useState<string | null>(
     null
@@ -54,9 +59,37 @@ export function ProductsSection({
   }, []);
 
   useEffect(() => {
+    if (!formsResetToken) return;
+    const t = setTimeout(() => {
+      setEditingProductId(null);
+      setAddingToCategoryId(null);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [formsResetToken]);
+
+  useEffect(() => {
     if (confirmingProductId === null) return;
     confirmButtonRef.current?.focus();
   }, [confirmingProductId]);
+
+  useEffect(() => {
+    if (confirmingProductId === null) return;
+    const stillVisible = groups.some((g) =>
+      g.products.some((p) => p.id === confirmingProductId)
+    );
+    if (!stillVisible) {
+      if (confirmTimerRef.current !== null) {
+        clearTimeout(confirmTimerRef.current);
+        confirmTimerRef.current = null;
+      }
+      const id = confirmingProductId;
+      const t = setTimeout(() => {
+        setConfirmingProductId(null);
+        deleteTriggerRefs.current[id]?.focus();
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [groups, confirmingProductId]);
 
   function announceStatus(message: string) {
     if (announceTimerRef.current !== null)
@@ -73,6 +106,7 @@ export function ProductsSection({
       clearTimeout(confirmTimerRef.current);
       confirmTimerRef.current = null;
     }
+    onCloseGlobalAdd?.();
     setEditingProductId(null);
     setConfirmingProductId(null);
     setAddingToCategoryId(categoryId);
@@ -171,9 +205,18 @@ export function ProductsSection({
                   onSuccess={(updated) => {
                     closeForm();
                     onProductUpdated(product.category_id, updated);
-                    requestAnimationFrame(() =>
-                      editTriggerRefs.current[updated.id]?.focus()
-                    );
+                    const categoryChanged =
+                      updated.category_id !== product.category_id;
+                    requestAnimationFrame(() => {
+                      if (!categoryChanged) {
+                        editTriggerRefs.current[updated.id]?.focus();
+                      } else {
+                        (
+                          editTriggerRefs.current[updated.id] ??
+                          addTriggerRefs.current[product.category_id]
+                        )?.focus();
+                      }
+                    });
                   }}
                   onCancel={() => {
                     closeForm();
@@ -188,22 +231,48 @@ export function ProductsSection({
                   key={product.id}
                   className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm"
                 >
-                  <div className="min-w-0">
-                    <p
-                      className={`truncate font-medium ${
-                        !product.is_available
-                          ? "text-muted-foreground line-through"
-                          : ""
-                      }`}
-                    >
-                      {product.name}
-                      {!product.is_available && (
-                        <span className="sr-only"> (không có sẵn)</span>
+                  <div className="flex min-w-0 items-center gap-3">
+                    {/* Thumbnail */}
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      {product.image_url &&
+                      !failedImgUrls.has(product.image_url) ? (
+                        <img
+                          src={product.image_url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={() =>
+                            setFailedImgUrls((prev) =>
+                              new Set(prev).add(product.image_url!)
+                            )
+                          }
+                        />
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          className="flex h-full w-full items-center justify-center text-xl"
+                        >
+                          ☕
+                        </span>
                       )}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {product.price.toLocaleString("vi-VN")}đ
-                    </p>
+                    </div>
+
+                    <div className="min-w-0">
+                      <p
+                        className={`truncate font-medium ${
+                          !product.is_available
+                            ? "text-muted-foreground line-through"
+                            : ""
+                        }`}
+                      >
+                        {product.name}
+                        {!product.is_available && (
+                          <span className="sr-only"> (không có sẵn)</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {product.price.toLocaleString("vi-VN")}đ
+                      </p>
+                    </div>
                   </div>
 
                   <div className="ml-3 flex shrink-0 items-center gap-2">
@@ -215,32 +284,43 @@ export function ProductsSection({
                       />
                     ) : (
                       <>
-                        {/* Availability toggle */}
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={product.is_available}
-                          aria-label={`${product.name}: bật/tắt hiển thị`}
-                          onClick={() =>
-                            onToggle(product.id, !product.is_available)
-                          }
-                          className="relative flex min-h-[44px] w-11 shrink-0 cursor-pointer items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className={`inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                              product.is_available ? "bg-primary" : "bg-input"
-                            }`}
+                        {/* Availability toggle + label */}
+                        <div className="flex flex-col items-center gap-0.5">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={product.is_available}
+                            aria-label={`${product.name}: bật/tắt hiển thị`}
+                            onClick={() =>
+                              onToggle(product.id, !product.is_available)
+                            }
+                            className="relative flex min-h-[44px] w-11 shrink-0 cursor-pointer items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <span
-                              className={`block h-5 w-5 rounded-full bg-background shadow-lg transition-transform ${
-                                product.is_available
-                                  ? "translate-x-5"
-                                  : "translate-x-0.5"
+                              aria-hidden="true"
+                              className={`inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                product.is_available ? "bg-primary" : "bg-input"
                               }`}
-                            />
+                            >
+                              <span
+                                className={`block h-5 w-5 rounded-full bg-background shadow-lg transition-transform ${
+                                  product.is_available
+                                    ? "translate-x-5"
+                                    : "translate-x-0.5"
+                                }`}
+                              />
+                            </span>
+                          </button>
+                          <span
+                            className={`text-[10px] font-semibold uppercase ${
+                              product.is_available
+                                ? "text-emerald-600"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {product.is_available ? "ĐANG BÁN" : "HẾT HÀNG"}
                           </span>
-                        </button>
+                        </div>
 
                         {/* Edit */}
                         <button

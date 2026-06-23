@@ -8,6 +8,7 @@ import type {
 } from "@/lib/services/product.service";
 import type { Category } from "@/types/product";
 import { CategoriesSection } from "./CategoriesSection";
+import { ProductForm } from "./ProductForm";
 import { ProductsSection } from "./ProductsSection";
 
 type AdminProductState = AdminProduct & { pending?: boolean };
@@ -29,14 +30,31 @@ export function AdminView({
   const [groups, setGroups] = useState<AdminViewGroup[]>(initial);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [toggleStatusMessage, setToggleStatusMessage] = useState("");
+  const [showGlobalAdd, setShowGlobalAdd] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
+  const [formsResetToken, setFormsResetToken] = useState(0);
   const togglingIdsRef = useRef<Set<string>>(new Set());
   const toggleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const globalAddRef = useRef<HTMLDivElement>(null);
+  const headerAddButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     return () => {
       if (toggleTimerRef.current !== null) clearTimeout(toggleTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showGlobalAdd) return;
+    requestAnimationFrame(() => {
+      const first = globalAddRef.current?.querySelector<HTMLElement>(
+        "input, select, textarea, button"
+      );
+      first?.focus();
+    });
+  }, [showGlobalAdd]);
 
   function announceToggle(message: string) {
     if (toggleTimerRef.current !== null) clearTimeout(toggleTimerRef.current);
@@ -51,6 +69,14 @@ export function AdminView({
     () =>
       Object.fromEntries(groups.map((g) => [g.category.id, g.products.length])),
     [groups]
+  );
+
+  const filteredGroups = useMemo(
+    () =>
+      selectedCategoryId
+        ? groups.filter((g) => g.category.id === selectedCategoryId)
+        : groups,
+    [groups, selectedCategoryId]
   );
 
   const productNames = useMemo(
@@ -77,6 +103,7 @@ export function AdminView({
   function handleCategoryDeleted(id: string) {
     setGroups((prev) => prev.filter((g) => g.category.id !== id));
     setCategories((prev) => prev.filter((c) => c.id !== id));
+    setSelectedCategoryId((prev) => (prev === id ? null : prev));
   }
 
   function handleCategoryUpdated(category: Category) {
@@ -158,17 +185,21 @@ export function AdminView({
   }
 
   function handleProductCreated(product: AdminProduct) {
-    if (!groups.some((g) => g.category.id === product.category_id)) {
-      toast.error("Danh mục không còn tồn tại. Vui lòng tải lại trang.");
-      return;
-    }
-    setGroups((prev) =>
-      prev.map((g) =>
+    setGroups((prev) => {
+      if (!prev.some((g) => g.category.id === product.category_id)) {
+        setTimeout(
+          () =>
+            toast.error("Danh mục không còn tồn tại. Vui lòng tải lại trang."),
+          0
+        );
+        return prev;
+      }
+      return prev.map((g) =>
         g.category.id === product.category_id
           ? { ...g, products: [...g.products, product] }
           : g
-      )
-    );
+      );
+    });
   }
 
   function handleProductUpdated(oldCategoryId: string, product: AdminProduct) {
@@ -213,10 +244,54 @@ export function AdminView({
         {toggleStatusMessage}
       </div>
       <header className="border-b px-4 py-3">
-        <h1 className="text-lg font-bold">Quản lý menu</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold">Quản lý menu</h1>
+          <button
+            type="button"
+            ref={headerAddButtonRef}
+            onClick={() => {
+              setFormsResetToken((t) => t + 1);
+              setShowGlobalAdd(true);
+            }}
+            disabled={showGlobalAdd || categories.length === 0}
+            aria-expanded={categories.length === 0 ? undefined : showGlobalAdd}
+            aria-controls="global-add-form"
+            title={
+              categories.length === 0
+                ? "Tạo danh mục trước để thêm sản phẩm"
+                : undefined
+            }
+            className="flex min-h-[44px] items-center gap-1 rounded-xl bg-accent px-4 text-sm font-medium text-accent-foreground disabled:opacity-50"
+          >
+            <span aria-hidden="true">+</span> Thêm sản phẩm
+          </button>
+        </div>
       </header>
 
       <main className="space-y-6 px-4 py-4">
+        {showGlobalAdd && (
+          <div ref={globalAddRef} id="global-add-form">
+            <ProductForm
+              mode="create"
+              categories={categories}
+              onSuccess={(product) => {
+                setShowGlobalAdd(false);
+                setSelectedCategoryId(null);
+                handleProductCreated(product);
+                requestAnimationFrame(() =>
+                  headerAddButtonRef.current?.focus()
+                );
+              }}
+              onCancel={() => {
+                setShowGlobalAdd(false);
+                requestAnimationFrame(() =>
+                  headerAddButtonRef.current?.focus()
+                );
+              }}
+            />
+          </div>
+        )}
+
         <CategoriesSection
           initialCategories={categories}
           productCounts={productCounts}
@@ -225,13 +300,57 @@ export function AdminView({
           onCategoryUpdated={handleCategoryUpdated}
         />
 
+        {categories.length > 0 && (
+          <div
+            className="flex gap-2 overflow-x-auto pb-1"
+            role="group"
+            aria-label="Lọc theo danh mục"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setFormsResetToken((t) => t + 1);
+                setSelectedCategoryId(null);
+              }}
+              aria-pressed={selectedCategoryId === null}
+              className={`min-h-[44px] shrink-0 rounded-full px-4 text-sm font-medium transition-colors ${
+                selectedCategoryId === null
+                  ? "bg-primary text-primary-foreground"
+                  : "border text-muted-foreground hover:border-foreground"
+              }`}
+            >
+              Tất cả
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => {
+                  setFormsResetToken((t) => t + 1);
+                  setSelectedCategoryId(cat.id);
+                }}
+                aria-pressed={selectedCategoryId === cat.id}
+                className={`min-h-[44px] shrink-0 rounded-full px-4 text-sm font-medium transition-colors ${
+                  selectedCategoryId === cat.id
+                    ? "bg-primary text-primary-foreground"
+                    : "border text-muted-foreground hover:border-foreground"
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <ProductsSection
-          groups={groups}
+          groups={filteredGroups}
           categories={categories}
+          formsResetToken={formsResetToken}
           onToggle={handleToggle}
           onProductCreated={handleProductCreated}
           onProductUpdated={handleProductUpdated}
           onProductDeleted={handleProductDeleted}
+          onCloseGlobalAdd={() => setShowGlobalAdd(false)}
         />
       </main>
     </div>
