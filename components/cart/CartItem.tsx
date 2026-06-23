@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import type { CartItem as CartItemType } from "@/types/order";
 
@@ -11,6 +11,10 @@ interface Props {
 
 export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
   const [imgError, setImgError] = useState(false);
+  // Reset error state when imageUrl changes (e.g. owner re-uploads the image)
+  useEffect(() => {
+    setImgError(false);
+  }, [item.imageUrl]);
   const optionText = item.selectedOptions.map((o) => o.valueName).join(", ");
 
   return (
