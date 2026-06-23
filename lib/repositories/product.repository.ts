@@ -49,7 +49,7 @@ export async function findImageUrlsByIds(
   return new Map(
     (data ?? []).map((p) => [
       p.id as string,
-      (p.image_url as string | null) ?? null,
+      (p.image_url as string | null) || null,
     ])
   );
 }

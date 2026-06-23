@@ -127,7 +127,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
                       }}
                       className="min-h-[44px] rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform active:scale-95"
                     >
-                      Bắt đầu làm
+                      Bắt đầu pha
                     </button>
                     <button
                       onClick={(e) => {
@@ -157,13 +157,14 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
         </div>
       </div>
 
-      <OrderDetailDrawer
-        order={order}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        isPending={isPending}
-        onStatusUpdate={onStatusUpdate}
-      />
+      {drawerOpen && (
+        <OrderDetailDrawer
+          order={order}
+          onClose={() => setDrawerOpen(false)}
+          isPending={isPending}
+          onStatusUpdate={onStatusUpdate}
+        />
+      )}
     </>
   );
 }

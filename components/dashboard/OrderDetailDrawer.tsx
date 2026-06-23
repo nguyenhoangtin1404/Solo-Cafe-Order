@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, ClipboardList, PlayCircle, Loader2 } from "lucide-react";
 import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
@@ -8,7 +9,6 @@ import { StatusBadge } from "./StatusBadge";
 
 interface Props {
   order: DashboardOrder;
-  open: boolean;
   onClose: () => void;
   isPending: boolean;
   onStatusUpdate: (orderId: string, newStatus: OrderStatus) => void;
@@ -26,12 +26,17 @@ function formatCurrency(amount: number): string {
 
 export function OrderDetailDrawer({
   order,
-  open,
   onClose,
   isPending,
   onStatusUpdate,
 }: Props) {
-  if (!open) return null;
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   function handleAction(newStatus: OrderStatus) {
     onStatusUpdate(order.id, newStatus);
@@ -44,10 +49,19 @@ export function OrderDetailDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-40 bg-black/50"
+        onClick={onClose}
+        role="presentation"
+      />
 
       {/* Drawer */}
-      <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col rounded-t-2xl bg-background shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-detail-title"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col rounded-t-2xl bg-background shadow-xl"
+      >
         {/* Drag handle */}
         <div className="flex justify-center pb-1 pt-3">
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
@@ -55,9 +69,12 @@ export function OrderDetailDrawer({
 
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-base font-bold">Chi tiết đơn</h2>
+          <h2 id="order-detail-title" className="text-base font-bold">
+            Chi tiết đơn
+          </h2>
           <button
             onClick={onClose}
+            aria-label="Đóng"
             className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted"
           >
             <X size={20} />

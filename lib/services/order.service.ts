@@ -325,7 +325,16 @@ export async function getOrderItemsWithImages(
 ): Promise<OrderItemSummary[]> {
   const order = await getOrderById(id);
   const productIds = [...new Set(order.items.map((i) => i.product_id))];
-  const imageMap = await productRepo.findImageUrlsByIds(productIds);
+  // Image lookup is non-critical — degrade gracefully if it fails so the
+  // drawer still opens (without thumbnails) instead of returning a 500.
+  let imageMap: Map<string, string | null> = new Map();
+  try {
+    imageMap = await productRepo.findImageUrlsByIds(productIds);
+  } catch (err) {
+    console.error("[order] image lookup degraded", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
   return order.items.map((item) =>
     toItemDto(item, imageMap.get(item.product_id))
   );
