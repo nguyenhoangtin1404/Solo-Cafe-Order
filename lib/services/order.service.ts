@@ -17,8 +17,9 @@ import * as productRepo from "@/lib/repositories/product.repository";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import { getHCMHour } from "@/lib/utils/timezone";
 import type { SubmitOrderInput } from "@/lib/validators";
-import type { Order, SelectedOption } from "@/types/order";
+import type { Order, OrderItemSummary, SelectedOption } from "@/types/order";
 import type { ProductWithOptions } from "@/types/product";
+import { toItemDto } from "@/lib/dto/order";
 
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [ORDER_STATUS.NEW]: [ORDER_STATUS.MAKING, ORDER_STATUS.CANCELLED],
@@ -317,6 +318,15 @@ export async function getOrderById(id: string): Promise<Order> {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
   return order;
+}
+
+export async function getOrderItemsWithImages(
+  id: string
+): Promise<OrderItemSummary[]> {
+  const order = await getOrderById(id);
+  const productIds = [...new Set(order.items.map((i) => i.product_id))];
+  const imageMap = await productRepo.findImageUrlsByIds(productIds);
+  return order.items.map((item) => toItemDto(item, imageMap.get(item.product_id)));
 }
 
 export async function cancelOrder(

@@ -58,6 +58,7 @@ export interface OrderItemSummary {
   unit_price: number;
   selected_options: SelectedOption[];
   note: string | null;
+  image_url?: string | null;
 }
 
 export type { BankTransferInfo };

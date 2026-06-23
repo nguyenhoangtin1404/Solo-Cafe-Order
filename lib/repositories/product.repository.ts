@@ -36,6 +36,21 @@ function filterDeletedNested(raw: RawProductRow): ProductWithOptions {
 
 const WITH_OPTIONS = `*, options:product_options(*, values:product_option_values(*))`;
 
+export async function findImageUrlsByIds(
+  ids: string[]
+): Promise<Map<string, string | null>> {
+  if (ids.length === 0) return new Map();
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, image_url")
+    .in("id", ids);
+  if (error) throw error;
+  return new Map(
+    (data ?? []).map((p) => [p.id as string, (p.image_url as string | null) ?? null])
+  );
+}
+
 export async function findAllAvailable(): Promise<ProductWithOptions[]> {
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase

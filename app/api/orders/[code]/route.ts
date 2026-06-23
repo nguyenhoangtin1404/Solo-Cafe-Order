@@ -32,7 +32,7 @@ export async function GET(
       total_amount: order.total_amount,
       payment_method: order.payment_method,
       pickup_name: order.pickup_name,
-      items: order.items.map(toItemDto),
+      items: order.items.map((item) => toItemDto(item)),
       created_at: order.created_at,
     });
   } catch (err) {

@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import type { OrderRow } from "@/hooks/useOrderQueue";
 import type { OrderItemSummary } from "@/types/order";
 import { StatusBadge } from "./StatusBadge";
+import { OrderDetailDrawer } from "./OrderDetailDrawer";
 
 export type DashboardOrder = OrderRow & { items: OrderItemSummary[] };
 
@@ -31,9 +33,13 @@ function formatCurrency(amount: number): string {
 }
 
 export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   return (
+    <>
     <div
-      className={`rounded-xl border bg-card p-4 shadow-sm transition-all duration-700 ${
+      onClick={() => setDrawerOpen(true)}
+      className={`cursor-pointer rounded-xl border bg-card p-4 shadow-sm transition-all duration-700 ${
         isNew ? "bg-primary/5 ring-2 ring-primary ring-offset-1" : ""
       }`}
     >
@@ -112,17 +118,19 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
               {order.status === ORDER_STATUS.NEW && (
                 <>
                   <button
-                    onClick={() =>
-                      onStatusUpdate(order.id, ORDER_STATUS.MAKING)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusUpdate(order.id, ORDER_STATUS.MAKING);
+                    }}
                     className="min-h-[44px] rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform active:scale-95"
                   >
                     Bắt đầu làm
                   </button>
                   <button
-                    onClick={() =>
-                      onStatusUpdate(order.id, ORDER_STATUS.CANCELLED)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusUpdate(order.id, ORDER_STATUS.CANCELLED);
+                    }}
                     className="min-h-[44px] rounded-lg border px-3 py-1.5 text-xs font-medium text-destructive transition-transform active:scale-95"
                   >
                     Hủy
@@ -131,7 +139,10 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
               )}
               {order.status === ORDER_STATUS.MAKING && (
                 <button
-                  onClick={() => onStatusUpdate(order.id, ORDER_STATUS.DONE)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusUpdate(order.id, ORDER_STATUS.DONE);
+                  }}
                   className="min-h-[44px] rounded-lg bg-status-done px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-95"
                 >
                   Hoàn thành
@@ -142,5 +153,14 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
         </div>
       </div>
     </div>
+
+    <OrderDetailDrawer
+      order={order}
+      open={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+      isPending={isPending}
+      onStatusUpdate={onStatusUpdate}
+    />
+    </>
   );
 }
