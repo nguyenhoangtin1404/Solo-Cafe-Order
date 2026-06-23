@@ -96,19 +96,50 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl bg-background sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-lg font-semibold">{product.name}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        {product.image_url ? (
+          <div className="relative flex-shrink-0">
+            <div className="h-52 w-full overflow-hidden rounded-t-2xl sm:rounded-t-2xl">
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-white"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between border-b px-4 py-3">
+            <h2 className="text-lg font-semibold">{product.name}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
+          {product.image_url && (
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="text-lg font-semibold leading-tight">
+                {product.name}
+              </h2>
+              <p className="flex-shrink-0 font-semibold text-primary">
+                {product.price.toLocaleString("vi-VN")}đ
+              </p>
+            </div>
+          )}
+
           {product.description && (
             <p className="text-sm text-muted-foreground">
               {product.description}
@@ -188,44 +219,72 @@ function OptionGroup({
   return (
     <div>
       <p className="mb-2 text-sm font-medium">{option.name}</p>
-      <div className="space-y-2">
-        {option.values.map((val) => {
-          const on = selected.includes(val.id);
-          return (
-            <button
-              type="button"
-              key={val.id}
-              onClick={() => onToggle(val.id)}
-              className={`flex min-h-[44px] w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
-                on ? "border-primary bg-primary/5" : "border-border"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center border-2 ${
-                    option.type === "select" ? "rounded-full" : "rounded-sm"
-                  } ${on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}
-                >
-                  {on &&
-                    (option.type === "select" ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                    ) : (
+      {option.type === "select" ? (
+        <div className="flex flex-wrap gap-2">
+          {option.values.map((val) => {
+            const on = selected.includes(val.id);
+            return (
+              <button
+                type="button"
+                key={val.id}
+                onClick={() => onToggle(val.id)}
+                className={`flex min-h-[44px] items-center rounded-full border px-4 text-sm font-medium transition-colors ${
+                  on
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-foreground"
+                }`}
+              >
+                {val.name}
+                {val.extra_price > 0 && (
+                  <span
+                    className={`ml-1 text-xs ${on ? "text-primary-foreground/80" : "text-muted-foreground"}`}
+                  >
+                    +{val.extra_price.toLocaleString("vi-VN")}đ
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {option.values.map((val) => {
+            const on = selected.includes(val.id);
+            return (
+              <button
+                type="button"
+                key={val.id}
+                onClick={() => onToggle(val.id)}
+                className={`flex min-h-[44px] w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+                  on ? "border-primary bg-primary/5" : "border-border"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 ${
+                      on
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground"
+                    }`}
+                  >
+                    {on && (
                       <span className="text-[9px] font-bold leading-none">
                         ✓
                       </span>
-                    ))}
-                </span>
-                <span>{val.name}</span>
-              </div>
-              {val.extra_price > 0 && (
-                <span className="text-muted-foreground">
-                  +{val.extra_price.toLocaleString("vi-VN")}đ
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                    )}
+                  </span>
+                  <span>{val.name}</span>
+                </div>
+                {val.extra_price > 0 && (
+                  <span className="text-muted-foreground">
+                    +{val.extra_price.toLocaleString("vi-VN")}đ
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
