@@ -119,24 +119,37 @@ export function CartSummary({ items, total, onClearCart }: Props) {
 
       <div>
         <p className="mb-2 text-sm font-medium">Phương thức thanh toán</p>
-        <div className="flex gap-3">
+        <div className="space-y-2">
           {(
             [
-              { value: PAYMENT_METHOD.CASH, label: "💵 Tiền mặt" },
-              { value: PAYMENT_METHOD.BANK_TRANSFER, label: "🏦 Chuyển khoản" },
+              { value: PAYMENT_METHOD.CASH, label: "Tiền mặt" },
+              { value: PAYMENT_METHOD.BANK_TRANSFER, label: "Chuyển khoản" },
             ] as const
           ).map(({ value, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => setPaymentMethod(value)}
-              className={`min-h-[44px] flex-1 rounded-xl border py-3 text-sm font-medium transition-colors ${
+              className={`flex min-h-[44px] w-full items-center gap-3 rounded-xl border p-3 text-sm transition-colors ${
                 paymentMethod === value
-                  ? "border-primary bg-primary/5 text-foreground"
+                  ? "border-primary bg-primary/5"
                   : "border-border"
               }`}
             >
-              {label}
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                  paymentMethod === value
+                    ? "border-primary"
+                    : "border-muted-foreground"
+                }`}
+              >
+                {paymentMethod === value && (
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                )}
+              </span>
+              <span className={paymentMethod === value ? "font-medium" : ""}>
+                {label}
+              </span>
             </button>
           ))}
         </div>
@@ -154,7 +167,9 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         disabled={loading || pickupNameTooLong}
         className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary font-medium text-primary-foreground disabled:opacity-50"
       >
-        {loading ? "Đang đặt hàng..." : "Đặt hàng"}
+        {loading
+          ? "Đang đặt hàng..."
+          : `Đặt hàng — ${total.toLocaleString("vi-VN")}đ`}
       </button>
     </form>
   );

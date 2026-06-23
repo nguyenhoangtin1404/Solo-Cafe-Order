@@ -86,6 +86,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
       unitPrice,
       selectedOptions: buildCartOptions(product.options, sel),
       note: note.trim() || null,
+      imageUrl: product.image_url ?? null,
     });
     toast.success(`Đã thêm ${product.name} vào giỏ`);
     onClose();

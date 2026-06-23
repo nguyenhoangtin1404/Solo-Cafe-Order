@@ -50,6 +50,7 @@ export interface CartItem {
   unitPrice: number;
   selectedOptions: CartSelectedOption[]; // default [] khi không có options
   note: string | null; // null = không có note, consistent với validator output và DB
+  imageUrl?: string | null;
 }
 
 export interface OrderItemSummary {
