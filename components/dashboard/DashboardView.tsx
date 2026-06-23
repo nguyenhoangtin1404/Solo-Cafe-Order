@@ -52,13 +52,15 @@ export function DashboardView({ initialOrders }: Props) {
     initialOrders.map(toOrderRow)
   );
   const [itemsMap, setItemsMap] = useState<Map<string, OrderItemSummary[]>>(
-    () => new Map(initialOrders.map((o) => [o.id, o.items.map(toItemDto)]))
+    () =>
+      new Map(
+        initialOrders.map((o) => [o.id, o.items.map((item) => toItemDto(item))])
+      )
   );
   // Ref (not state) so the items-fetch effect only re-runs when `rows` changes,
   // not when itemsMap changes — prevents duplicate fetches on each state update.
-  const fetchedIdsRef = useRef<Set<string>>(
-    new Set(initialOrders.map((o) => o.id))
-  );
+  // Not pre-populated: initial orders need a fetch to get image_url from products.
+  const fetchedIdsRef = useRef<Set<string>>(new Set());
   // Tracks orders that have been announced (sound + animation) so a retry
   // after a failed items fetch doesn't re-play the notification chime.
   const announcedIdsRef = useRef<Set<string>>(

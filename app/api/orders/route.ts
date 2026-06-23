@@ -33,7 +33,7 @@ function toOrderDto(order: Order): OrderDto {
     customer_ref: order.customer_ref,
     created_at: order.created_at,
     updated_at: order.updated_at,
-    items: order.items.map(toItemDto),
+    items: order.items.map((item) => toItemDto(item)),
   };
 }
 
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         payment_method: order.payment_method,
         wait_estimate: formatWaitEstimate(wait_estimate),
         pickup_name: order.pickup_name,
-        items: order.items.map(toItemDto),
+        items: order.items.map((item) => toItemDto(item)),
         bank_transfer_info,
       },
       { status: 201 }
