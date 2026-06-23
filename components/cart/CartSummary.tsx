@@ -117,9 +117,11 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         />
       </div>
 
-      <div>
-        <p className="mb-2 text-sm font-medium">Phương thức thanh toán</p>
-        <div className="space-y-2">
+      <fieldset>
+        <legend className="mb-2 text-sm font-medium">
+          Phương thức thanh toán
+        </legend>
+        <div role="radiogroup" className="space-y-2">
           {(
             [
               { value: PAYMENT_METHOD.CASH, label: "Tiền mặt" },
@@ -129,6 +131,8 @@ export function CartSummary({ items, total, onClearCart }: Props) {
             <button
               key={value}
               type="button"
+              role="radio"
+              aria-checked={paymentMethod === value}
               onClick={() => setPaymentMethod(value)}
               className={`flex min-h-[44px] w-full items-center gap-3 rounded-xl border p-3 text-sm transition-colors ${
                 paymentMethod === value
@@ -137,14 +141,15 @@ export function CartSummary({ items, total, onClearCart }: Props) {
               }`}
             >
               <span
-                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                aria-hidden="true"
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
                   paymentMethod === value
                     ? "border-primary"
                     : "border-muted-foreground"
                 }`}
               >
                 {paymentMethod === value && (
-                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
                 )}
               </span>
               <span className={paymentMethod === value ? "font-medium" : ""}>
@@ -153,14 +158,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="flex items-center justify-between rounded-xl bg-secondary p-4 text-secondary-foreground">
-        <span className="font-medium">Tổng cộng</span>
-        <span className="text-lg font-bold">
-          {total.toLocaleString("vi-VN")}đ
-        </span>
-      </div>
+      </fieldset>
 
       <button
         type="submit"
