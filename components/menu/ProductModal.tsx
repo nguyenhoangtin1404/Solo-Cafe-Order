@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import type { MenuOption, MenuProduct } from "@/types/menu";
@@ -59,8 +59,19 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
   const [sel, setSel] = useState(() => initSelection(product.options));
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState("");
+  const [failedImgUrl, setFailedImgUrl] = useState<string | null>(null);
+  const showImage =
+    Boolean(product.image_url) && product.image_url !== failedImgUrl;
 
   const unitPrice = calcUnitPrice(product, sel);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
 
   const toggle = useCallback(
     (optId: string, valId: string, type: MenuOption["type"]) => {
@@ -94,21 +105,76 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl bg-background sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-lg font-semibold">{product.name}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
-          >
-            <X size={16} />
-          </button>
-        </div>
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className="relative z-10 flex min-h-0 max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl bg-background sm:rounded-2xl"
+      >
+        {showImage ? (
+          <div className="relative flex-shrink-0">
+            <div className="h-52 w-full overflow-hidden rounded-t-2xl sm:rounded-t-2xl">
+              <img
+                src={product.image_url!}
+                alt={product.name}
+                decoding="async"
+                className="h-full w-full object-cover"
+                onError={() => setFailedImgUrl(product.image_url ?? null)}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-white"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+            <h2
+              id="modal-title"
+              className="min-w-0 truncate text-lg font-semibold"
+            >
+              {product.name}
+            </h2>
+            <div className="flex flex-shrink-0 items-center gap-3">
+              <p className="font-semibold text-primary">
+                {unitPrice.toLocaleString("vi-VN")}đ
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Đóng"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
+          {showImage && (
+            <div className="flex items-start justify-between gap-2">
+              <h2
+                id="modal-title"
+                className="text-lg font-semibold leading-tight"
+              >
+                {product.name}
+              </h2>
+              <p className="flex-shrink-0 font-semibold text-primary">
+                {unitPrice.toLocaleString("vi-VN")}đ
+              </p>
+            </div>
+          )}
+
           {product.description && (
             <p className="text-sm text-muted-foreground">
               {product.description}
@@ -123,10 +189,14 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             />
           ))}
           <div>
-            <label className="mb-1.5 block text-sm font-medium">
+            <label
+              htmlFor="item-note"
+              className="mb-1.5 block text-sm font-medium"
+            >
               Ghi chú món
             </label>
             <textarea
+              id="item-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Ít đường, nhiều đá..."
@@ -148,16 +218,24 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
               type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               aria-label="Giảm số lượng"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+              disabled={qty === 1}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground disabled:opacity-40"
             >
               <Minus size={16} />
             </button>
-            <span className="w-8 text-center font-semibold">{qty}</span>
+            <span
+              aria-live="polite"
+              aria-atomic="true"
+              className="w-8 text-center font-semibold"
+            >
+              {qty}
+            </span>
             <button
               type="button"
               onClick={() => setQty((q) => Math.min(99, q + 1))}
               aria-label="Tăng số lượng"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+              disabled={qty === 99}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground disabled:opacity-40"
             >
               <Plus size={16} />
             </button>
@@ -165,7 +243,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           <button
             type="button"
             onClick={handleAdd}
-            className="flex flex-1 items-center justify-between rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+            className="flex min-h-[44px] flex-1 items-center justify-between rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
           >
             <span>Thêm vào giỏ</span>
             <span>{(unitPrice * qty).toLocaleString("vi-VN")}đ</span>
@@ -185,47 +263,87 @@ function OptionGroup({
   selected: string[];
   onToggle: (vid: string) => void;
 }) {
+  const labelId = `option-label-${option.id}`;
   return (
     <div>
-      <p className="mb-2 text-sm font-medium">{option.name}</p>
-      <div className="space-y-2">
-        {option.values.map((val) => {
-          const on = selected.includes(val.id);
-          return (
-            <button
-              type="button"
-              key={val.id}
-              onClick={() => onToggle(val.id)}
-              className={`flex min-h-[44px] w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
-                on ? "border-primary bg-primary/5" : "border-border"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center border-2 ${
-                    option.type === "select" ? "rounded-full" : "rounded-sm"
-                  } ${on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}
-                >
-                  {on &&
-                    (option.type === "select" ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                    ) : (
+      <p id={labelId} className="mb-2 text-sm font-medium">
+        {option.name}
+      </p>
+      {option.type === "select" ? (
+        <div
+          role="radiogroup"
+          aria-labelledby={labelId}
+          className="flex flex-wrap gap-2"
+        >
+          {option.values.map((val) => {
+            const on = selected.includes(val.id);
+            return (
+              <button
+                type="button"
+                key={val.id}
+                role="radio"
+                aria-checked={on}
+                onClick={() => onToggle(val.id)}
+                className={`flex min-h-[44px] min-w-[44px] items-center rounded-full border px-4 text-sm font-medium transition-colors ${
+                  on
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-foreground"
+                }`}
+              >
+                {val.name}
+                {val.extra_price > 0 && (
+                  <span
+                    className={`ml-1 text-xs ${on ? "text-primary-foreground/80" : "text-muted-foreground"}`}
+                  >
+                    +{val.extra_price.toLocaleString("vi-VN")}đ
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div role="group" aria-labelledby={labelId} className="space-y-2">
+          {option.values.map((val) => {
+            const on = selected.includes(val.id);
+            return (
+              <button
+                type="button"
+                key={val.id}
+                role="checkbox"
+                aria-checked={on}
+                onClick={() => onToggle(val.id)}
+                className={`flex min-h-[44px] w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+                  on ? "border-primary bg-primary/5" : "border-border"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 ${
+                      on
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground"
+                    }`}
+                  >
+                    {on && (
                       <span className="text-[9px] font-bold leading-none">
                         ✓
                       </span>
-                    ))}
-                </span>
-                <span>{val.name}</span>
-              </div>
-              {val.extra_price > 0 && (
-                <span className="text-muted-foreground">
-                  +{val.extra_price.toLocaleString("vi-VN")}đ
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                    )}
+                  </span>
+                  <span>{val.name}</span>
+                </div>
+                {val.extra_price > 0 && (
+                  <span className="text-muted-foreground">
+                    +{val.extra_price.toLocaleString("vi-VN")}đ
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
