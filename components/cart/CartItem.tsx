@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import type { CartItem as CartItemType } from "@/types/order";
 
@@ -10,25 +10,24 @@ interface Props {
 }
 
 export function CartItem({ item, index, onUpdateQty, onRemove }: Props) {
-  const [imgError, setImgError] = useState(false);
-  // Reset error state when imageUrl changes (e.g. owner re-uploads the image)
-  useEffect(() => {
-    setImgError(false);
-  }, [item.imageUrl]);
+  // Track the specific URL that failed so the error resets automatically
+  // when imageUrl changes (e.g. owner re-uploads the product image).
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const showImage = Boolean(item.imageUrl) && item.imageUrl !== failedUrl;
   const optionText = item.selectedOptions.map((o) => o.valueName).join(", ");
 
   return (
     <div className="flex gap-3 rounded-xl bg-card p-3 shadow-sm">
       {/* Thumbnail */}
       <div className="h-[72px] w-[72px] flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-        {item.imageUrl && !imgError ? (
+        {showImage ? (
           <img
-            src={item.imageUrl}
+            src={item.imageUrl!}
             alt={item.productName}
             loading="lazy"
             decoding="async"
             className="h-full w-full object-cover"
-            onError={() => setImgError(true)}
+            onError={() => setFailedUrl(item.imageUrl ?? null)}
           />
         ) : (
           <div
