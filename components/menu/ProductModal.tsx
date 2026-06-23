@@ -122,7 +122,6 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
               <img
                 src={product.image_url!}
                 alt={product.name}
-                loading="eager"
                 decoding="async"
                 className="h-full w-full object-cover"
                 onError={() => setFailedImgUrl(product.image_url ?? null)}
@@ -139,12 +138,15 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
-            <h2 id="modal-title" className="text-lg font-semibold">
+            <h2
+              id="modal-title"
+              className="min-w-0 truncate text-lg font-semibold"
+            >
               {product.name}
             </h2>
             <div className="flex flex-shrink-0 items-center gap-3">
               <p className="font-semibold text-primary">
-                {product.price.toLocaleString("vi-VN")}đ
+                {unitPrice.toLocaleString("vi-VN")}đ
               </p>
               <button
                 type="button"
@@ -168,7 +170,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
                 {product.name}
               </h2>
               <p className="flex-shrink-0 font-semibold text-primary">
-                {product.price.toLocaleString("vi-VN")}đ
+                {unitPrice.toLocaleString("vi-VN")}đ
               </p>
             </div>
           )}
@@ -221,12 +223,19 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
             >
               <Minus size={16} />
             </button>
-            <span className="w-8 text-center font-semibold">{qty}</span>
+            <span
+              aria-live="polite"
+              aria-atomic="true"
+              className="w-8 text-center font-semibold"
+            >
+              {qty}
+            </span>
             <button
               type="button"
               onClick={() => setQty((q) => Math.min(99, q + 1))}
               aria-label="Tăng số lượng"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+              disabled={qty === 99}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground disabled:opacity-40"
             >
               <Plus size={16} />
             </button>
@@ -254,17 +263,26 @@ function OptionGroup({
   selected: string[];
   onToggle: (vid: string) => void;
 }) {
+  const labelId = `option-label-${option.id}`;
   return (
     <div>
-      <p className="mb-2 text-sm font-medium">{option.name}</p>
+      <p id={labelId} className="mb-2 text-sm font-medium">
+        {option.name}
+      </p>
       {option.type === "select" ? (
-        <div className="flex flex-wrap gap-2">
+        <div
+          role="radiogroup"
+          aria-labelledby={labelId}
+          className="flex flex-wrap gap-2"
+        >
           {option.values.map((val) => {
             const on = selected.includes(val.id);
             return (
               <button
                 type="button"
                 key={val.id}
+                role="radio"
+                aria-checked={on}
                 onClick={() => onToggle(val.id)}
                 className={`flex min-h-[44px] min-w-[44px] items-center rounded-full border px-4 text-sm font-medium transition-colors ${
                   on
@@ -285,13 +303,15 @@ function OptionGroup({
           })}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div role="group" aria-labelledby={labelId} className="space-y-2">
           {option.values.map((val) => {
             const on = selected.includes(val.id);
             return (
               <button
                 type="button"
                 key={val.id}
+                role="checkbox"
+                aria-checked={on}
                 onClick={() => onToggle(val.id)}
                 className={`flex min-h-[44px] w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors ${
                   on ? "border-primary bg-primary/5" : "border-border"
@@ -299,6 +319,7 @@ function OptionGroup({
               >
                 <div className="flex items-center gap-2">
                   <span
+                    aria-hidden="true"
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 ${
                       on
                         ? "border-primary bg-primary text-primary-foreground"
