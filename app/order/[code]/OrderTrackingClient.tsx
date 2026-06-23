@@ -104,9 +104,7 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-sm text-muted-foreground">Đơn hàng</p>
-            <h1 className="text-2xl font-bold tracking-tight">
-              #{orderCode}
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">#{orderCode}</h1>
           </div>
           <span
             className={`mt-1 rounded-full px-3 py-1 text-sm font-medium ${STATUS_BADGE_CLASS[status]}`}
@@ -175,7 +173,10 @@ function StatusCard({
           : STATUS_SUBTITLE[status]}
       </p>
       {status !== ORDER_STATUS.CANCELLED && (
-        <ProgressSteps currentStep={stepIndex} done={status === ORDER_STATUS.DONE} />
+        <ProgressSteps
+          currentStep={stepIndex}
+          done={status === ORDER_STATUS.DONE}
+        />
       )}
     </div>
   );
