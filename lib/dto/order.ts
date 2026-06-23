@@ -1,6 +1,9 @@
 import type { OrderItem, OrderItemSummary } from "@/types/order";
 
-export function toItemDto(item: OrderItem, imageUrl?: string | null): OrderItemSummary {
+export function toItemDto(
+  item: OrderItem,
+  imageUrl?: string | null
+): OrderItemSummary {
   return {
     product_name: item.product_name,
     quantity: item.quantity,

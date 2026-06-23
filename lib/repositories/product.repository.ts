@@ -47,7 +47,10 @@ export async function findImageUrlsByIds(
     .in("id", ids);
   if (error) throw error;
   return new Map(
-    (data ?? []).map((p) => [p.id as string, (p.image_url as string | null) ?? null])
+    (data ?? []).map((p) => [
+      p.id as string,
+      (p.image_url as string | null) ?? null,
+    ])
   );
 }
 

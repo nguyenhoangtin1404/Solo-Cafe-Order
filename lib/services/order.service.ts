@@ -326,7 +326,9 @@ export async function getOrderItemsWithImages(
   const order = await getOrderById(id);
   const productIds = [...new Set(order.items.map((i) => i.product_id))];
   const imageMap = await productRepo.findImageUrlsByIds(productIds);
-  return order.items.map((item) => toItemDto(item, imageMap.get(item.product_id)));
+  return order.items.map((item) =>
+    toItemDto(item, imageMap.get(item.product_id))
+  );
 }
 
 export async function cancelOrder(

@@ -89,7 +89,10 @@ export function OrderDetailDrawer({
             </p>
             <div className="space-y-3">
               {order.items.map((item, i) => (
-                <div key={i} className="flex gap-3 rounded-xl border bg-card p-3">
+                <div
+                  key={i}
+                  className="flex gap-3 rounded-xl border bg-card p-3"
+                >
                   <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
                     {item.image_url ? (
                       <img
@@ -114,7 +117,9 @@ export function OrderDetailDrawer({
                     </div>
                     {item.selected_options.length > 0 && (
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {item.selected_options.map((o) => o.value_name).join(", ")}
+                        {item.selected_options
+                          .map((o) => o.value_name)
+                          .join(", ")}
                       </p>
                     )}
                     {item.note && (
@@ -163,7 +168,10 @@ export function OrderDetailDrawer({
           <div className="border-t px-4 py-4">
             {isPending ? (
               <div className="flex items-center justify-center py-2">
-                <Loader2 size={20} className="animate-spin text-muted-foreground" />
+                <Loader2
+                  size={20}
+                  className="animate-spin text-muted-foreground"
+                />
               </div>
             ) : (
               <div className="flex gap-3">
