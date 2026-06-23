@@ -1,84 +1,139 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-    if (authError) {
-      setError("Email hoặc mật khẩu không đúng");
+      if (authError) {
+        const isRateLimit =
+          authError.code?.includes("rate_limit") || authError.status === 429;
+        setError(
+          isRateLimit
+            ? "Quá nhiều lần thử. Vui lòng thử lại sau ít phút."
+            : "Email hoặc mật khẩu không đúng"
+        );
+        return;
+      }
+
+      setPassword("");
+      const next = searchParams.get("next");
+      const isSafeRelative = (p: string) =>
+        p.startsWith("/") && !p.startsWith("//");
+      const isOwnerRoute = (p: string) =>
+        p === "/dashboard" ||
+        p.startsWith("/dashboard/") ||
+        p === "/admin" ||
+        p.startsWith("/admin/");
+      const target =
+        next && isSafeRelative(next) && isOwnerRoute(next)
+          ? next
+          : "/dashboard";
+      window.location.href = target;
+    } catch {
+      // unexpected error (network, SDK init failure, etc.)
+      setError("Có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const next = searchParams.get("next");
-    const isOwnerRoute = (p: string) =>
-      p === "/dashboard" ||
-      p.startsWith("/dashboard/") ||
-      p === "/admin" ||
-      p.startsWith("/admin/");
-    const target = next && isOwnerRoute(next) ? next : "/dashboard";
-    router.push(target);
-    router.refresh();
   }
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-4"
+      className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-4"
     >
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Đăng nhập</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Chào mừng bạn quay trở lại!
+        </p>
+      </div>
+
       <div className="space-y-1">
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-foreground"
+          className="block text-xs font-semibold tracking-widest text-secondary uppercase"
         >
           Email
         </label>
-        <input
-          id="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2.5 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
-        />
+        <div className="relative">
+          <Mail
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            size={16}
+          />
+          <input
+            id="email"
+            type="email"
+            inputMode="email"
+            required
+            autoComplete="email"
+            placeholder="owner@cafe.com"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
+            className="w-full pl-9 pr-3 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
+          />
+        </div>
       </div>
 
       <div className="space-y-1">
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-foreground"
+          className="block text-xs font-semibold tracking-widest text-secondary uppercase"
         >
           Mật khẩu
         </label>
-        <input
-          id="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2.5 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
-        />
+        <div className="relative">
+          <Lock
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            size={16}
+          />
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
+            className="w-full pl-9 pr-12 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground min-w-[44px] min-h-[44px] flex items-center justify-center"
+            tabIndex={-1}
+            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -90,9 +145,16 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+        aria-busy={loading}
+        className="w-full py-3.5 bg-primary text-primary-foreground rounded-full font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] flex items-center justify-center gap-2"
       >
-        {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+        {loading ? (
+          "Đang đăng nhập..."
+        ) : (
+          <>
+            Đăng nhập <span aria-hidden="true">→</span>
+          </>
+        )}
       </button>
     </form>
   );
@@ -102,11 +164,23 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-2">☕ Vibe Cafe</h1>
-        <p className="text-sm text-muted-foreground text-center mb-8">
-          Đăng nhập để quản lý quán
-        </p>
-        <Suspense>
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4">
+            <Image
+              src="/logo_bean.png"
+              alt="Vibe Cafe logo"
+              width={56}
+              height={56}
+              priority
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-secondary">Vibe Cafe ☕</h1>
+        </div>
+        <Suspense
+          fallback={
+            <div className="rounded-2xl border border-border bg-white p-6 h-[350px] animate-pulse" />
+          }
+        >
           <LoginForm />
         </Suspense>
       </div>
