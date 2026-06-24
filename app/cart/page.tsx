@@ -17,7 +17,10 @@ export default function CartPage() {
           paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <div className="flex h-40 w-40 items-center justify-center rounded-full bg-card" aria-hidden="true">
+        <div
+          className="flex h-40 w-40 items-center justify-center rounded-full bg-card"
+          aria-hidden="true"
+        >
           <ShoppingCart size={64} className="text-amber-400" />
         </div>
         <div>

@@ -60,7 +60,10 @@ export default async function MenuPage() {
           paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <div className="flex h-32 w-32 items-center justify-center rounded-full bg-card" aria-hidden="true">
+        <div
+          className="flex h-32 w-32 items-center justify-center rounded-full bg-card"
+          aria-hidden="true"
+        >
           <Leaf size={56} className="text-amber-400" />
         </div>
         <div>

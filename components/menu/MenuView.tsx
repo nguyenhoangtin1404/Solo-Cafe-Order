@@ -36,7 +36,10 @@ function EmptyState({ isSearching }: { isSearching: boolean }) {
         </>
       ) : (
         <>
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-card" aria-hidden="true">
+          <div
+            className="flex h-28 w-28 items-center justify-center rounded-full bg-card"
+            aria-hidden="true"
+          >
             <Leaf size={48} className="text-amber-400" />
           </div>
           <div>
