@@ -14,7 +14,7 @@ export default function Error({
     console.error(error);
   }, [error]);
 
-  const msg = error.message.toLowerCase();
+  const msg = (error.message ?? "").toLowerCase();
   const isNetworkError =
     msg.includes("failed to fetch") ||
     msg.includes("network error") ||
@@ -27,7 +27,10 @@ export default function Error({
     : "Vui lòng thử lại sau.";
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
+    <main
+      role="alert"
+      className="min-h-screen flex flex-col items-center justify-center px-4 text-center"
+    >
       <div className="relative mb-6" aria-hidden="true">
         <div className="flex h-32 w-32 items-center justify-center rounded-full bg-card">
           <Icon size={56} className="text-amber-400" />

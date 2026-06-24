@@ -67,9 +67,9 @@ export default async function MenuPage() {
           <Leaf size={56} className="text-amber-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Vibe Cafe</h1>
+          <h1 className="text-xl font-bold">Menu đang trống</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Menu đang được cập nhật. Vui lòng quay lại sau!
+            Vui lòng quay lại sau nhé!
           </p>
         </div>
       </div>

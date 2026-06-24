@@ -3,10 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 function MenuCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-card shadow-sm">
-      <Skeleton className="aspect-square w-full bg-card" />
+      <Skeleton className="aspect-square w-full bg-muted-foreground/10" />
       <div className="space-y-2 p-2.5">
-        <Skeleton className="h-4 w-3/4 bg-card" />
-        <Skeleton className="h-4 w-1/2 bg-card" />
+        <Skeleton className="h-4 w-3/4 bg-muted-foreground/10" />
+        <Skeleton className="h-4 w-1/2 bg-muted-foreground/10" />
       </div>
     </div>
   );
