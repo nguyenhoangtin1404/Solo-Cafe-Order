@@ -11,7 +11,12 @@ export default function CartPage() {
 
   if (cart.items.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+      <div
+        className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center"
+        style={{
+          paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         <ShoppingCart size={48} className="text-muted-foreground" />
         <p className="text-lg font-medium">Giỏ hàng trống</p>
         <Link
@@ -25,7 +30,10 @@ export default function CartPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div
+      className="flex min-h-screen flex-col"
+      style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <Link
           href="/menu"

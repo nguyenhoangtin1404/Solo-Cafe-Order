@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import type { CartItem, OrderSuccessData } from "@/types/order";
 import {
   MAX_ORDER_NOTE_LENGTH,
   MAX_PICKUP_NAME_LENGTH,
+  ORDER_CODE_RE,
   ORDER_SUCCESS_SESSION_KEY,
   PAYMENT_METHOD,
 } from "@/lib/constants";
+import { saveLastOrderCode } from "@/lib/lastOrderStorage";
 import type { PaymentMethod } from "@/lib/constants";
 
 interface Props {
@@ -18,8 +21,34 @@ interface Props {
   onClearCart: () => void;
 }
 
+const PAYMENT_OPTIONS = [
+  { value: PAYMENT_METHOD.CASH, label: "Tiền mặt" },
+  { value: PAYMENT_METHOD.BANK_TRANSFER, label: "Chuyển khoản" },
+] as const;
+
+function applyOrderSuccess(
+  data: OrderSuccessData,
+  onClearCart: () => void,
+  router: AppRouterInstance
+): void {
+  const codeValid = ORDER_CODE_RE.test(data.order_code);
+  if (codeValid) saveLastOrderCode(data.order_code);
+  try {
+    sessionStorage.setItem(ORDER_SUCCESS_SESSION_KEY, JSON.stringify(data));
+    onClearCart();
+    router.push("/order-success");
+  } catch {
+    onClearCart();
+    toast.success(
+      `Đặt hàng thành công! Mã đơn: ${data.order_code}. Lưu lại nhé!`
+    );
+    if (codeValid) router.push(`/order/${data.order_code}`);
+  }
+}
+
 export function CartSummary({ items, total, onClearCart }: Props) {
   const router = useRouter();
+  const submittingRef = useRef(false);
   const [pickupName, setPickupName] = useState("");
   const [orderNote, setOrderNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
@@ -31,7 +60,9 @@ export function CartSummary({ items, total, onClearCart }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (loading || items.length === 0 || pickupNameTooLong) return;
+    if (submittingRef.current || items.length === 0 || pickupNameTooLong)
+      return;
+    submittingRef.current = true;
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -62,22 +93,18 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         toast.error(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         return;
       }
-      const data = (await res.json()) as OrderSuccessData;
+      let data: OrderSuccessData;
       try {
-        sessionStorage.setItem(ORDER_SUCCESS_SESSION_KEY, JSON.stringify(data));
+        data = (await res.json()) as OrderSuccessData;
       } catch {
-        onClearCart();
-        toast.success(
-          `Đặt hàng thành công! Mã đơn: ${data.order_code ?? ""}. Lưu lại nhé!`
-        );
-        if (data.order_code) router.push(`/order/${data.order_code}`);
+        toast.error("Lỗi đọc phản hồi từ máy chủ.");
         return;
       }
-      onClearCart();
-      router.push("/order-success");
+      applyOrderSuccess(data, onClearCart, router);
     } catch {
       toast.error("Mất kết nối. Vui lòng thử lại.");
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   }
@@ -98,7 +125,7 @@ export function CartSummary({ items, total, onClearCart }: Props) {
           onChange={(e) => setPickupName(e.target.value)}
           placeholder="Nhập tên để nhân viên gọi khi xong"
           maxLength={MAX_PICKUP_NAME_LENGTH}
-          className="w-full rounded-lg border border-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full rounded-lg border border-input px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         {pickupNameTooLong && (
           <p role="alert" className="mt-1 text-xs text-destructive">
@@ -121,28 +148,41 @@ export function CartSummary({ items, total, onClearCart }: Props) {
           placeholder="Ghi chú cho toàn bộ đơn hàng..."
           maxLength={MAX_ORDER_NOTE_LENGTH}
           rows={2}
-          className="w-full resize-none rounded-lg border border-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full resize-none rounded-lg border border-input px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </div>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-medium">
+        <legend id="payment-legend" className="mb-2 text-sm font-medium">
           Phương thức thanh toán
         </legend>
-        <div className="space-y-2">
-          {(
-            [
-              { value: PAYMENT_METHOD.CASH, label: "Tiền mặt" },
-              { value: PAYMENT_METHOD.BANK_TRANSFER, label: "Chuyển khoản" },
-            ] as const
-          ).map(({ value, label }) => (
+        <div
+          role="radiogroup"
+          aria-labelledby="payment-legend"
+          className="space-y-2"
+          onKeyDown={(e) => {
+            const values = PAYMENT_OPTIONS.map((o) => o.value);
+            const idx = values.indexOf(paymentMethod);
+            if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+              e.preventDefault();
+              setPaymentMethod(values[(idx + 1) % values.length]);
+            } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+              e.preventDefault();
+              setPaymentMethod(
+                values[(idx - 1 + values.length) % values.length]
+              );
+            }
+          }}
+        >
+          {PAYMENT_OPTIONS.map(({ value, label }) => (
             <button
               key={value}
               type="button"
               role="radio"
               aria-checked={paymentMethod === value}
+              tabIndex={paymentMethod === value ? 0 : -1}
               onClick={() => setPaymentMethod(value)}
-              className={`flex min-h-[44px] w-full items-center gap-3 rounded-xl border p-3 text-sm transition-colors ${
+              className={`flex min-h-[44px] w-full items-center gap-3 rounded-xl border p-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 paymentMethod === value
                   ? "border-primary bg-primary/5"
                   : "border-border"

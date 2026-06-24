@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
+import { NavController } from "@/components/layout/NavController";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -60,6 +61,7 @@ export default function RootLayout({
     <html lang="vi" className={`${beVietnamPro.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {children}
+        <NavController />
         <Toaster richColors position="top-center" />
       </body>
     </html>

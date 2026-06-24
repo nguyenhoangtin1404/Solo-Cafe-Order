@@ -53,7 +53,12 @@ export default async function MenuPage() {
 
   if (categories.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center">
+      <div
+        className="flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center"
+        style={{
+          paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         <span className="text-5xl">☕</span>
         <h1 className="text-xl font-semibold">Vibe Cafe</h1>
         <p className="text-muted-foreground">

@@ -7,13 +7,28 @@ import { CheckCircle, Clock } from "lucide-react";
 import { ORDER_SUCCESS_SESSION_KEY } from "@/lib/constants";
 import type { OrderSuccessData } from "@/types/order";
 
+function subscribeNoOp(): () => void {
+  return () => {};
+}
+
+function isOrderSuccessData(v: unknown): v is OrderSuccessData {
+  if (typeof v !== "object" || v === null) return false;
+  const r = v as Record<string, unknown>;
+  return (
+    typeof r.order_code === "string" &&
+    r.order_code.length > 0 &&
+    typeof r.total_amount === "number" &&
+    Array.isArray(r.items)
+  );
+}
+
 function readOrderSuccess(): OrderSuccessData | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = sessionStorage.getItem(ORDER_SUCCESS_SESSION_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as OrderSuccessData;
-    if (!parsed.order_code) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isOrderSuccessData(parsed)) return null;
     return parsed;
   } catch {
     return null;
@@ -22,12 +37,9 @@ function readOrderSuccess(): OrderSuccessData | null {
 
 export default function OrderSuccessPage() {
   const router = useRouter();
-  // Cache the first read so re-renders after removeItem don't return null.
   const snapshotRef = useRef<OrderSuccessData | null | undefined>(undefined);
-  // useSyncExternalStore: server snapshot = null (matches SSR output),
-  // client snapshot reads sessionStorage once, preventing hydration mismatch.
   const data = useSyncExternalStore(
-    () => () => {},
+    subscribeNoOp,
     () => {
       if (snapshotRef.current === undefined) {
         snapshotRef.current = readOrderSuccess();
@@ -47,8 +59,15 @@ export default function OrderSuccessPage() {
 
   if (!data) return null;
 
+  const qrUrl = data.bank_transfer_info?.qr_image_url;
+  const safeQrUrl =
+    typeof qrUrl === "string" && qrUrl.startsWith("https://") ? qrUrl : null;
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div
+      className="flex min-h-screen flex-col bg-background"
+      style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <div className="flex flex-1 flex-col items-center px-4 py-8">
         <CheckCircle size={56} className="text-status-done" />
         <h1 className="mt-3 text-2xl font-bold">Đặt hàng thành công!</h1>
@@ -70,7 +89,7 @@ export default function OrderSuccessPage() {
         )}
 
         <div className="mt-3 flex items-center gap-2 rounded-full bg-status-new/10 px-4 py-2 text-status-new">
-          <Clock size={16} />
+          <Clock size={16} aria-hidden="true" />
           <span className="text-sm font-medium">
             Khoảng {data.wait_estimate}
           </span>
@@ -143,10 +162,10 @@ export default function OrderSuccessPage() {
                   <span className="font-mono font-bold">{data.order_code}</span>
                 </p>
               </div>
-              {data.bank_transfer_info.qr_image_url && (
+              {safeQrUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={data.bank_transfer_info.qr_image_url}
+                  src={safeQrUrl}
                   alt="QR chuyển khoản"
                   className="mx-auto mt-2 h-48 w-48 rounded-lg"
                 />

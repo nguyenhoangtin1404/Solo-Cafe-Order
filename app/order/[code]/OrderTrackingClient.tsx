@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Phone, User } from "lucide-react";
 import { useOrderTracking } from "@/hooks/useOrderTracking";
@@ -60,7 +61,7 @@ const STATUS_SUBTITLE: Record<OrderStatus, string> = {
 
 const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? null;
 
-const VALID_STATUSES: string[] = ["new", "making", "done", "cancelled"];
+const VALID_STATUSES: string[] = Object.values(ORDER_STATUS);
 function isValidStatus(s: string): s is OrderStatus {
   return VALID_STATUSES.includes(s);
 }
@@ -206,7 +207,10 @@ function OrderTrackingLayout({
   onConfirm,
 }: LayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div
+      className="flex min-h-screen flex-col bg-background"
+      style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <header className="flex items-center justify-between border-b px-4 py-3">
         <span className="text-lg font-bold text-primary">☕ Vibe Cafe</span>
         <ConnectionStatus status={connectionStatus} />
@@ -277,6 +281,16 @@ function OrderTrackingLayout({
           />
 
           <SupportButton phone={SUPPORT_PHONE} />
+
+          {(status === ORDER_STATUS.DONE ||
+            status === ORDER_STATUS.CANCELLED) && (
+            <Link
+              href="/menu"
+              className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-primary font-medium text-primary-foreground"
+            >
+              Đặt thêm ☕
+            </Link>
+          )}
         </div>
       </main>
     </div>
@@ -380,11 +394,25 @@ const CancelSection = memo(function CancelSection({
   onDismiss: () => void;
   onConfirm: () => void;
 }) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const prevShowConfirmRef = useRef(false);
+
+  useEffect(() => {
+    if (showConfirm) {
+      dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    } else if (prevShowConfirmRef.current) {
+      triggerRef.current?.focus();
+    }
+    prevShowConfirmRef.current = showConfirm;
+  }, [showConfirm]);
+
   if (status !== ORDER_STATUS.NEW) return null;
 
   if (showConfirm) {
     return (
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="cancel-dialog-title"
@@ -420,6 +448,7 @@ const CancelSection = memo(function CancelSection({
   return (
     <div className="space-y-1.5">
       <button
+        ref={triggerRef}
         type="button"
         onClick={onShow}
         className="min-h-[44px] w-full rounded-xl border border-destructive py-3 font-medium text-destructive"

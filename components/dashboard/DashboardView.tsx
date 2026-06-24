@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Loader2, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { useOrderQueue } from "@/hooks/useOrderQueue";
@@ -68,6 +69,7 @@ export function DashboardView({ initialOrders }: Props) {
   );
 
   const [activeTab, setActiveTab] = useState<TabId>("new");
+  const tabButtonRefs = useRef<Map<TabId, HTMLButtonElement | null>>(new Map());
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
   const [newArrivals, setNewArrivals] = useState<Set<string>>(new Set());
   // Track seen order IDs (not count) so cancellations don't skew the unread badge.
@@ -293,7 +295,11 @@ export function DashboardView({ initialOrders }: Props) {
   return (
     // Any pointer interaction triggers audio unlock so the owner doesn't have
     // to find and tap the banner specifically as their first gesture.
-    <div className="min-h-screen bg-background" onPointerDown={unlock}>
+    <div
+      className="min-h-screen bg-background"
+      style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+      onPointerDown={unlock}
+    >
       {/* Sticky top block: header + optional audio banner + tabs all stick together
           so the tab bar never overlaps the banner during scroll. */}
       <div className="sticky top-0 z-10 bg-background">
@@ -307,19 +313,45 @@ export function DashboardView({ initialOrders }: Props) {
         {/* Audio unlock banner — shown until first user interaction */}
         {!unlocked && (
           <button
+            type="button"
             onClick={unlock}
             className="flex min-h-[44px] w-full items-center justify-center border-b border-status-new/30 bg-status-new/10 px-4 py-2 text-center text-sm text-status-new"
           >
-            Nhấn để bật thông báo âm thanh khi có đơn mới 🔔
+            Nhấn để bật thông báo âm thanh khi có đơn mới{" "}
+            <span aria-hidden="true">🔔</span>
           </button>
         )}
 
         {/* Filter tabs */}
         <div className="border-b">
-          <div className="flex px-1">
+          <div
+            role="tablist"
+            aria-label="Lọc đơn hàng"
+            className="flex px-1"
+            onKeyDown={(e) => {
+              if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+              e.preventDefault();
+              const ids = TABS.map((t) => t.id);
+              const currentIdx = ids.indexOf(activeTab);
+              const nextIdx =
+                e.key === "ArrowRight"
+                  ? (currentIdx + 1) % ids.length
+                  : (currentIdx - 1 + ids.length) % ids.length;
+              const nextId = ids[nextIdx];
+              flushSync(() => handleTabChange(nextId));
+              tabButtonRefs.current.get(nextId)?.focus();
+            }}
+          >
             {TABS.map((tab) => (
               <button
                 key={tab.id}
+                ref={(el) => {
+                  tabButtonRefs.current.set(tab.id, el);
+                }}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 onClick={() => handleTabChange(tab.id)}
                 className={`relative flex min-h-[44px] items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
                   activeTab === tab.id
@@ -330,6 +362,7 @@ export function DashboardView({ initialOrders }: Props) {
                 {tab.label}
                 {tabCounts[tab.id] > 0 && (
                   <span
+                    aria-hidden="true"
                     className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
                       activeTab === tab.id
                         ? "bg-primary text-primary-foreground"
@@ -341,7 +374,10 @@ export function DashboardView({ initialOrders }: Props) {
                 )}
                 {/* Red dot for unread new orders */}
                 {tab.id === "new" && unreadCount > 0 && activeTab !== "new" && (
-                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
+                  <span
+                    aria-label={`${unreadCount} đơn chưa đọc`}
+                    className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive"
+                  />
                 )}
               </button>
             ))}

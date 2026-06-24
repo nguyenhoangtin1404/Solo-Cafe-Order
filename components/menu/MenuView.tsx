@@ -45,7 +45,10 @@ function EmptyState({ isSearching }: { isSearching: boolean }) {
 function CartBar({ totalQty, total }: { totalQty: number; total: number }) {
   if (totalQty === 0) return null;
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-20">
+    <div
+      className="fixed left-4 right-4 z-20"
+      style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}
+    >
       <Link
         href="/cart"
         className="flex items-center justify-between rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-lg"
@@ -63,6 +66,7 @@ function CartBar({ totalQty, total }: { totalQty: number; total: number }) {
 export function MenuView({ categories }: Props) {
   const [selected, setSelected] = useState<MenuProduct | null>(null);
   const [search, setSearch] = useState("");
+  const [greeting] = useState(getGreeting);
   const inputRef = useRef<HTMLInputElement>(null);
   const cart = useCart();
 
@@ -109,7 +113,7 @@ export function MenuView({ categories }: Props) {
       <header className="px-4 pb-3 pt-4">
         <h1 className="text-xl font-bold">Vibe Cafe ☕</h1>
         <p className="text-sm text-muted-foreground" suppressHydrationWarning>
-          {getGreeting()} Bạn muốn uống gì hôm nay?
+          {greeting} Bạn muốn uống gì hôm nay?
         </p>
       </header>
 
@@ -137,7 +141,7 @@ export function MenuView({ categories }: Props) {
               }
             }}
             placeholder="Tìm cà phê, trà, bánh..."
-            className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-base outline-none focus:ring-2 focus:ring-primary"
+            className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-base focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {search && (
             <button
@@ -156,7 +160,15 @@ export function MenuView({ categories }: Props) {
 
       {!isSearching && <CategoryTabs categories={categories} />}
 
-      <main className="flex-1 space-y-6 px-4 pb-28 pt-4">
+      <main
+        className="flex-1 space-y-6 px-4 pt-4"
+        style={{
+          paddingBottom:
+            totalQty > 0
+              ? "calc(9rem + env(safe-area-inset-bottom, 0px))"
+              : "calc(5rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         {filteredCategories.length === 0 ? (
           <EmptyState isSearching={isSearching} />
         ) : (

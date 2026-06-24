@@ -39,7 +39,10 @@ export default async function OrderTrackingPage({ params }: PageProps) {
 
 function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center"
+      style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <span className="text-4xl">🔍</span>
       <h1 className="text-xl font-semibold">Không tìm thấy đơn hàng</h1>
       <p className="text-muted-foreground">

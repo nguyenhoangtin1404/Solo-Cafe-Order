@@ -39,8 +39,13 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 ] as const;
 
 export const ORDER_SUCCESS_SESSION_KEY = "vibe_cafe_order_success";
+export const LAST_ORDER_CODE_KEY = "vibe_cafe_last_order_code";
 
 export const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 
 // Error codes used programmatically (prevents magic-string drift)
 export const CATEGORY_HAS_PRODUCTS = "CATEGORY_HAS_PRODUCTS";
+
+export const APP_NAME = "Vibe Cafe";
+export const OWNER_PATH_PREFIXES = ["/dashboard", "/admin"] as const;
+export const HIDDEN_PATH_PREFIXES = ["/login"] as const;
