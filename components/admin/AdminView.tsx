@@ -239,7 +239,10 @@ export function AdminView({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {toggleStatusMessage}
       </div>
@@ -351,6 +354,7 @@ export function AdminView({
           onProductUpdated={handleProductUpdated}
           onProductDeleted={handleProductDeleted}
           onCloseGlobalAdd={() => setShowGlobalAdd(false)}
+          fallbackFocusRef={headerAddButtonRef}
         />
       </main>
     </div>

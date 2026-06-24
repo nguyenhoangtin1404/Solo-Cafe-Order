@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Category } from "@/types/product";
@@ -17,6 +17,7 @@ interface Props {
   onProductDeleted: (id: string, categoryId: string) => void;
   onCloseGlobalAdd?: () => void;
   formsResetToken?: number;
+  fallbackFocusRef?: RefObject<HTMLButtonElement | null>;
 }
 
 export function ProductsSection({
@@ -28,6 +29,7 @@ export function ProductsSection({
   onProductDeleted,
   onCloseGlobalAdd,
   formsResetToken,
+  fallbackFocusRef,
 }: Props) {
   const [failedImgUrls, setFailedImgUrls] = useState<Set<string>>(new Set());
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -213,7 +215,8 @@ export function ProductsSection({
                       } else {
                         (
                           editTriggerRefs.current[updated.id] ??
-                          addTriggerRefs.current[product.category_id]
+                          addTriggerRefs.current[product.category_id] ??
+                          fallbackFocusRef?.current
                         )?.focus();
                       }
                     });

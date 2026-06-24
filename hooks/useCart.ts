@@ -21,6 +21,7 @@ let _cachedStr: string | null = null;
 let _cachedItems: CartItem[] = [];
 
 function readCart(): CartItem[] {
+  if (typeof window === "undefined") return _cachedItems;
   try {
     const stored = localStorage.getItem(CART_KEY);
     if (stored === _cachedStr) return _cachedItems;
@@ -40,11 +41,13 @@ function readCart(): CartItem[] {
 }
 
 function writeCart(items: CartItem[]): void {
+  if (typeof window === "undefined") return;
   localStorage.setItem(CART_KEY, JSON.stringify(items));
   window.dispatchEvent(new Event(CART_STORAGE_EVENT));
 }
 
 function subscribeCart(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
   window.addEventListener("storage", onStoreChange);
   window.addEventListener(CART_STORAGE_EVENT, onStoreChange);
   return () => {

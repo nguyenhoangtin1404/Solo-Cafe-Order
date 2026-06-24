@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
+import { OWNER_PATH_PREFIXES } from "@/lib/constants";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -42,10 +43,9 @@ function LoginForm() {
       const isSafeRelative = (p: string) =>
         p.startsWith("/") && !p.startsWith("//");
       const isOwnerRoute = (p: string) =>
-        p === "/dashboard" ||
-        p.startsWith("/dashboard/") ||
-        p === "/admin" ||
-        p.startsWith("/admin/");
+        OWNER_PATH_PREFIXES.some(
+          (prefix) => p === prefix || p.startsWith(prefix + "/")
+        );
       const target =
         next && isSafeRelative(next) && isOwnerRoute(next)
           ? next
