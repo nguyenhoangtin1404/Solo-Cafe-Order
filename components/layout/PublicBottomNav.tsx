@@ -102,7 +102,7 @@ export function PublicBottomNav() {
         <CartTab isActive={pathname === "/cart"} count={cartCount} />
         <OrderTab
           href={orderHref}
-          isActive={orderHref !== null && pathname.startsWith("/order")}
+          isActive={orderHref !== null && pathname.startsWith("/order/")}
         />
       </div>
       <div style={{ height: "env(safe-area-inset-bottom, 0px)" }} />

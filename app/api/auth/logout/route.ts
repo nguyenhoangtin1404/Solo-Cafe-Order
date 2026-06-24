@@ -1,14 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
+import { handleRouteError } from "@/lib/errors";
+import * as authService from "@/lib/services/auth.service";
 import { NextResponse } from "next/server";
 
-export async function POST(): Promise<NextResponse> {
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    return NextResponse.json(
-      { ok: false, message: error.message },
-      { status: 500 }
-    );
+export async function POST(): Promise<Response> {
+  try {
+    await authService.signOut();
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleRouteError(err);
   }
-  return NextResponse.json({ ok: true });
 }
