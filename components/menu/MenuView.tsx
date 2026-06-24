@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, ShoppingCart, X } from "lucide-react";
+import { Leaf, Search, ShoppingCart, X } from "lucide-react";
 import { normalizeSearch } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { CategoryTabs } from "./CategoryTabs";
@@ -23,19 +23,28 @@ function getGreeting(): string {
 
 function EmptyState({ isSearching }: { isSearching: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+    <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
       {isSearching ? (
         <>
           <span className="text-4xl">🔍</span>
-          <p className="font-medium">Không tìm thấy món nào</p>
-          <p className="text-sm text-muted-foreground">
-            Thử tìm với từ khóa khác
-          </p>
+          <div>
+            <p className="font-medium">Không tìm thấy món nào</p>
+            <p className="text-sm text-muted-foreground">
+              Thử tìm với từ khóa khác
+            </p>
+          </div>
         </>
       ) : (
         <>
-          <span className="text-4xl">☕</span>
-          <p className="font-medium">Chưa có món nào</p>
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#fff1e3]">
+            <Leaf size={48} className="text-amber-400" />
+          </div>
+          <div>
+            <p className="font-bold">Danh mục này chưa có món</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Vui lòng chọn danh mục khác
+            </p>
+          </div>
         </>
       )}
     </div>

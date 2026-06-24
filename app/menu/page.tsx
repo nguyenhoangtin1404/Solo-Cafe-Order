@@ -1,3 +1,4 @@
+import { Leaf } from "lucide-react";
 import { getMenuWithCategories } from "@/lib/services/product.service";
 import { MenuView } from "@/components/menu/MenuView";
 import type { MenuCategory, MenuOption, MenuProduct } from "@/types/menu";
@@ -54,16 +55,20 @@ export default async function MenuPage() {
   if (categories.length === 0) {
     return (
       <div
-        className="flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center"
+        className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center"
         style={{
           paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <span className="text-5xl">☕</span>
-        <h1 className="text-xl font-semibold">Vibe Cafe</h1>
-        <p className="text-muted-foreground">
-          Menu đang được cập nhật. Vui lòng quay lại sau!
-        </p>
+        <div className="flex h-32 w-32 items-center justify-center rounded-full bg-[#fff1e3]">
+          <Leaf size={56} className="text-amber-400" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold">Vibe Cafe</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Menu đang được cập nhật. Vui lòng quay lại sau!
+          </p>
+        </div>
       </div>
     );
   }

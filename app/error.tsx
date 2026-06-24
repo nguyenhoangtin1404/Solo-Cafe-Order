@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { RefreshCw, WifiOff } from "lucide-react";
 
 export default function Error({
   error,
@@ -12,14 +13,38 @@ export default function Error({
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  const isNetworkError =
+    error.message.toLowerCase().includes("network") ||
+    error.message.toLowerCase().includes("fetch") ||
+    error.message.toLowerCase().includes("failed");
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-      <p className="text-lg font-semibold text-foreground">Có lỗi xảy ra</p>
-      <p className="mt-1 text-sm text-muted-foreground">Vui lòng thử lại.</p>
+      {/* Icon */}
+      <div className="relative mb-6">
+        <div className="flex h-32 w-32 items-center justify-center rounded-full bg-[#fff1e3]">
+          <WifiOff size={56} className="text-amber-500" />
+        </div>
+        <span className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white shadow">
+          ×
+        </span>
+      </div>
+
+      <h1 className="text-xl font-bold text-foreground">
+        {isNetworkError ? "Không có kết nối mạng" : "Có lỗi xảy ra"}
+      </h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {isNetworkError
+          ? "Kiểm tra kết nối và thử lại."
+          : "Vui lòng thử lại sau."}
+      </p>
+
       <button
         onClick={reset}
-        className="mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-full text-sm font-medium min-h-[44px]"
+        className="mt-8 inline-flex items-center gap-2 rounded-full bg-amber-900 px-7 py-3 text-sm font-semibold text-white min-h-[44px] shadow"
       >
+        <RefreshCw size={16} />
         Thử lại
       </button>
     </main>

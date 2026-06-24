@@ -17,12 +17,20 @@ export default function CartPage() {
           paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <ShoppingCart size={48} className="text-muted-foreground" />
-        <p className="text-lg font-medium">Giỏ hàng trống</p>
+        <div className="flex h-40 w-40 items-center justify-center rounded-full bg-[#fff1e3]">
+          <ShoppingCart size={64} className="text-amber-400" />
+        </div>
+        <div>
+          <p className="text-lg font-bold">Giỏ hàng đang trống</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Hãy chọn món bạn thích!
+          </p>
+        </div>
         <Link
           href="/menu"
-          className="rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground"
+          className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-7 py-3 text-sm font-semibold text-white min-h-[44px] shadow"
         >
+          <ArrowLeft size={16} />
           Xem menu
         </Link>
       </div>
