@@ -13,7 +13,7 @@ CREATE TABLE order_code_seq (
 
 -- orders (no deleted_at — cancel = status 'cancelled')
 CREATE TABLE orders (
-  id              uuid        DEFAULT extensions.uuid_generate_v7() PRIMARY KEY,
+  id              uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   order_code      varchar     NOT NULL,
   status          varchar     NOT NULL DEFAULT 'new'
                               CHECK (status IN ('new', 'making', 'done', 'cancelled')),
@@ -29,7 +29,7 @@ CREATE TABLE orders (
 
 -- order_items
 CREATE TABLE order_items (
-  id                uuid    NOT NULL DEFAULT extensions.uuid_generate_v7() PRIMARY KEY,
+  id                uuid    NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   order_id          uuid    NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
   product_id        uuid,                                   -- soft ref: no FK (product may be soft-deleted)
   product_name      varchar NOT NULL,                       -- snapshot at submit time
