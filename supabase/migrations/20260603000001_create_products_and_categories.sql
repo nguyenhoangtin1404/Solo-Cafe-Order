@@ -1,14 +1,11 @@
 -- supabase/migrations/20260603000001_create_products_and_categories.sql
 
 -- Description: Create categories, products, product_options, product_option_values tables
--- with UUID v7 PKs, soft delete, FK constraints (ON DELETE RESTRICT), indexes, and RLS policies
-
--- Enable UUID v7 extension in Supabase-required schema
-CREATE EXTENSION IF NOT EXISTS pg_uuidv7 SCHEMA extensions;
+-- with UUID v4 PKs, soft delete, FK constraints (ON DELETE RESTRICT), indexes, and RLS policies
 
 -- categories
 CREATE TABLE categories (
-  id          uuid        DEFAULT extensions.uuid_generate_v7() PRIMARY KEY,
+  id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   name        varchar     NOT NULL,
   sort_order  int         NOT NULL,
   created_at  timestamptz DEFAULT now() NOT NULL,
@@ -17,7 +14,7 @@ CREATE TABLE categories (
 
 -- products
 CREATE TABLE products (
-  id           uuid        DEFAULT extensions.uuid_generate_v7() PRIMARY KEY,
+  id           uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   category_id  uuid        NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   name         varchar     NOT NULL,
   description  text,
@@ -30,7 +27,7 @@ CREATE TABLE products (
 
 -- product_options
 CREATE TABLE product_options (
-  id          uuid        DEFAULT extensions.uuid_generate_v7() PRIMARY KEY,
+  id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   product_id  uuid        NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
   name        varchar     NOT NULL,
   type        varchar     NOT NULL CHECK (type IN ('select', 'multi')),
@@ -39,7 +36,7 @@ CREATE TABLE product_options (
 
 -- product_option_values
 CREATE TABLE product_option_values (
-  id           uuid        DEFAULT extensions.uuid_generate_v7() PRIMARY KEY,
+  id           uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   option_id    uuid        NOT NULL REFERENCES product_options(id) ON DELETE RESTRICT,
   name         varchar     NOT NULL,
   extra_price  int         NOT NULL DEFAULT 0 CHECK (extra_price >= 0),
