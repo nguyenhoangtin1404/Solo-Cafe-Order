@@ -42,12 +42,10 @@ function toProductDto(product: ProductWithOptions): MenuProductDto {
     description: product.description,
     price: product.price,
     image_url: product.image_url,
-    // Option không còn value nào (đã soft delete hết) thì ẩn luôn — tránh group rỗng kẹt UI chọn món.
     // Sort tường minh vì nested select không có ORDER BY: id là UUID v7 (thứ tự tạo, so sánh
     // codepoint — không dùng localeCompare vì phụ thuộc locale runtime), values theo extra_price
     // tăng dần để FE default-select value rẻ nhất, tie-break bằng id cho deterministic.
     options: product.options
-      .filter((option) => option.values.length > 0)
       .sort((a, b) => (a.id < b.id ? -1 : 1))
       .map((option) => ({
         id: option.id,

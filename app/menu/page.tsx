@@ -5,12 +5,6 @@ import type { ProductWithOptions } from "@/types/product";
 
 export const dynamic = "force-dynamic";
 
-function hasNoEmptySelectOption(p: ProductWithOptions): boolean {
-  return !p.options.some(
-    (opt) => opt.type === "select" && opt.values.length === 0
-  );
-}
-
 function toMenuProduct(p: ProductWithOptions): MenuProduct {
   return {
     id: p.id,
@@ -19,7 +13,6 @@ function toMenuProduct(p: ProductWithOptions): MenuProduct {
     price: p.price,
     image_url: p.image_url,
     options: p.options
-      .filter((opt) => opt.values.length > 0)
       .sort((a, b) => (a.id < b.id ? -1 : 1))
       .map(
         (opt): MenuOption => ({
@@ -47,7 +40,7 @@ export default async function MenuPage() {
       id: cat.id,
       name: cat.name,
       sort_order: cat.sort_order,
-      products: cat.products.filter(hasNoEmptySelectOption).map(toMenuProduct),
+      products: cat.products.map(toMenuProduct),
     }))
     .filter((cat) => cat.products.length > 0);
 

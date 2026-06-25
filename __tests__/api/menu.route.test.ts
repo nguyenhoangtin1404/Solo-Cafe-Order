@@ -268,7 +268,7 @@ describe("GET /api/menu", () => {
     ).toEqual(["val-aaaa", "val-bbbb"]);
   });
 
-  it("ẩn option không còn value nào", async () => {
+  it("giữ option không còn value nào để UI hiển thị trạng thái chưa cấu hình", async () => {
     mockedService.getMenuWithCategories.mockResolvedValue([
       makeCategoryWithProducts({
         products: [
@@ -291,7 +291,14 @@ describe("GET /api/menu", () => {
     const res = await GET();
     const body = await res.json();
 
-    expect(body.categories[0].products[0].options).toEqual([]);
+    expect(body.categories[0].products[0].options).toEqual([
+      {
+        id: "opt-empty",
+        name: "Size",
+        type: "select",
+        values: [],
+      },
+    ]);
   });
 
   it("pass-through description và image_url null", async () => {
