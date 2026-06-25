@@ -7,7 +7,7 @@ import type { ProductOptionValue } from "@/types/product";
 import { parseExtraPrice } from "@/lib/utils";
 
 const inputCls =
-  "min-h-[44px] w-full rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50";
+  "min-h-[44px] rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50";
 
 interface Props {
   value: ProductOptionValue;
@@ -104,7 +104,7 @@ export function ValueRow({
 
   if (editing) {
     return (
-      <li className="flex gap-2">
+      <li className="flex flex-wrap gap-2">
         <input
           autoFocus
           value={draft.name}
@@ -112,7 +112,7 @@ export function ValueRow({
           maxLength={50}
           disabled={saving}
           aria-label="Tên value"
-          className={`${inputCls} flex-1`}
+          className={`${inputCls} min-w-[10rem] flex-1`}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !saving) submitEdit();
             if (e.key === "Escape" && !saving) setEditing(false);
@@ -127,8 +127,8 @@ export function ValueRow({
           }
           disabled={saving}
           aria-label="Giá thêm (VND)"
-          placeholder="+giá"
-          className={`${inputCls} w-24`}
+          placeholder="+giá (VND)"
+          className={`${inputCls} w-[6.5rem] shrink-0`}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !saving) submitEdit();
             if (e.key === "Escape" && !saving) setEditing(false);
@@ -139,7 +139,7 @@ export function ValueRow({
           onClick={submitEdit}
           disabled={saving || !draft.name.trim()}
           aria-label="Lưu value"
-          className="min-h-[44px] rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
+          className="min-h-[44px] w-[3.5rem] shrink-0 rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
         >
           {saving ? (
             <Loader2 size={14} className="animate-spin" aria-hidden="true" />
