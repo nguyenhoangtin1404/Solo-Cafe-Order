@@ -52,7 +52,10 @@ export async function GET(req: NextRequest) {
     if (statusParam !== undefined && !isOrderStatus(statusParam)) {
       return errorResponse("VALIDATION_ERROR", "Status không hợp lệ.", 400);
     }
-    if (cursor !== undefined && !z.string().uuid().safeParse(cursor).success) {
+    if (
+      cursor !== undefined &&
+      !z.string().datetime({ offset: true }).safeParse(cursor).success
+    ) {
       return errorResponse("VALIDATION_ERROR", "cursor không hợp lệ.", 400);
     }
 
