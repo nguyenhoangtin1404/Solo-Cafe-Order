@@ -1,23 +1,39 @@
 import Link from "next/link";
+import { ArrowRight, Coffee } from "lucide-react";
 
 export default function NotFound() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-      <p className="text-7xl font-bold text-border" aria-hidden="true">
-        404
-      </p>
-      <h1 className="mt-4 text-lg font-semibold text-foreground">
-        Trang không tồn tại
+      {/* Illustration */}
+      <div className="relative mb-6" aria-hidden="true">
+        <div className="flex h-32 w-32 items-center justify-center rounded-full bg-card">
+          <Coffee size={56} className="text-amber-400" />
+        </div>
+        <span className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-sm font-bold text-white shadow">
+          404
+        </span>
+      </div>
+
+      <h1 className="text-xl font-bold text-foreground">
+        Oops! Trang không tồn tại
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Địa chỉ này không còn hoặc chưa bao giờ tồn tại.
+      <p className="mt-2 text-sm text-muted-foreground">
+        URL này không đúng hoặc đơn hàng không tìm thấy.
       </p>
+
       <Link
         href="/menu"
-        className="mt-6 inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-full text-sm font-medium min-h-[44px]"
+        className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground min-h-[44px] shadow"
       >
-        Về menu
+        Về trang menu
+        <ArrowRight size={16} aria-hidden="true" />
       </Link>
+
+      <div className="mt-8 flex gap-4 text-amber-300" aria-hidden="true">
+        <Coffee size={20} />
+        <Coffee size={20} />
+        <Coffee size={20} />
+      </div>
     </main>
   );
 }

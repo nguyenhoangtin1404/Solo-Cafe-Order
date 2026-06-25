@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import type { CartItem as CartItemType } from "@/types/order";
