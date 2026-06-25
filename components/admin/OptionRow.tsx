@@ -12,7 +12,7 @@ import { ValueRow } from "./ValueRow";
 import { AddValueForm } from "./AddValueForm";
 
 const inputCls =
-  "min-h-[44px] w-full rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50";
+  "min-h-[44px] rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50";
 
 interface EditDraft {
   name: string;
@@ -143,7 +143,7 @@ export function OptionRow({
       {/* Option header */}
       {editing ? (
         <div className="space-y-2">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               ref={editInputRef}
               value={editDraft.name}
@@ -153,7 +153,7 @@ export function OptionRow({
               maxLength={50}
               disabled={saving}
               aria-label="Tên option"
-              className={`${inputCls} flex-1`}
+              className={`${inputCls} min-w-[10rem] flex-1`}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !saving) submitEdit();
                 if (e.key === "Escape" && !saving) {
@@ -169,7 +169,7 @@ export function OptionRow({
               }
               disabled={saving}
               aria-label="Kiểu chọn"
-              className={`${inputCls} w-28 bg-background`}
+              className={`${inputCls} w-[7.5rem] shrink-0 bg-background`}
             >
               <option value="select">Chọn 1</option>
               <option value="multi">Nhiều</option>
@@ -179,7 +179,7 @@ export function OptionRow({
               onClick={submitEdit}
               disabled={saving || !editDraft.name.trim()}
               aria-label="Lưu option"
-              className="min-h-[44px] rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
+              className="min-h-[44px] w-[3.5rem] shrink-0 rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
             >
               {saving ? (
                 <Loader2

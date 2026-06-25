@@ -7,7 +7,7 @@ import type { ProductOptionValue } from "@/types/product";
 import { parseExtraPrice } from "@/lib/utils";
 
 const inputCls =
-  "min-h-[44px] w-full rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50";
+  "min-h-[44px] rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50";
 
 interface Draft {
   name: string;
@@ -85,7 +85,7 @@ export function AddValueForm({
   }
 
   return (
-    <div className="mt-2 flex gap-2">
+    <div className="mt-2 flex flex-wrap gap-2">
       <input
         ref={inputRef}
         value={draft.name}
@@ -94,7 +94,7 @@ export function AddValueForm({
         disabled={saving}
         aria-label="Tên value mới"
         placeholder="Tên value *"
-        className={`${inputCls} flex-1`}
+        className={`${inputCls} min-w-[10rem] flex-1`}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !saving) submitAdd();
           if (e.key === "Escape" && !saving) {
@@ -112,8 +112,8 @@ export function AddValueForm({
         }
         disabled={saving}
         aria-label="Giá thêm (VND)"
-        placeholder="+giá"
-        className={`${inputCls} w-24`}
+        placeholder="+giá (VND)"
+        className={`${inputCls} w-[6.5rem] shrink-0`}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !saving) submitAdd();
           if (e.key === "Escape" && !saving) {
@@ -127,7 +127,7 @@ export function AddValueForm({
         onClick={submitAdd}
         disabled={saving || !draft.name.trim()}
         aria-label="Thêm value"
-        className="min-h-[44px] rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
+        className="min-h-[44px] w-[4.25rem] shrink-0 rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
       >
         {saving ? (
           <Loader2 size={14} className="animate-spin" aria-hidden="true" />

@@ -137,7 +137,14 @@ export function ProductForm({
       };
       if (!res.ok) throw new Error(data.message ?? "Upload thất bại.");
       if (!data.url) throw new Error("Phản hồi không hợp lệ.");
-      if (abortUploadRef.current === controller) setImageUrl(data.url);
+      if (abortUploadRef.current === controller) {
+        setImageUrl(data.url);
+        if (previewUrlRef.current) {
+          URL.revokeObjectURL(previewUrlRef.current);
+          previewUrlRef.current = null;
+        }
+        setImagePreview(null);
+      }
     } catch (err) {
       if (abortUploadRef.current !== controller) return;
       const msg = err instanceof Error ? err.message : "Upload thất bại.";
@@ -386,6 +393,13 @@ export function ProductForm({
                   src={imagePreview ?? imageUrl ?? ""}
                   alt="Preview ảnh sản phẩm"
                   className="h-20 w-20 rounded-lg object-cover"
+                  onError={() => {
+                    if (previewUrlRef.current) {
+                      URL.revokeObjectURL(previewUrlRef.current);
+                      previewUrlRef.current = null;
+                    }
+                    setImagePreview(null);
+                  }}
                 />
                 {!uploading && (
                   <button
