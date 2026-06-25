@@ -62,6 +62,9 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
   const [failedImgUrl, setFailedImgUrl] = useState<string | null>(null);
   const showImage =
     Boolean(product.image_url) && product.image_url !== failedImgUrl;
+  const unavailableSelectOption = product.options.find(
+    (opt) => opt.type === "select" && opt.values.length === 0
+  );
 
   const unitPrice = calcUnitPrice(product, sel);
 
@@ -90,6 +93,7 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
   );
 
   const handleAdd = () => {
+    if (unavailableSelectOption) return;
     onAdd({
       productId: product.id,
       productName: product.name,
@@ -243,9 +247,12 @@ export function ProductModal({ product, onClose, onAdd }: Props) {
           <button
             type="button"
             onClick={handleAdd}
-            className="flex min-h-[44px] flex-1 items-center justify-between rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+            disabled={Boolean(unavailableSelectOption)}
+            className="flex min-h-[44px] flex-1 items-center justify-between rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <span>Thêm vào giỏ</span>
+            <span>
+              {unavailableSelectOption ? "Chưa thể đặt" : "Thêm vào giỏ"}
+            </span>
             <span>{(unitPrice * qty).toLocaleString("vi-VN")}đ</span>
           </button>
         </div>
@@ -264,6 +271,19 @@ function OptionGroup({
   onToggle: (vid: string) => void;
 }) {
   const labelId = `option-label-${option.id}`;
+  if (option.values.length === 0) {
+    return (
+      <div>
+        <p id={labelId} className="mb-2 text-sm font-medium">
+          {option.name}
+        </p>
+        <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+          Chưa có lựa chọn
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <p id={labelId} className="mb-2 text-sm font-medium">
