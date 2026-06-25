@@ -45,7 +45,7 @@ export default function Error({
 
       <button
         onClick={reset}
-        className="mt-8 inline-flex items-center gap-2 rounded-full bg-amber-400 px-7 py-3 text-sm font-semibold text-white min-h-[44px] shadow"
+        className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground min-h-[44px] shadow"
       >
         <RefreshCw size={16} aria-hidden="true" />
         Thử lại

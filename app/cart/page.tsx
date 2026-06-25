@@ -31,7 +31,7 @@ export default function CartPage() {
         </div>
         <Link
           href="/menu"
-          className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-7 py-3 text-sm font-semibold text-white min-h-[44px] shadow"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground min-h-[44px] shadow"
         >
           <ArrowLeft size={16} />
           Xem menu
