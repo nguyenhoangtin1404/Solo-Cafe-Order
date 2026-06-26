@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DateFilter, type DateRange } from "./DateFilter";
 import { SummaryKPIs } from "./SummaryKPIs";
+import { RevenueChart } from "./RevenueChart";
 import { startOfDayHCM } from "@/lib/utils/timezone";
 
 export function ReportsClient() {
@@ -28,7 +29,7 @@ export function ReportsClient() {
         {/* KPI Summary cards */}
         <SummaryKPIs dateRange={dateRange} />
 
-        <WidgetPlaceholder label="Biểu đồ doanh thu" tall />
+        <RevenueChart dateRange={dateRange} />
         <WidgetPlaceholder label="Danh mục sản phẩm" tall />
         <WidgetPlaceholder label="Sản phẩm bán chạy" tall />
       </main>
