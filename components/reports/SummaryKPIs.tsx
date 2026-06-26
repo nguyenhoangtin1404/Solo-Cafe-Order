@@ -2,26 +2,15 @@
 
 import { useEffect, useState } from "react";
 import {
+  AlertCircle,
   CircleDollarSign,
+  Package,
   ShoppingBag,
   TrendingUp,
-  Package,
 } from "lucide-react";
+import type { SummaryResult } from "@/lib/services/report.service";
+import { formatCurrency } from "@/lib/utils/format";
 import type { DateRange } from "./DateFilter";
-
-interface SummaryData {
-  revenue: number;
-  orderCount: number;
-  avgOrderValue: number;
-  itemsSold: number;
-}
-
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
-}
 
 function KPICard({
   icon: Icon,
@@ -52,18 +41,44 @@ function KPICardSkeleton() {
   );
 }
 
+const CARDS: {
+  icon: React.ElementType;
+  label: string;
+  key: keyof SummaryResult;
+  format: (n: number) => string;
+}[] = [
+  {
+    icon: CircleDollarSign,
+    label: "Doanh thu",
+    key: "revenue",
+    format: formatCurrency,
+  },
+  {
+    icon: ShoppingBag,
+    label: "Đơn hoàn thành",
+    key: "orderCount",
+    format: (n) => n.toLocaleString("vi-VN"),
+  },
+  {
+    icon: TrendingUp,
+    label: "Giá trị trung bình",
+    key: "avgOrderValue",
+    format: formatCurrency,
+  },
+  {
+    icon: Package,
+    label: "Sản phẩm đã bán",
+    key: "itemsSold",
+    format: (n) => n.toLocaleString("vi-VN"),
+  },
+];
+
 interface FetchedState {
-  data: SummaryData;
+  data: SummaryResult | null;
   fromMs: number;
   toMs: number;
+  error: boolean;
 }
-
-const EMPTY: SummaryData = {
-  revenue: 0,
-  orderCount: 0,
-  avgOrderValue: 0,
-  itemsSold: 0,
-};
 
 interface Props {
   dateRange: DateRange;
@@ -72,65 +87,59 @@ interface Props {
 export function SummaryKPIs({ dateRange }: Props) {
   const [fetched, setFetched] = useState<FetchedState | null>(null);
 
-  useEffect(() => {
-    const fromMs = dateRange.from.getTime();
-    const toMs = dateRange.to.getTime();
+  const fromMs = dateRange.from.getTime();
+  const toMs = dateRange.to.getTime();
 
+  useEffect(() => {
+    const controller = new AbortController();
     const params = new URLSearchParams({
-      from: dateRange.from.toISOString(),
-      to: dateRange.to.toISOString(),
+      from: new Date(fromMs).toISOString(),
+      to: new Date(toMs).toISOString(),
     });
 
-    fetch(`/api/reports/summary?${params}`)
+    fetch(`/api/reports/summary?${params}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error("fetch failed");
-        return res.json() as Promise<SummaryData>;
+        return res.json() as Promise<SummaryResult>;
       })
-      .then((data) => setFetched({ data, fromMs, toMs }))
-      .catch(() => setFetched({ data: EMPTY, fromMs, toMs }));
-  }, [dateRange.from, dateRange.to]);
+      .then((data) => setFetched({ data, fromMs, toMs, error: false }))
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setFetched({ data: null, fromMs, toMs, error: true });
+      });
 
-  // loading when no data yet, or when dateRange changed and fetch hasn't returned
-  const isLoading =
-    !fetched ||
-    fetched.fromMs !== dateRange.from.getTime() ||
-    fetched.toMs !== dateRange.to.getTime();
+    return () => controller.abort();
+  }, [fromMs, toMs]);
+
+  // Derive loading: no result yet, or result is for a different date range
+  const isLoading = !fetched || fetched.fromMs !== fromMs || fetched.toMs !== toMs;
 
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KPICardSkeleton />
-        <KPICardSkeleton />
-        <KPICardSkeleton />
-        <KPICardSkeleton />
+        {CARDS.map((c) => (
+          <KPICardSkeleton key={c.key} />
+        ))}
       </div>
     );
   }
 
-  const d = fetched.data;
+  if (fetched.error) {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <AlertCircle size={16} aria-hidden="true" />
+        Không thể tải dữ liệu báo cáo. Vui lòng thử lại sau.
+      </div>
+    );
+  }
+
+  const d = fetched.data!;
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <KPICard
-        icon={CircleDollarSign}
-        label="Doanh thu"
-        value={formatVND(d.revenue)}
-      />
-      <KPICard
-        icon={ShoppingBag}
-        label="Đơn hoàn thành"
-        value={d.orderCount.toLocaleString("vi-VN")}
-      />
-      <KPICard
-        icon={TrendingUp}
-        label="Giá trị trung bình"
-        value={formatVND(d.avgOrderValue)}
-      />
-      <KPICard
-        icon={Package}
-        label="Sản phẩm đã bán"
-        value={d.itemsSold.toLocaleString("vi-VN")}
-      />
+      {CARDS.map((c) => (
+        <KPICard key={c.key} icon={c.icon} label={c.label} value={c.format(d[c.key])} />
+      ))}
     </div>
   );
 }
