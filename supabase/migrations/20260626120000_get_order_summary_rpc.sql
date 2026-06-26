@@ -13,10 +13,11 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = ''
 AS $$
   WITH done_orders AS (
     SELECT id, total_amount
-    FROM   orders
+    FROM   public.orders
     WHERE  status      = 'done'
       AND  created_at >= p_from
       AND  created_at <  p_to
@@ -26,7 +27,7 @@ AS $$
     COUNT(ord.id)::bigint                      AS order_count,
     COALESCE((
       SELECT SUM(oi.quantity)
-      FROM   order_items oi
+      FROM   public.order_items oi
       WHERE  oi.order_id IN (SELECT id FROM done_orders)
     ), 0)::bigint                              AS items_sold
   FROM done_orders ord;
