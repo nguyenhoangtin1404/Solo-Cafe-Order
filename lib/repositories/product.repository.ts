@@ -254,7 +254,7 @@ export async function findOptionsByProductId(
     )
     .eq("product_id", productId)
     .is("deleted_at", null)
-    .order("id", { ascending: true });
+    .order("created_at", { ascending: true });
 
   if (error) throw error;
   return (
