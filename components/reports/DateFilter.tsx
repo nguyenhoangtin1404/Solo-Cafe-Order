@@ -286,46 +286,61 @@ function DateDropdown({
 }
 
 export function DateFilter({ value, onChange }: Props) {
-  const df = useDateFilter(onChange);
+  const {
+    activePreset,
+    open,
+    setOpen,
+    customFrom,
+    customTo,
+    customError,
+    triggerRef,
+    firstPresetRef,
+    fromInputRef,
+    closeDropdown,
+    selectPreset,
+    applyCustom,
+    onCustomFromChange,
+    onCustomToChange,
+  } = useDateFilter(onChange);
   return (
     <div className="relative">
       <button
-        ref={df.triggerRef}
+        ref={triggerRef}
         type="button"
-        aria-expanded={df.open}
+        aria-expanded={open}
         aria-controls="date-preset-dropdown"
         aria-label="Chọn khoảng thời gian"
-        onClick={() => df.setOpen((v) => !v)}
+        onClick={() => setOpen((v) => !v)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") df.closeDropdown();
+          if (e.key === "Escape") closeDropdown();
         }}
         className="flex min-h-[44px] items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted"
       >
         <span className="hidden sm:inline">
-          {PRESETS.find((p) => p.id === df.activePreset)?.label}:&nbsp;
+          {PRESETS.find((p) => p.id === activePreset)?.label}:&nbsp;
         </span>
         <span className="text-muted-foreground">{formatRange(value)}</span>
         <ChevronDown
           size={16}
           aria-hidden="true"
           className={
-            df.open ? "rotate-180 transition-transform" : "transition-transform"
+            open ? "rotate-180 transition-transform" : "transition-transform"
           }
         />
       </button>
-      {df.open && (
+      {open && (
         <DateDropdown
-          activePreset={df.activePreset}
-          firstPresetRef={df.firstPresetRef}
-          fromInputRef={df.fromInputRef}
-          customFrom={df.customFrom}
-          customTo={df.customTo}
-          customError={df.customError}
-          onCustomFromChange={df.onCustomFromChange}
-          onCustomToChange={df.onCustomToChange}
-          selectPreset={df.selectPreset}
-          applyCustom={df.applyCustom}
-          onClose={df.closeDropdown}
+          activePreset={activePreset}
+          firstPresetRef={firstPresetRef}
+          fromInputRef={fromInputRef}
+          customFrom={customFrom}
+          customTo={customTo}
+          customError={customError}
+          onCustomFromChange={onCustomFromChange}
+          onCustomToChange={onCustomToChange}
+          selectPreset={selectPreset}
+          applyCustom={applyCustom}
+          onClose={closeDropdown}
         />
       )}
     </div>
