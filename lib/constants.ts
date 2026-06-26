@@ -47,5 +47,11 @@ export const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 export const CATEGORY_HAS_PRODUCTS = "CATEGORY_HAS_PRODUCTS";
 
 export const APP_NAME = "Vibe Cafe";
-export const OWNER_PATH_PREFIXES = ["/dashboard", "/admin"] as const;
-export const HIDDEN_PATH_PREFIXES = ["/login"] as const;
+export const OWNER_PATH_PREFIXES = [
+  "/dashboard",
+  "/admin",
+  "/reports",
+] as const;
+// Paths that require owner role beyond basic auth (subset of OWNER_PATH_PREFIXES)
+export const ADMIN_ONLY_PATH_PREFIXES = ["/admin", "/reports"] as const;
+export const HIDDEN_PATH_PREFIXES = ["/login", "/auth"] as const;

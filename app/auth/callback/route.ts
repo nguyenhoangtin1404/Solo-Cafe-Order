@@ -8,7 +8,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   // Only allow relative paths — absolute URLs like https://evil.com would bypass the base.
   const rawNext = searchParams.get("next");
-  const next = rawNext?.startsWith("/") ? rawNext : "/dashboard";
+  // Block protocol-relative URLs like //evil.com that pass startsWith("/")
+  const next =
+    rawNext?.startsWith("/") && !rawNext.startsWith("//")
+      ? rawNext
+      : "/dashboard";
 
   if (!code) {
     return NextResponse.redirect(
@@ -16,23 +20,25 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.redirect(new URL("/login?error=config", request.url));
+  }
+
   const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cs: { name: string; value: string; options: CookieOptions }[]) {
-          cs.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    }
-  );
+      setAll(cs: { name: string; value: string; options: CookieOptions }[]) {
+        cs.forEach(({ name, value, options }) =>
+          cookieStore.set(name, value, options)
+        );
+      },
+    },
+  });
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {

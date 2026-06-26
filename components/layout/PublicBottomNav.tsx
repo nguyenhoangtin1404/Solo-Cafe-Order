@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingCart, UtensilsCrossed, Package } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { useLastOrder } from "@/hooks/useLastOrder";
@@ -59,10 +58,9 @@ function OrderTab({
     return (
       <button
         type="button"
-        aria-disabled={true}
+        disabled
         aria-label="Đơn hàng (chưa có đơn hôm nay)"
         title="Bạn chưa có đơn hàng hôm nay"
-        onClick={() => toast("Bạn chưa có đơn hàng hôm nay.")}
         className="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium text-muted-foreground/40"
       >
         <Package size={22} aria-hidden="true" />

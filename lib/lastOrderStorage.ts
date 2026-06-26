@@ -1,18 +1,13 @@
 "use client";
 
 import { LAST_ORDER_CODE_KEY, ORDER_CODE_RE } from "@/lib/constants";
+import { addDaysHCM, toInputDateHCM } from "@/lib/utils/timezone";
 
 type StoredOrder = { code: string; date: string };
 
 export const storageListeners = new Set<() => void>();
 
 let _cached: string | null | undefined = undefined;
-
-function getDateHCM(offset = 0): string {
-  const d = new Date();
-  if (offset) d.setDate(d.getDate() + offset);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
-}
 
 function isStoredOrder(v: unknown): v is StoredOrder {
   return (
@@ -25,8 +20,8 @@ function isStoredOrder(v: unknown): v is StoredOrder {
 
 export function pruneStaleOrders(): void {
   if (typeof window === "undefined") return;
-  const today = getDateHCM();
-  const yesterday = getDateHCM(-1);
+  const today = toInputDateHCM(new Date());
+  const yesterday = toInputDateHCM(addDaysHCM(new Date(), -1));
   for (const getStorage of [
     () => window.localStorage,
     () => window.sessionStorage,
@@ -53,8 +48,8 @@ export function pruneStaleOrders(): void {
 export function readStoredOrder(): string | null {
   if (_cached !== undefined) return _cached;
   if (typeof window === "undefined") return null;
-  const today = getDateHCM();
-  const yesterday = getDateHCM(-1);
+  const today = toInputDateHCM(new Date());
+  const yesterday = toInputDateHCM(addDaysHCM(new Date(), -1));
   for (const getStorage of [
     () => window.localStorage,
     () => window.sessionStorage,
@@ -87,7 +82,7 @@ export function invalidateCache(): void {
 export function saveLastOrderCode(code: string): void {
   if (!ORDER_CODE_RE.test(code)) return;
   if (typeof window === "undefined") return;
-  const entry: StoredOrder = { code, date: getDateHCM() };
+  const entry: StoredOrder = { code, date: toInputDateHCM(new Date()) };
   const json = JSON.stringify(entry);
   let saved = false;
   for (const getStorage of [
