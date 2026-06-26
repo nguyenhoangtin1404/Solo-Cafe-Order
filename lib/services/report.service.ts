@@ -31,7 +31,7 @@ export async function getRevenueTrend(
   if (sameDay) {
     const rows = await reportRepo.fetchRevenueByHour(from, to);
     const dbMap = new Map(rows.map((r) => [r.hour, r.revenue]));
-    const data = Array.from({ length: 23 }, (_, h) => ({
+    const data = Array.from({ length: 24 }, (_, h) => ({
       label: `${h}h`,
       revenue: dbMap.get(h) ?? 0,
     }));

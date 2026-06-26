@@ -49,61 +49,63 @@ function yFormatter(value: number): string {
   return String(value);
 }
 
-function RevenueChartInner({
-  data,
-  groupBy,
-}: {
-  data: RevenueTrendPoint[];
-  groupBy: "hour" | "day";
-}) {
-  const commonProps = {
-    data,
-    margin: { top: 8, right: 8, bottom: 0, left: 0 },
-  };
-  const axes = (
-    <>
+const CHART_MARGIN = { top: 8, right: 8, bottom: 0, left: 0 };
+const AXIS_TICK = { fontSize: 11 };
+
+function HourBarChart({ data }: { data: RevenueTrendPoint[] }) {
+  return (
+    <BarChart data={data} margin={CHART_MARGIN}>
       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
       <XAxis
         dataKey="label"
-        tick={{ fontSize: 11 }}
+        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
-        interval={groupBy === "hour" ? 2 : "preserveStartEnd"}
+        interval={2}
       />
       <YAxis
         tickFormatter={yFormatter}
-        tick={{ fontSize: 11 }}
+        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         width={48}
       />
-    </>
+      <Tooltip
+        content={<ChartTooltip />}
+        cursor={{ fill: "rgba(0,0,0,0.04)" }}
+      />
+      <Bar
+        dataKey="revenue"
+        fill="var(--primary)"
+        radius={[3, 3, 0, 0]}
+        maxBarSize={24}
+      />
+    </BarChart>
   );
+}
 
-  if (groupBy === "hour") {
-    return (
-      <BarChart {...commonProps}>
-        {axes}
-        <Tooltip
-          content={<ChartTooltip />}
-          cursor={{ fill: "rgba(0,0,0,0.04)" }}
-        />
-        <Bar
-          dataKey="revenue"
-          fill="hsl(var(--primary))"
-          radius={[3, 3, 0, 0]}
-          maxBarSize={24}
-        />
-      </BarChart>
-    );
-  }
+function DayLineChart({ data }: { data: RevenueTrendPoint[] }) {
   return (
-    <LineChart {...commonProps}>
-      {axes}
+    <LineChart data={data} margin={CHART_MARGIN}>
+      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+      <XAxis
+        dataKey="label"
+        tick={AXIS_TICK}
+        tickLine={false}
+        axisLine={false}
+        interval="preserveStartEnd"
+      />
+      <YAxis
+        tickFormatter={yFormatter}
+        tick={AXIS_TICK}
+        tickLine={false}
+        axisLine={false}
+        width={48}
+      />
       <Tooltip content={<ChartTooltip />} />
       <Line
         dataKey="revenue"
-        stroke="hsl(var(--primary))"
+        stroke="var(--primary)"
         strokeWidth={2}
         dot={false}
         activeDot={{ r: 4 }}
@@ -112,11 +114,8 @@ function RevenueChartInner({
   );
 }
 
-export function RevenueChart({ dateRange }: { dateRange: DateRange }) {
+function useRevenueTrend(fromMs: number, toMs: number): FetchedState | null {
   const [fetched, setFetched] = useState<FetchedState | null>(null);
-
-  const fromMs = dateRange.from.getTime();
-  const toMs = dateRange.to.getTime();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -138,17 +137,19 @@ export function RevenueChart({ dateRange }: { dateRange: DateRange }) {
       )
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        setFetched({
-          data: [],
-          groupBy: "hour",
-          fromMs,
-          toMs,
-          error: true,
-        });
+        setFetched({ data: [], groupBy: "hour", fromMs, toMs, error: true });
       });
 
     return () => controller.abort();
   }, [fromMs, toMs]);
+
+  return fetched;
+}
+
+export function RevenueChart({ dateRange }: { dateRange: DateRange }) {
+  const fromMs = dateRange.from.getTime();
+  const toMs = dateRange.to.getTime();
+  const fetched = useRevenueTrend(fromMs, toMs);
 
   const isLoading =
     !fetched || fetched.fromMs !== fromMs || fetched.toMs !== toMs;
@@ -178,7 +179,11 @@ export function RevenueChart({ dateRange }: { dateRange: DateRange }) {
       <div className="overflow-x-auto">
         <div style={{ minWidth }}>
           <ResponsiveContainer width="100%" height={220}>
-            <RevenueChartInner data={fetched.data} groupBy={fetched.groupBy} />
+            {fetched.groupBy === "hour" ? (
+              <HourBarChart data={fetched.data} />
+            ) : (
+              <DayLineChart data={fetched.data} />
+            )}
           </ResponsiveContainer>
         </div>
       </div>
