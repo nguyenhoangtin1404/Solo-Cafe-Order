@@ -93,6 +93,9 @@ export function DateFilter({ value, onChange }: Props) {
   const firstPresetRef = useRef<HTMLButtonElement>(null);
   const fromInputRef = useRef<HTMLInputElement>(null);
   const prevPresetRef = useRef<PresetId>("today");
+  // Tracks the last successfully applied preset so closing the dropdown without
+  // applying a custom range reverts activePreset to the previous committed value.
+  const committedPresetRef = useRef<PresetId>("today");
 
   // Move focus into the dropdown when it opens
   useEffect(() => {
@@ -109,6 +112,8 @@ export function DateFilter({ value, onChange }: Props) {
 
   const closeDropdown = useCallback(() => {
     setOpen(false);
+    // Revert display preset if the user browsed to "custom" but never applied.
+    setActivePreset(committedPresetRef.current);
     triggerRef.current?.focus();
   }, []);
 
@@ -120,6 +125,7 @@ export function DateFilter({ value, onChange }: Props) {
         setCustomFrom("");
         setCustomTo("");
         setCustomError("");
+        committedPresetRef.current = id;
         const range = computePreset(id, new Date());
         if (range) onChange(range);
         closeDropdown();
@@ -137,6 +143,7 @@ export function DateFilter({ value, onChange }: Props) {
       return;
     }
     setCustomError("");
+    committedPresetRef.current = "custom";
     onChange({ from, to });
     closeDropdown();
   }, [customFrom, customTo, onChange, closeDropdown]);

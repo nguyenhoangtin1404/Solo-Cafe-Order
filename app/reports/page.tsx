@@ -9,8 +9,9 @@ export default async function ReportsPage() {
   try {
     await requireOwner();
   } catch (err) {
-    if (isAppError(err) && (err.httpStatus === 401 || err.httpStatus === 403)) {
-      redirect("/login");
+    if (isAppError(err)) {
+      if (err.httpStatus === 401) redirect("/login");
+      if (err.httpStatus === 403) redirect("/dashboard");
     }
     throw err;
   }
