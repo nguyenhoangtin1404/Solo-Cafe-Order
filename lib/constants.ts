@@ -52,4 +52,6 @@ export const OWNER_PATH_PREFIXES = [
   "/admin",
   "/reports",
 ] as const;
-export const HIDDEN_PATH_PREFIXES = ["/login"] as const;
+// Paths that require owner role beyond basic auth (subset of OWNER_PATH_PREFIXES)
+export const ADMIN_ONLY_PATH_PREFIXES = ["/admin", "/reports"] as const;
+export const HIDDEN_PATH_PREFIXES = ["/login", "/auth"] as const;

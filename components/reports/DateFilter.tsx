@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDown } from "lucide-react";
 import {
   addDaysHCM,
@@ -82,37 +88,29 @@ interface Props {
   onChange: (range: DateRange) => void;
 }
 
-export function DateFilter({ value, onChange }: Props) {
+function useDateFilter(onChange: (range: DateRange) => void) {
   const [activePreset, setActivePreset] = useState<PresetId>("today");
   const [open, setOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [customError, setCustomError] = useState("");
-
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstPresetRef = useRef<HTMLButtonElement>(null);
   const fromInputRef = useRef<HTMLInputElement>(null);
   const prevPresetRef = useRef<PresetId>("today");
-  // Tracks the last successfully applied preset so closing the dropdown without
-  // applying a custom range reverts activePreset to the previous committed value.
   const committedPresetRef = useRef<PresetId>("today");
 
-  // Move focus into the dropdown when it opens
   useEffect(() => {
     if (open) firstPresetRef.current?.focus();
   }, [open]);
-
-  // Move focus to "Từ" input when switching to custom preset
   useEffect(() => {
-    if (activePreset === "custom" && prevPresetRef.current !== "custom") {
+    if (activePreset === "custom" && prevPresetRef.current !== "custom")
       fromInputRef.current?.focus();
-    }
     prevPresetRef.current = activePreset;
   }, [activePreset]);
 
   const closeDropdown = useCallback(() => {
     setOpen(false);
-    // Revert display preset if the user browsed to "custom" but never applied.
     setActivePreset(committedPresetRef.current);
     triggerRef.current?.focus();
   }, []);
@@ -121,7 +119,6 @@ export function DateFilter({ value, onChange }: Props) {
     (id: PresetId) => {
       setActivePreset(id);
       if (id !== "custom") {
-        // Clear stale custom dates so re-entering custom starts fresh
         setCustomFrom("");
         setCustomTo("");
         setCustomError("");
@@ -148,126 +145,188 @@ export function DateFilter({ value, onChange }: Props) {
     closeDropdown();
   }, [customFrom, customTo, onChange, closeDropdown]);
 
+  const onCustomFromChange = useCallback((v: string) => {
+    setCustomFrom(v);
+    setCustomError("");
+  }, []);
+  const onCustomToChange = useCallback((v: string) => {
+    setCustomTo(v);
+    setCustomError("");
+  }, []);
+
+  return {
+    activePreset,
+    open,
+    setOpen,
+    customFrom,
+    customTo,
+    customError,
+    triggerRef,
+    firstPresetRef,
+    fromInputRef,
+    closeDropdown,
+    selectPreset,
+    applyCustom,
+    onCustomFromChange,
+    onCustomToChange,
+  };
+}
+
+function DateDropdown({
+  activePreset,
+  firstPresetRef,
+  fromInputRef,
+  customFrom,
+  customTo,
+  customError,
+  onCustomFromChange,
+  onCustomToChange,
+  selectPreset,
+  applyCustom,
+  onClose,
+}: {
+  activePreset: PresetId;
+  firstPresetRef: RefObject<HTMLButtonElement | null>;
+  fromInputRef: RefObject<HTMLInputElement | null>;
+  customFrom: string;
+  customTo: string;
+  customError: string;
+  onCustomFromChange: (v: string) => void;
+  onCustomToChange: (v: string) => void;
+  selectPreset: (id: PresetId) => void;
+  applyCustom: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-10"
+        onClick={onClose}
+        aria-hidden="true"
+        role="presentation"
+      />
+      <div
+        id="date-preset-dropdown"
+        className="absolute inset-x-0 top-full z-20 mt-1 rounded-xl border bg-background shadow-lg sm:left-0 sm:right-auto sm:w-72"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") onClose();
+        }}
+      >
+        <div className="p-2">
+          {PRESETS.map((preset, i) => (
+            <button
+              key={preset.id}
+              ref={i === 0 ? firstPresetRef : undefined}
+              type="button"
+              onClick={() => selectPreset(preset.id)}
+              className={`flex min-h-[44px] w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                activePreset === preset.id
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+        {activePreset === "custom" && (
+          <div className="space-y-2 border-t p-3">
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="date-filter-from"
+                className="w-12 shrink-0 text-xs text-muted-foreground"
+              >
+                Từ
+              </label>
+              <input
+                ref={fromInputRef}
+                id="date-filter-from"
+                type="date"
+                value={customFrom}
+                max={customTo || toInputDateHCM(new Date())}
+                onChange={(e) => onCustomFromChange(e.target.value)}
+                className="min-h-[44px] flex-1 rounded-md border px-2 text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="date-filter-to"
+                className="w-12 shrink-0 text-xs text-muted-foreground"
+              >
+                Đến
+              </label>
+              <input
+                id="date-filter-to"
+                type="date"
+                value={customTo}
+                min={customFrom}
+                max={toInputDateHCM(new Date())}
+                onChange={(e) => onCustomToChange(e.target.value)}
+                className="min-h-[44px] flex-1 rounded-md border px-2 text-sm"
+              />
+            </div>
+            {customError && (
+              <p role="alert" className="text-xs text-destructive">
+                {customError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={applyCustom}
+              disabled={!customFrom || !customTo}
+              className="min-h-[44px] w-full rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              Áp dụng
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function DateFilter({ value, onChange }: Props) {
+  const df = useDateFilter(onChange);
   return (
     <div className="relative">
       <button
-        ref={triggerRef}
+        ref={df.triggerRef}
         type="button"
-        aria-expanded={open}
+        aria-expanded={df.open}
         aria-controls="date-preset-dropdown"
         aria-label="Chọn khoảng thời gian"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => df.setOpen((v) => !v)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") closeDropdown();
+          if (e.key === "Escape") df.closeDropdown();
         }}
         className="flex min-h-[44px] items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted"
       >
         <span className="hidden sm:inline">
-          {PRESETS.find((p) => p.id === activePreset)?.label}:&nbsp;
+          {PRESETS.find((p) => p.id === df.activePreset)?.label}:&nbsp;
         </span>
         <span className="text-muted-foreground">{formatRange(value)}</span>
         <ChevronDown
           size={16}
           aria-hidden="true"
           className={
-            open ? "rotate-180 transition-transform" : "transition-transform"
+            df.open ? "rotate-180 transition-transform" : "transition-transform"
           }
         />
       </button>
-
-      {open && (
-        <>
-          {/* Backdrop — closes dropdown on outside click */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={closeDropdown}
-            aria-hidden="true"
-            role="presentation"
-          />
-          <div
-            id="date-preset-dropdown"
-            className="absolute inset-x-0 top-full z-20 mt-1 rounded-xl border bg-background shadow-lg sm:left-0 sm:right-auto sm:w-72"
-            onKeyDown={(e) => {
-              if (e.key === "Escape") closeDropdown();
-            }}
-          >
-            <div className="p-2">
-              {PRESETS.map((preset, i) => (
-                <button
-                  key={preset.id}
-                  ref={i === 0 ? firstPresetRef : undefined}
-                  type="button"
-                  onClick={() => selectPreset(preset.id)}
-                  className={`flex min-h-[44px] w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    activePreset === preset.id
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-
-            {activePreset === "custom" && (
-              <div className="space-y-2 border-t p-3">
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="date-filter-from"
-                    className="w-12 shrink-0 text-xs text-muted-foreground"
-                  >
-                    Từ
-                  </label>
-                  <input
-                    ref={fromInputRef}
-                    id="date-filter-from"
-                    type="date"
-                    value={customFrom}
-                    max={customTo || toInputDateHCM(new Date())}
-                    onChange={(e) => {
-                      setCustomFrom(e.target.value);
-                      setCustomError("");
-                    }}
-                    className="min-h-[44px] flex-1 rounded-md border px-2 text-sm"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="date-filter-to"
-                    className="w-12 shrink-0 text-xs text-muted-foreground"
-                  >
-                    Đến
-                  </label>
-                  <input
-                    id="date-filter-to"
-                    type="date"
-                    value={customTo}
-                    min={customFrom}
-                    max={toInputDateHCM(new Date())}
-                    onChange={(e) => {
-                      setCustomTo(e.target.value);
-                      setCustomError("");
-                    }}
-                    className="min-h-[44px] flex-1 rounded-md border px-2 text-sm"
-                  />
-                </div>
-                {customError && (
-                  <p role="alert" className="text-xs text-destructive">
-                    {customError}
-                  </p>
-                )}
-                <button
-                  type="button"
-                  onClick={applyCustom}
-                  disabled={!customFrom || !customTo}
-                  className="min-h-[44px] w-full rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-                >
-                  Áp dụng
-                </button>
-              </div>
-            )}
-          </div>
-        </>
+      {df.open && (
+        <DateDropdown
+          activePreset={df.activePreset}
+          firstPresetRef={df.firstPresetRef}
+          fromInputRef={df.fromInputRef}
+          customFrom={df.customFrom}
+          customTo={df.customTo}
+          customError={df.customError}
+          onCustomFromChange={df.onCustomFromChange}
+          onCustomToChange={df.onCustomToChange}
+          selectPreset={df.selectPreset}
+          applyCustom={df.applyCustom}
+          onClose={df.closeDropdown}
+        />
       )}
     </div>
   );

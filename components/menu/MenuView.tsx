@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { type RefObject, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Leaf, Search, ShoppingCart, X } from "lucide-react";
 import { normalizeSearch } from "@/lib/utils";
@@ -50,6 +50,59 @@ function EmptyState({ isSearching }: { isSearching: boolean }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function MenuSearchBar({
+  search,
+  inputRef,
+  onChange,
+  onClear,
+}: {
+  search: string;
+  inputRef: RefObject<HTMLInputElement | null>;
+  onChange: (v: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div role="search" className="px-4 pb-2">
+      <div className="relative flex items-center">
+        <Search
+          size={16}
+          className="absolute left-3 text-muted-foreground"
+          aria-hidden="true"
+        />
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="search"
+          aria-label="Tìm kiếm món"
+          autoComplete="off"
+          value={search}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              onClear();
+            } else if (e.key === "Enter") inputRef.current?.blur();
+          }}
+          placeholder="Tìm cà phê, trà, bánh..."
+          className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-r-xl"
+            aria-label="Xóa tìm kiếm"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30">
+              <X size={12} />
+            </span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -129,46 +182,12 @@ export function MenuView({ categories }: Props) {
         </p>
       </header>
 
-      <div role="search" className="px-4 pb-2">
-        <div className="relative flex items-center">
-          <Search
-            size={16}
-            className="absolute left-3 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="search"
-            aria-label="Tìm kiếm món"
-            autoComplete="off"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                clearSearch();
-              } else if (e.key === "Enter") {
-                inputRef.current?.blur();
-              }
-            }}
-            placeholder="Tìm cà phê, trà, bánh..."
-            className="h-11 w-full rounded-xl border border-border bg-card pl-9 pr-11 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-r-xl"
-              aria-label="Xóa tìm kiếm"
-            >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30">
-                <X size={12} />
-              </span>
-            </button>
-          )}
-        </div>
-      </div>
+      <MenuSearchBar
+        search={search}
+        inputRef={inputRef}
+        onChange={setSearch}
+        onClear={clearSearch}
+      />
 
       {!isSearching && <CategoryTabs categories={categories} />}
 

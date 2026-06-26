@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_ONLY_PATH_PREFIXES } from "@/lib/constants";
 
 export function isSafeRedirect(
   value: string | null | undefined
@@ -28,9 +29,6 @@ function makeRedirect(url: URL, supabaseResponse: NextResponse): NextResponse {
     );
   return redirectResponse;
 }
-
-// Paths that require the admin role (beyond basic authentication)
-const ADMIN_ONLY_PREFIXES = ["/admin", "/reports"] as const;
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -73,7 +71,7 @@ export async function middleware(request: NextRequest) {
   // /admin and /reports require the admin role in addition to authentication.
   // The role check here mirrors requireOwner() in server pages — both layers
   // must agree so a future page under /reports can't skip the guard.
-  const requiresAdmin = ADMIN_ONLY_PREFIXES.some((prefix) =>
+  const requiresAdmin = ADMIN_ONLY_PATH_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   );
   if (requiresAdmin) {
