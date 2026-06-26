@@ -21,7 +21,6 @@ const TIME_FORMAT = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh",
 });
 
-
 export function OrderDetailDrawer({
   order,
   onClose,

@@ -112,7 +112,8 @@ export function SummaryKPIs({ dateRange }: Props) {
   }, [fromMs, toMs]);
 
   // Derive loading: no result yet, or result is for a different date range
-  const isLoading = !fetched || fetched.fromMs !== fromMs || fetched.toMs !== toMs;
+  const isLoading =
+    !fetched || fetched.fromMs !== fromMs || fetched.toMs !== toMs;
 
   if (isLoading) {
     return (
@@ -138,7 +139,12 @@ export function SummaryKPIs({ dateRange }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {CARDS.map((c) => (
-        <KPICard key={c.key} icon={c.icon} label={c.label} value={c.format(d[c.key])} />
+        <KPICard
+          key={c.key}
+          icon={c.icon}
+          label={c.label}
+          value={c.format(d[c.key])}
+        />
       ))}
     </div>
   );
