@@ -6,6 +6,7 @@ import { ORDER_STATUS, PAYMENT_METHOD } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import type { DashboardOrder } from "./OrderCard";
 import { StatusBadge } from "./StatusBadge";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface Props {
   order: DashboardOrder;
@@ -19,10 +20,6 @@ const TIME_FORMAT = new Intl.DateTimeFormat("vi-VN", {
   minute: "2-digit",
   timeZone: "Asia/Ho_Chi_Minh",
 });
-
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString("vi-VN") + "đ";
-}
 
 export function OrderDetailDrawer({
   order,

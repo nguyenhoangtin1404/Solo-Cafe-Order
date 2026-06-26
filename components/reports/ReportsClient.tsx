@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DateFilter, type DateRange } from "./DateFilter";
+import { SummaryKPIs } from "./SummaryKPIs";
 import { startOfDayHCM } from "@/lib/utils/timezone";
 
 export function ReportsClient() {
@@ -24,13 +25,8 @@ export function ReportsClient() {
         {/* Date filter */}
         <DateFilter value={dateRange} onChange={setDateRange} />
 
-        {/* Widget grid — slots to be filled by follow-up issues.
-            Data must flow through /api/reports/... API routes, not direct Supabase calls. */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <WidgetPlaceholder label="Tổng doanh thu" />
-          <WidgetPlaceholder label="Tổng đơn hàng" />
-          <WidgetPlaceholder label="Đơn trung bình" />
-        </div>
+        {/* KPI Summary cards */}
+        <SummaryKPIs dateRange={dateRange} />
 
         <WidgetPlaceholder label="Biểu đồ doanh thu" tall />
         <WidgetPlaceholder label="Danh mục sản phẩm" tall />

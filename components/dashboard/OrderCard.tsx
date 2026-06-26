@@ -8,6 +8,7 @@ import type { OrderRow } from "@/hooks/useOrderQueue";
 import type { OrderItemSummary } from "@/types/order";
 import { StatusBadge } from "./StatusBadge";
 import { OrderDetailDrawer } from "./OrderDetailDrawer";
+import { formatCurrency } from "@/lib/utils/format";
 
 export type DashboardOrder = OrderRow & { items: OrderItemSummary[] };
 
@@ -26,10 +27,6 @@ const TIME_FORMAT = new Intl.DateTimeFormat("vi-VN", {
 
 function formatTime(iso: string): string {
   return TIME_FORMAT.format(new Date(iso));
-}
-
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString("vi-VN") + "đ";
 }
 
 export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
