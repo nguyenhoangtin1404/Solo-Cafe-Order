@@ -101,7 +101,9 @@ function computePreset(id: PresetId, now: Date): DateRange | null {
         `${prevYear}-${String(prevMonth).padStart(2, "0")}-01T00:00:00+07:00`
       );
       // Last day of prev month = day before this month start
-      const thisMonthStart = new Date(`${y}-${String(mo).padStart(2, "0")}-01T00:00:00+07:00`);
+      const thisMonthStart = new Date(
+        `${y}-${String(mo).padStart(2, "0")}-01T00:00:00+07:00`
+      );
       const lmEnd = new Date(thisMonthStart.getTime() - 1);
       return { from: lmStart, to: lmEnd };
     }
@@ -170,7 +172,12 @@ export function DateFilter({ value, onChange }: Props) {
           {PRESETS.find((p) => p.id === activePreset)?.label}:&nbsp;
         </span>
         <span className="text-muted-foreground">{formatRange(value)}</span>
-        <ChevronDown size={16} className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+        <ChevronDown
+          size={16}
+          className={
+            open ? "rotate-180 transition-transform" : "transition-transform"
+          }
+        />
       </button>
 
       {open && (
@@ -202,7 +209,9 @@ export function DateFilter({ value, onChange }: Props) {
             {activePreset === "custom" && (
               <div className="border-t p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <label className="w-12 shrink-0 text-xs text-muted-foreground">Từ</label>
+                  <label className="w-12 shrink-0 text-xs text-muted-foreground">
+                    Từ
+                  </label>
                   <input
                     type="date"
                     value={customFrom}
@@ -212,7 +221,9 @@ export function DateFilter({ value, onChange }: Props) {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="w-12 shrink-0 text-xs text-muted-foreground">Đến</label>
+                  <label className="w-12 shrink-0 text-xs text-muted-foreground">
+                    Đến
+                  </label>
                   <input
                     type="date"
                     value={customTo}
