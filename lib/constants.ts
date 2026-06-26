@@ -47,5 +47,9 @@ export const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 export const CATEGORY_HAS_PRODUCTS = "CATEGORY_HAS_PRODUCTS";
 
 export const APP_NAME = "Vibe Cafe";
-export const OWNER_PATH_PREFIXES = ["/dashboard", "/admin", "/reports"] as const;
+export const OWNER_PATH_PREFIXES = [
+  "/dashboard",
+  "/admin",
+  "/reports",
+] as const;
 export const HIDDEN_PATH_PREFIXES = ["/login"] as const;
