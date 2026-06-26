@@ -1,9 +1,9 @@
--- Description: Thêm DB index cho aggregation queries của Reports dashboard
+-- Description: Add optimized report indexes for Reports dashboard (closes #158)
 
--- Aggregation queries lọc theo status + date range
-CREATE INDEX idx_orders_report
-ON orders(status, created_at DESC);
+-- created_at leads so date-range filter hits index boundary first
+-- INCLUDE (total_amount) enables index-only scan for SUM(total_amount)
+CREATE INDEX idx_orders_created_status
+  ON orders(created_at, status) INCLUDE (total_amount);
 
--- Hỗ trợ GROUP BY payment_method trong date range
-CREATE INDEX idx_orders_payment_created
-ON orders(payment_method, created_at DESC);
+CREATE INDEX idx_orders_created_payment
+  ON orders(created_at, payment_method) INCLUDE (total_amount);
