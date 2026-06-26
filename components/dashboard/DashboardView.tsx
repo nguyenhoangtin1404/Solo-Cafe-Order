@@ -306,13 +306,14 @@ export function DashboardView({ initialOrders }: Props) {
       <div className="sticky top-0 z-10 bg-background">
         <header className="border-b px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold">Dashboard</h1>
-            <div className="flex items-center gap-3">
+            <h1 className="min-w-0 truncate text-lg font-bold">Dashboard</h1>
+            <div className="flex shrink-0 items-center gap-3">
               <Link
                 href="/reports"
+                aria-label="Báo cáo"
                 className="flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <BarChart2 size={16} />
+                <BarChart2 size={16} aria-hidden={true} />
                 <span className="hidden sm:inline">Báo cáo</span>
               </Link>
               <ConnectionStatus status={connectionStatus} />

@@ -8,7 +8,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   // Only allow relative paths — absolute URLs like https://evil.com would bypass the base.
   const rawNext = searchParams.get("next");
-  const next = rawNext?.startsWith("/") ? rawNext : "/dashboard";
+  // Block protocol-relative URLs like //evil.com that pass startsWith("/")
+  const next =
+    rawNext?.startsWith("/") && !rawNext.startsWith("//")
+      ? rawNext
+      : "/dashboard";
 
   if (!code) {
     return NextResponse.redirect(

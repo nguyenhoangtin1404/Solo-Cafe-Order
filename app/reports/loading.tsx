@@ -1,13 +1,17 @@
 export default function ReportsLoading() {
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div
+      role="status"
+      aria-label="Đang tải báo cáo…"
+      className="min-h-screen bg-background pb-24"
+    >
       <header className="sticky top-0 z-10 border-b bg-background px-4 py-3">
         <div className="h-6 w-24 animate-pulse rounded bg-muted" />
       </header>
 
       <main className="space-y-4 p-4">
         {/* DateFilter skeleton */}
-        <div className="h-11 w-64 animate-pulse rounded-lg bg-muted" />
+        <div className="h-11 w-full animate-pulse rounded-lg bg-muted sm:w-64" />
 
         {/* Stat cards skeleton */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

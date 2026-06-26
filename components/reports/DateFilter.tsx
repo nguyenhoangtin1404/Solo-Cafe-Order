@@ -1,9 +1,16 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
-
-const TZ = "Asia/Ho_Chi_Minh";
+import {
+  addDaysHCM,
+  endOfDayHCM,
+  endOfPrevMonthHCM,
+  startOfDayHCM,
+  startOfMonthHCM,
+  startOfPrevMonthHCM,
+  toInputDateHCM,
+} from "@/lib/utils/timezone";
 
 export interface DateRange {
   from: Date;
@@ -34,94 +41,35 @@ const PRESETS: Preset[] = [
   { id: "custom", label: "Tuỳ chọn" },
 ];
 
-function startOfDayHCM(date: Date): Date {
-  // Get the date string in HCM timezone then parse as midnight HCM
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const y = parts.find((p) => p.type === "year")!.value;
-  const m = parts.find((p) => p.type === "month")!.value;
-  const d = parts.find((p) => p.type === "day")!.value;
-  // Create midnight in HCM by using the offset
-  return new Date(`${y}-${m}-${d}T00:00:00+07:00`);
-}
-
-function endOfDayHCM(date: Date): Date {
-  const start = startOfDayHCM(date);
-  return new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
-}
-
-function addDays(date: Date, days: number): Date {
-  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-}
-
 function computePreset(id: PresetId, now: Date): DateRange | null {
   if (id === "custom") return null;
-
   const todayStart = startOfDayHCM(now);
-  const todayEnd = endOfDayHCM(now);
-
   switch (id) {
     case "today":
-      return { from: todayStart, to: todayEnd };
+      return { from: todayStart, to: now }; // spec: 00:00:00 HCM đến hiện tại
     case "yesterday": {
-      const yest = addDays(todayStart, -1);
+      const yest = addDaysHCM(todayStart, -1);
       return { from: yest, to: endOfDayHCM(yest) };
     }
     case "last7":
-      return { from: addDays(todayStart, -6), to: todayEnd };
+      return { from: addDaysHCM(todayStart, -6), to: endOfDayHCM(now) };
     case "last30":
-      return { from: addDays(todayStart, -29), to: todayEnd };
-    case "thisMonth": {
-      const hcmParts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: TZ,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).formatToParts(now);
-      const y = hcmParts.find((p) => p.type === "year")!.value;
-      const mo = hcmParts.find((p) => p.type === "month")!.value;
-      const monthStart = new Date(`${y}-${mo}-01T00:00:00+07:00`);
-      return { from: monthStart, to: todayEnd };
-    }
-    case "lastMonth": {
-      const hcmParts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: TZ,
-        year: "numeric",
-        month: "2-digit",
-      }).formatToParts(now);
-      const y = parseInt(hcmParts.find((p) => p.type === "year")!.value);
-      const mo = parseInt(hcmParts.find((p) => p.type === "month")!.value);
-      const prevMonth = mo === 1 ? 12 : mo - 1;
-      const prevYear = mo === 1 ? y - 1 : y;
-      const lmStart = new Date(
-        `${prevYear}-${String(prevMonth).padStart(2, "0")}-01T00:00:00+07:00`
-      );
-      // Last day of prev month = day before this month start
-      const thisMonthStart = new Date(
-        `${y}-${String(mo).padStart(2, "0")}-01T00:00:00+07:00`
-      );
-      const lmEnd = new Date(thisMonthStart.getTime() - 1);
-      return { from: lmStart, to: lmEnd };
+      return { from: addDaysHCM(todayStart, -29), to: endOfDayHCM(now) };
+    case "thisMonth":
+      return { from: startOfMonthHCM(now), to: now }; // spec: đến hiện tại
+    case "lastMonth":
+      return { from: startOfPrevMonthHCM(now), to: endOfPrevMonthHCM(now) };
+    default: {
+      // Exhaustiveness check — TypeScript errors here if a new PresetId is added without a case
+      const _exhaustive: never = id;
+      return _exhaustive;
     }
   }
 }
 
-function toInputDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
 function formatRange(range: DateRange): string {
   const fmt = new Intl.DateTimeFormat("vi-VN", {
-    timeZone: TZ,
+    timeZone: "Asia/Ho_Chi_Minh",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -139,33 +87,72 @@ export function DateFilter({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [customError, setCustomError] = useState("");
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstPresetRef = useRef<HTMLButtonElement>(null);
+  const fromInputRef = useRef<HTMLInputElement>(null);
+  const prevPresetRef = useRef<PresetId>("today");
+
+  // Move focus into the dropdown when it opens
+  useEffect(() => {
+    if (open) firstPresetRef.current?.focus();
+  }, [open]);
+
+  // Move focus to "Từ" input when switching to custom preset
+  useEffect(() => {
+    if (activePreset === "custom" && prevPresetRef.current !== "custom") {
+      fromInputRef.current?.focus();
+    }
+    prevPresetRef.current = activePreset;
+  }, [activePreset]);
+
+  const closeDropdown = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
 
   const selectPreset = useCallback(
     (id: PresetId) => {
       setActivePreset(id);
       if (id !== "custom") {
+        // Clear stale custom dates so re-entering custom starts fresh
+        setCustomFrom("");
+        setCustomTo("");
+        setCustomError("");
         const range = computePreset(id, new Date());
         if (range) onChange(range);
-        setOpen(false);
+        closeDropdown();
       }
     },
-    [onChange]
+    [onChange, closeDropdown]
   );
 
   const applyCustom = useCallback(() => {
     if (!customFrom || !customTo) return;
     const from = new Date(`${customFrom}T00:00:00+07:00`);
-    const to = new Date(`${customTo}T23:59:59+07:00`);
-    if (from > to) return;
+    const to = new Date(`${customTo}T23:59:59.999+07:00`);
+    if (from > to) {
+      setCustomError("Ngày bắt đầu phải trước ngày kết thúc.");
+      return;
+    }
+    setCustomError("");
     onChange({ from, to });
-    setOpen(false);
-  }, [customFrom, customTo, onChange]);
+    closeDropdown();
+  }, [customFrom, customTo, onChange, closeDropdown]);
 
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
+        aria-expanded={open}
+        aria-controls="date-preset-dropdown"
+        aria-label="Chọn khoảng thời gian"
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") closeDropdown();
+        }}
         className="flex min-h-[44px] items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted"
       >
         <span className="hidden sm:inline">
@@ -174,6 +161,7 @@ export function DateFilter({ value, onChange }: Props) {
         <span className="text-muted-foreground">{formatRange(value)}</span>
         <ChevronDown
           size={16}
+          aria-hidden="true"
           className={
             open ? "rotate-180 transition-transform" : "transition-transform"
           }
@@ -182,20 +170,28 @@ export function DateFilter({ value, onChange }: Props) {
 
       {open && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — closes dropdown on outside click */}
           <div
             className="fixed inset-0 z-10"
-            onClick={() => setOpen(false)}
-            aria-hidden
+            onClick={closeDropdown}
+            aria-hidden="true"
+            role="presentation"
           />
-          <div className="absolute left-0 top-full z-20 mt-1 w-72 rounded-xl border bg-background shadow-lg">
+          <div
+            id="date-preset-dropdown"
+            className="absolute inset-x-0 top-full z-20 mt-1 rounded-xl border bg-background shadow-lg sm:left-0 sm:right-auto sm:w-72"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") closeDropdown();
+            }}
+          >
             <div className="p-2">
-              {PRESETS.map((preset) => (
+              {PRESETS.map((preset, i) => (
                 <button
                   key={preset.id}
+                  ref={i === 0 ? firstPresetRef : undefined}
                   type="button"
                   onClick={() => selectPreset(preset.id)}
-                  className={`flex min-h-[40px] w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  className={`flex min-h-[44px] w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                     activePreset === preset.id
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted"
@@ -207,37 +203,57 @@ export function DateFilter({ value, onChange }: Props) {
             </div>
 
             {activePreset === "custom" && (
-              <div className="border-t p-3 space-y-2">
+              <div className="space-y-2 border-t p-3">
                 <div className="flex items-center gap-2">
-                  <label className="w-12 shrink-0 text-xs text-muted-foreground">
+                  <label
+                    htmlFor="date-filter-from"
+                    className="w-12 shrink-0 text-xs text-muted-foreground"
+                  >
                     Từ
                   </label>
                   <input
+                    ref={fromInputRef}
+                    id="date-filter-from"
                     type="date"
                     value={customFrom}
-                    max={customTo || toInputDate(new Date())}
-                    onChange={(e) => setCustomFrom(e.target.value)}
-                    className="min-h-[36px] flex-1 rounded-md border px-2 text-sm"
+                    max={customTo || toInputDateHCM(new Date())}
+                    onChange={(e) => {
+                      setCustomFrom(e.target.value);
+                      setCustomError("");
+                    }}
+                    className="min-h-[44px] flex-1 rounded-md border px-2 text-sm"
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="w-12 shrink-0 text-xs text-muted-foreground">
+                  <label
+                    htmlFor="date-filter-to"
+                    className="w-12 shrink-0 text-xs text-muted-foreground"
+                  >
                     Đến
                   </label>
                   <input
+                    id="date-filter-to"
                     type="date"
                     value={customTo}
                     min={customFrom}
-                    max={toInputDate(new Date())}
-                    onChange={(e) => setCustomTo(e.target.value)}
-                    className="min-h-[36px] flex-1 rounded-md border px-2 text-sm"
+                    max={toInputDateHCM(new Date())}
+                    onChange={(e) => {
+                      setCustomTo(e.target.value);
+                      setCustomError("");
+                    }}
+                    className="min-h-[44px] flex-1 rounded-md border px-2 text-sm"
                   />
                 </div>
+                {customError && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {customError}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={applyCustom}
                   disabled={!customFrom || !customTo}
-                  className="min-h-[36px] w-full rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                  className="min-h-[44px] w-full rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
                 >
                   Áp dụng
                 </button>
