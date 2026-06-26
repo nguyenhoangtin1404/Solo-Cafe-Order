@@ -30,7 +30,9 @@ function makeRedirect(url: URL, supabaseResponse: NextResponse): NextResponse {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProtectedPath =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/reports");
   if (!isProtectedPath) {
     return NextResponse.next({ request });
   }
@@ -77,5 +79,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/reports/:path*"],
 };
