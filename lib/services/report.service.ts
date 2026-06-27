@@ -77,6 +77,25 @@ export async function getBestSellingProducts(
   return reportRepo.fetchBestSellingProducts(from, to);
 }
 
+export interface CategoryRevenueItem {
+  name: string;
+  revenue: number;
+  percentage: number;
+}
+
+export async function getRevenueByCategory(
+  from: Date,
+  to: Date
+): Promise<CategoryRevenueItem[]> {
+  const rows = await reportRepo.fetchRevenueByCategory(from, to);
+  const total = rows.reduce((sum, r) => sum + r.revenue, 0);
+  return rows.map((r) => ({
+    name: r.categoryName,
+    revenue: r.revenue,
+    percentage: total > 0 ? Math.round((r.revenue / total) * 100) : 0,
+  }));
+}
+
 export async function getSummary(from: Date, to: Date): Promise<SummaryResult> {
   const { revenue, orderCount, itemsSold } = await reportRepo.fetchSummaryData(
     from,

@@ -77,6 +77,27 @@ export async function fetchBestSellingProducts(
   }));
 }
 
+interface CategoryRevenueRow {
+  category_name: string;
+  revenue: string | number;
+}
+
+export async function fetchRevenueByCategory(
+  from: Date,
+  to: Date
+): Promise<{ categoryName: string; revenue: number }[]> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.rpc("get_revenue_by_category", {
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  });
+  if (error) throw error;
+  return ((data ?? []) as CategoryRevenueRow[]).map((r) => ({
+    categoryName: r.category_name,
+    revenue: Number(r.revenue),
+  }));
+}
+
 export async function fetchSummaryData(
   from: Date,
   to: Date
