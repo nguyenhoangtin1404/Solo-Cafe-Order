@@ -74,7 +74,7 @@ function PieChartContent({ data }: { data: CategoryRevenueItem[] }) {
       {/* Legend */}
       <ul className="w-full space-y-2">
         {data.map((item, index) => (
-          <li key={item.name} className="flex items-center gap-2 text-sm">
+          <li key={index} className="flex items-center gap-2 text-sm">
             <span
               className="h-3 w-3 shrink-0 rounded-sm"
               style={{ background: getColor(index) }}

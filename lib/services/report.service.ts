@@ -97,6 +97,8 @@ export async function getRevenueByCategory(
     }));
   }
   // Largest-remainder method: guarantees percentages sum to exactly 100.
+  // Sort indices by remainder DESC to pick bonus recipients without disturbing
+  // the original revenue-DESC order returned by the RPC.
   const withRemainders = rows.map((r) => {
     const exact = (r.revenue / total) * 100;
     return {
@@ -107,11 +109,15 @@ export async function getRevenueByCategory(
     };
   });
   const remaining = 100 - withRemainders.reduce((s, r) => s + r.floor, 0);
-  withRemainders.sort((a, b) => b.remainder - a.remainder);
+  const bonusIndices = new Set(
+    [...withRemainders.keys()]
+      .sort((a, b) => withRemainders[b].remainder - withRemainders[a].remainder)
+      .slice(0, remaining)
+  );
   return withRemainders.map((r, i) => ({
     name: r.name,
     revenue: r.revenue,
-    percentage: r.floor + (i < remaining ? 1 : 0),
+    percentage: r.floor + (bonusIndices.has(i) ? 1 : 0),
   }));
 }
 
