@@ -18,7 +18,7 @@ AS $$
   SELECT
     oi.product_name,
     SUM(oi.quantity)::bigint                           AS quantity,
-    SUM(oi.quantity * oi.unit_price)::bigint           AS revenue
+    SUM(oi.quantity::bigint * oi.unit_price)::bigint    AS revenue
   FROM   public.order_items oi
   JOIN   public.orders      o  ON o.id = oi.order_id
   WHERE  o.status      = 'done'

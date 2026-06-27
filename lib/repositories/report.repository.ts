@@ -54,7 +54,7 @@ export async function fetchRevenueByDay(
   }));
 }
 
-export interface BestSellingProductRow {
+interface BestSellingProductRow {
   product_name: string;
   quantity: string | number;
   revenue: string | number;
