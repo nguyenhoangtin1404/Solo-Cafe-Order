@@ -35,7 +35,8 @@ export function useBestSellingProducts(dateRange: DateRange): {
         return res.json() as Promise<{ products: BestSellingProduct[] }>;
       })
       .then(({ products }) => {
-        if (!cancelled) setFetched({ data: products, fromMs, toMs, error: false });
+        if (!cancelled)
+          setFetched({ data: products, fromMs, toMs, error: false });
       })
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -48,7 +49,8 @@ export function useBestSellingProducts(dateRange: DateRange): {
     };
   }, [fromMs, toMs]);
 
-  const isLoading = !fetched || fetched.fromMs !== fromMs || fetched.toMs !== toMs;
+  const isLoading =
+    !fetched || fetched.fromMs !== fromMs || fetched.toMs !== toMs;
 
   return {
     isLoading,

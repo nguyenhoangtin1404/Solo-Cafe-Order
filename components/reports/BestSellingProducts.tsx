@@ -45,7 +45,9 @@ function ProductTable({ products }: { products: BestSellingProduct[] }) {
               <td className="py-2.5 pr-3 text-right">
                 {product.quantity.toLocaleString("vi-VN")}
               </td>
-              <td className="py-2.5 text-right">{formatCurrency(product.revenue)}</td>
+              <td className="py-2.5 text-right">
+                {formatCurrency(product.revenue)}
+              </td>
             </tr>
           ))}
         </tbody>
