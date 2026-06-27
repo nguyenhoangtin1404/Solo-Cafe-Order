@@ -2,7 +2,7 @@
 
 > Reviewed by: PM · PO · Tech Lead · Tester · Senior Dev (round 2 — cross-checked vs API_CONTRACT, DB_SCHEMA, DOMAIN, REALTIME, TESTING docs)
 > Last updated: 2026-06-27
-> Total: 53 issues · 4 milestones · **Phase 1 done + Phase 2 Reports done — pending #117 smoke test + #118 deploy**
+> Total: 55 issues · 4 milestones · **Phase 1 done + Phase 2 Reports done — pending #117 smoke test + #118 deploy**
 
 ---
 
@@ -1032,8 +1032,6 @@ new     → cancelled (owner hoặc customer)
 
 ---
 
----
-
 ## Milestone 4 — Phase 2 Operations (Partial)
 
 > Bắt đầu sau khi Phase 1 code complete. Các issues trong milestone này đã được merge trước #117 smoke test.
@@ -1107,7 +1105,7 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 
 ---
 
-### #152 · Bottom navigation thống nhất
+### #126 · Bottom navigation thống nhất
 
 **Labels:** `frontend`, `ux`
 **Status:** ✅ Done
@@ -1230,4 +1228,4 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 | v3.1    | sửa #117 (tách bullet payment_method=momo vs rate-limit), #47 (order note max 500 không phải 200), #44 (cursor dùng uuid_v7 khớp API_CONTRACT)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | v4      | Tạo 6 issues còn thiếu trên GitHub (#113 product options, #114 image upload, #115 bank transfer config, #116 PWA manifest, #117 smoke test, #118 deploy); cập nhật toàn bộ số issue trong doc sang số GitHub thực tế                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | v5      | Phase 1 code complete (2026-06-19): tất cả 41 issues M1/M2/M3 đã merge; #78 sửa 307→308; docs sync — ROADMAP checkpoints ticked, ISSUES header updated. Còn lại: #117 smoke test (manual) → #118 deploy.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| v6      | Phase 2 Reports done (2026-06-27): thêm Milestone 4 với 12 issues mới (#127–#165); Reports dashboard hoàn chỉnh (summary KPI, revenue trend, revenue by category, best selling products); password reset flow; bottom navigation thống nhất; UI/UX redesigns toàn app; security fixes (keyset pagination, revoke EXECUTE RPC, gen_random_uuid()); ROADMAP M3 checkpoints ticked; CLAUDE.md MVP scope ticked; TODO.md rewrite. Total: 53 issues.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| v6      | Phase 2 Reports done (2026-06-27): thêm Milestone 4 với 14 issues mới (#126–#165); Reports dashboard hoàn chỉnh (summary KPI, revenue trend, revenue by category, best selling products); password reset flow; bottom navigation thống nhất; UI/UX redesigns toàn app; security fixes (keyset pagination, revoke EXECUTE RPC, gen_random_uuid()); ROADMAP M3 checkpoints ticked; CLAUDE.md MVP scope ticked; TODO.md rewrite. Total: 55 issues.                                                                                                                                                                                                                                                                                                                                                                                                                              |

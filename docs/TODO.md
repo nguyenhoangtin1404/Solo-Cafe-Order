@@ -34,7 +34,6 @@
 
 - [ ] Jest unit tests cho `OrderService` (#54) — hiện chưa có, chỉ có mock setup
 - [ ] Image cleanup khi upload ảnh mới (xóa ảnh cũ trong Supabase Storage)
-- [ ] `cancel_token` để tránh brute-force cancel order người khác
 - [ ] Pagination cho admin product list (hiện load all)
 - [ ] Cursor pagination cho dashboard tab "Xong" (done + cancelled)
 
