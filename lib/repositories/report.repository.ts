@@ -12,6 +12,48 @@ interface SummaryRpcRow {
   items_sold: string | number;
 }
 
+interface HourlyRevenueRow {
+  hour: string | number;
+  revenue: string | number;
+}
+
+interface DailyRevenueRow {
+  day: string;
+  revenue: string | number;
+}
+
+export async function fetchRevenueByHour(
+  from: Date,
+  to: Date
+): Promise<{ hour: number; revenue: number }[]> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.rpc("get_revenue_by_hour", {
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  });
+  if (error) throw error;
+  return ((data ?? []) as HourlyRevenueRow[]).map((r) => ({
+    hour: Number(r.hour),
+    revenue: Number(r.revenue),
+  }));
+}
+
+export async function fetchRevenueByDay(
+  from: Date,
+  to: Date
+): Promise<{ day: string; revenue: number }[]> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.rpc("get_revenue_by_day", {
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  });
+  if (error) throw error;
+  return ((data ?? []) as DailyRevenueRow[]).map((r) => ({
+    day: r.day,
+    revenue: Number(r.revenue),
+  }));
+}
+
 export async function fetchSummaryData(
   from: Date,
   to: Date

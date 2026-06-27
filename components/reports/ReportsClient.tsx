@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateFilter, type DateRange } from "./DateFilter";
 import { SummaryKPIs } from "./SummaryKPIs";
-import { startOfDayHCM } from "@/lib/utils/timezone";
+import { RevenueChart } from "./RevenueChart";
+import { startOfDayHCM, toInputDateHCM } from "@/lib/utils/timezone";
 
 export function ReportsClient() {
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
     from: startOfDayHCM(new Date()),
     to: new Date(), // "hôm nay đến hiện tại" per spec
   }));
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDateRange((prev) => {
+        if (toInputDateHCM(prev.to) !== toInputDateHCM(new Date())) return prev;
+        return { ...prev, to: new Date() };
+      });
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div
@@ -28,7 +39,7 @@ export function ReportsClient() {
         {/* KPI Summary cards */}
         <SummaryKPIs dateRange={dateRange} />
 
-        <WidgetPlaceholder label="Biểu đồ doanh thu" tall />
+        <RevenueChart dateRange={dateRange} />
         <WidgetPlaceholder label="Danh mục sản phẩm" tall />
         <WidgetPlaceholder label="Sản phẩm bán chạy" tall />
       </main>
