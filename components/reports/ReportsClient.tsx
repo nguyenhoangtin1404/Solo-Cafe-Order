@@ -5,6 +5,7 @@ import { DateFilter, type DateRange } from "./DateFilter";
 import { SummaryKPIs } from "./SummaryKPIs";
 import { RevenueChart } from "./RevenueChart";
 import { BestSellingProducts } from "./BestSellingProducts";
+import { RevenueByCategoryChart } from "./RevenueByCategoryChart";
 import { startOfDayHCM, toInputDateHCM } from "@/lib/utils/timezone";
 
 export function ReportsClient() {
@@ -41,24 +42,9 @@ export function ReportsClient() {
         <SummaryKPIs dateRange={dateRange} />
 
         <RevenueChart dateRange={dateRange} />
-        <WidgetPlaceholder label="Danh mục sản phẩm" tall />
+        <RevenueByCategoryChart dateRange={dateRange} />
         <BestSellingProducts dateRange={dateRange} />
       </main>
-    </div>
-  );
-}
-
-function WidgetPlaceholder({ label, tall }: { label: string; tall?: boolean }) {
-  return (
-    // TODO: remove animate-pulse when real widget data is wired up
-    <div
-      aria-busy="true"
-      aria-label={`Đang tải: ${label}`}
-      className={`animate-pulse rounded-xl border bg-muted/30 ${tall ? "h-48 sm:h-64" : "h-28"} flex items-center justify-center`}
-    >
-      <span aria-hidden="true" className="text-sm text-muted-foreground">
-        {label}
-      </span>
     </div>
   );
 }
