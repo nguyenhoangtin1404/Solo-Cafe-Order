@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DateFilter, type DateRange } from "./DateFilter";
 import { SummaryKPIs } from "./SummaryKPIs";
 import { RevenueChart } from "./RevenueChart";
+import { BestSellingProducts } from "./BestSellingProducts";
 import { startOfDayHCM, toInputDateHCM } from "@/lib/utils/timezone";
 
 export function ReportsClient() {
@@ -41,7 +42,7 @@ export function ReportsClient() {
 
         <RevenueChart dateRange={dateRange} />
         <WidgetPlaceholder label="Danh mục sản phẩm" tall />
-        <WidgetPlaceholder label="Sản phẩm bán chạy" tall />
+        <BestSellingProducts dateRange={dateRange} />
       </main>
     </div>
   );
