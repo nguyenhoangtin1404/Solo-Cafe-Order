@@ -204,18 +204,26 @@ npm run typecheck  # TypeScript check
 
 ## MVP Scope (Phase 1 — ~3 tuần)
 
-- [ ] Setup Next.js + Supabase + rate limiting
-- [ ] DB schema + migrations + seed
-- [ ] Owner auth + middleware bảo vệ route
-- [ ] Menu page + product modal (public)
-- [ ] Cart logic + validate availability khi submit
-- [ ] Submit order API (với rate limit + wait_estimate)
-- [ ] Order success screen (order_code, pickup_name, items, wait_estimate)
-- [ ] Order tracking page /order/[code] (realtime + cancel by customer)
-- [ ] Realtime dashboard (owner, âm thanh khi order mới, filter tabs)
-- [ ] Order status update
-- [ ] Basic admin panel (list, toggle, add/edit product, upload ảnh)
+- [x] Setup Next.js + Supabase + rate limiting
+- [x] DB schema + migrations + seed
+- [x] Owner auth + middleware bảo vệ route
+- [x] Menu page + product modal (public)
+- [x] Cart logic + validate availability khi submit
+- [x] Submit order API (với rate limit + wait_estimate)
+- [x] Order success screen (order_code, pickup_name, items, wait_estimate)
+- [x] Order tracking page /order/[code] (realtime + cancel by customer)
+- [x] Realtime dashboard (owner, âm thanh khi order mới, filter tabs)
+- [x] Order status update
+- [x] Basic admin panel (list, toggle, add/edit product, upload ảnh)
 - [ ] Deploy to Vercel
+
+## Phase 2 Done (Operations — Partial)
+
+- [x] Reports dashboard (`/reports`) — KPI summary, revenue trend, revenue by category, best selling products
+- [x] Password reset flow
+- [x] Bottom navigation thống nhất toàn app
+- [x] UI/UX redesigns — login, menu 2-col grid, cart thumbnails, tracking page, dashboard drawer
+- [x] Security fixes — keyset pagination, pg_uuidv7 → gen_random_uuid(), revoke EXECUTE on RPC
 
 ## Phases
 

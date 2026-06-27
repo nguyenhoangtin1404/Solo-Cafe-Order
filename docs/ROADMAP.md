@@ -76,12 +76,12 @@
 
 **M3 / Done Checkpoint:**
 
-- [ ] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
-- [ ] Dashboard nhận order mới realtime < 2 giây + sound
-- [ ] Owner cập nhật status → tracking page khách cập nhật ngay
-- [ ] Upload ảnh product, toggle availability hoạt động
-- [ ] `npm run build` clean, Lighthouse PWA ≥ 80
-- [ ] App live trên Vercel
+- [x] Scan QR `/` → `/menu` → thêm vào cart → submit → nhận order_code < 60 giây
+- [x] Dashboard nhận order mới realtime < 2 giây + sound
+- [x] Owner cập nhật status → tracking page khách cập nhật ngay
+- [x] Upload ảnh product, toggle availability hoạt động
+- [x] `npm run build` clean, Lighthouse PWA ≥ 80
+- [ ] App live trên Vercel ← **pending #117 smoke test → #118 deploy**
 
 ---
 
@@ -124,12 +124,19 @@ Thứ tự có thể defer sang Phase 2 mà không ảnh hưởng core flow:
 
 ## Phase 2 — Operations (~2 tuần)
 
-- Daily revenue summary trên dashboard
-- Print / share QR code
-- Mobile optimization (Lighthouse ≥ 90)
-- MoMo / VNPAY integration + `payment_status`
-- `cancel_token` cho cancel endpoint (thay brute-force order_code)
-- Offline detection UI
+> Đã bắt đầu — xem Done items bên dưới.
+
+**Done:**
+- [x] Reports dashboard — KPI, revenue trend, revenue by category, best selling products
+- [x] Password reset flow
+- [x] Bottom navigation thống nhất + UI/UX redesigns toàn app
+
+**Còn lại:**
+- [ ] Print / share QR code
+- [ ] Mobile optimization (Lighthouse ≥ 90)
+- [ ] MoMo / VNPAY integration + `payment_status`
+- [ ] `cancel_token` cho cancel endpoint (thay brute-force order_code)
+- [ ] Offline detection UI
 
 ## Phase 3 — Loyalty (~3 tuần)
 
