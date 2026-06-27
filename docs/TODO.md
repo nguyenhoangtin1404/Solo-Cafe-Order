@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**Phase 1 — QR Menu MVP:** ✅ Code complete (tất cả 41 issues #16–#118 đã merge)
+**Phase 1 — QR Menu MVP:** ✅ Code complete (issues #16–#116 đã merge · #117 smoke test + #118 deploy còn pending)
 
 **Phase 2 — Operations (partial):** ✅ Reports dashboard done
 
@@ -32,7 +32,6 @@
 
 ## Cải thiện kỹ thuật (backlog)
 
-- [ ] Jest unit tests cho `OrderService` (#54) — hiện chưa có, chỉ có mock setup
 - [ ] Image cleanup khi upload ảnh mới (xóa ảnh cũ trong Supabase Storage)
 - [ ] Pagination cho admin product list (hiện load all)
 - [ ] Cursor pagination cho dashboard tab "Xong" (done + cancelled)
@@ -41,7 +40,7 @@
 
 ## Done
 
-### Phase 1 (tất cả #16–#118)
+### Phase 1 (issues #16–#116 · #117 + #118 pending)
 - [x] Project scaffolding — Next.js App Router + TypeScript + Tailwind + shadcn
 - [x] Supabase client setup (browser + server + admin)
 - [x] DB migrations — categories, products, options, orders, order_items
@@ -77,12 +76,12 @@
 
 ### Phase 2 — Reports Dashboard
 - [x] DB report indexes + optimization
-- [x] RPC `get_order_summary` — KPI (orders count, revenue, avg wait time)
-- [x] RPC `get_revenue_trend` — theo giờ hoặc theo ngày
+- [x] RPC `get_order_summary` — KPI (`revenue`, `order_count`, `items_sold`)
+- [x] RPC `get_revenue_by_hour`, `get_revenue_by_day` — theo giờ hoặc theo ngày
 - [x] RPC `get_revenue_by_category` — pie chart breakdown
 - [x] RPC `get_best_selling_products` — top 10 by quantity
 - [x] `GET /api/reports/summary`, `revenue`, `categories`, `products`
 - [x] `/reports` page + DateFilter, SummaryKPIs, RevenueChart, RevenueByCategoryChart, BestSellingProducts
 - [x] Password reset flow (`/auth/reset-password`)
 - [x] UI/UX redesigns — login, menu 2-col grid, cart thumbnails, tracking page, dashboard drawer, illustrations
-- [x] Security — revoke EXECUTE on RPC from anon/authenticated
+- [x] Security — revoke EXECUTE on all report RPCs from anon/authenticated (incl. `get_order_summary`)

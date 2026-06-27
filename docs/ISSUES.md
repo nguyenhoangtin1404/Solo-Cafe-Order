@@ -1097,7 +1097,7 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 ### #148 · Auth — password reset flow
 
 **Labels:** `frontend`, `backend`, `security`
-**Status:** ✅ Done
+**Status:** ⚠️ Partial — recovery form (`/auth/reset-password`) done; thiếu forgot-password link để trigger email reset
 
 - `app/auth/callback/route.ts` — OAuth callback handler
 - `app/auth/reset-password/page.tsx` — trang nhập mật khẩu mới
@@ -1112,7 +1112,7 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 
 - `NavController` — dynamic nav controller, show/hide dựa theo route
 - `PublicBottomNav` — Menu / Cart / Orders (cho khách)
-- `OwnerBottomNav` — Dashboard / Admin / Reports (cho owner)
+- `OwnerBottomNav` — Dashboard (Đơn hàng) / Admin (Quản lý) / Logout
 
 ---
 
@@ -1134,7 +1134,7 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 - `app/reports/page.tsx` + `app/reports/loading.tsx`
 - `components/reports/ReportsClient.tsx`
 - `components/reports/DateFilter.tsx` — date range filter (today, 7d, 30d, custom)
-- Navigation link từ OwnerBottomNav
+- Navigation link từ Dashboard header (không nằm trong OwnerBottomNav)
 
 ---
 
@@ -1143,9 +1143,9 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 **Labels:** `frontend`, `backend`
 **Status:** ✅ Done
 
-- RPC `get_order_summary(start, end)` — trả orders count, revenue, avg wait time
+- RPC `get_order_summary(p_from, p_to)` — trả `revenue`, `order_count`, `items_sold`
 - `GET /api/reports/summary` — owner only
-- `components/reports/SummaryKPIs.tsx` — 3 KPI cards
+- `components/reports/SummaryKPIs.tsx` — 4 KPI cards (revenue, đơn hàng, items sold, avg order value)
 
 ---
 
@@ -1154,7 +1154,7 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 **Labels:** `frontend`, `backend`
 **Status:** ✅ Done
 
-- RPC `get_revenue_trend(start, end, granularity)` — theo giờ hoặc theo ngày
+- RPC `get_revenue_by_hour(p_from, p_to)` và `get_revenue_by_day(p_from, p_to)`
 - `GET /api/reports/revenue` — owner only
 - `components/reports/RevenueChart.tsx` — bar (by hour) / line (by day) via Recharts
 
@@ -1165,7 +1165,7 @@ Revoke EXECUTE trên `rls_auto_enable()` khỏi `anon` và `authenticated` role.
 **Labels:** `frontend`, `backend`
 **Status:** ✅ Done
 
-- RPC `get_best_selling_products(start, end, limit)` — top 10 by quantity sold
+- RPC `get_best_selling_products(p_from, p_to)` — top 10 by quantity sold (LIMIT 10 hard-coded in SQL)
 - `GET /api/reports/products` — owner only
 - `components/reports/BestSellingProducts.tsx` — ranked list
 
