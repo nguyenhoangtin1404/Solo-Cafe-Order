@@ -106,7 +106,7 @@ export async function getRevenueByCategory(
       remainder: exact - Math.floor(exact),
     };
   });
-  let remaining = 100 - withRemainders.reduce((s, r) => s + r.floor, 0);
+  const remaining = 100 - withRemainders.reduce((s, r) => s + r.floor, 0);
   withRemainders.sort((a, b) => b.remainder - a.remainder);
   return withRemainders.map((r, i) => ({
     name: r.name,
