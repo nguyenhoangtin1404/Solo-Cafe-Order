@@ -54,6 +54,29 @@ export async function fetchRevenueByDay(
   }));
 }
 
+export interface BestSellingProductRow {
+  product_name: string;
+  quantity: string | number;
+  revenue: string | number;
+}
+
+export async function fetchBestSellingProducts(
+  from: Date,
+  to: Date
+): Promise<{ name: string; quantity: number; revenue: number }[]> {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.rpc("get_best_selling_products", {
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+  });
+  if (error) throw error;
+  return ((data ?? []) as BestSellingProductRow[]).map((r) => ({
+    name: r.product_name,
+    quantity: Number(r.quantity),
+    revenue: Number(r.revenue),
+  }));
+}
+
 export async function fetchSummaryData(
   from: Date,
   to: Date

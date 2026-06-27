@@ -64,6 +64,19 @@ function formatDayLabel(isoDate: string): string {
   return `${d}/${m}`;
 }
 
+export interface BestSellingProduct {
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export async function getBestSellingProducts(
+  from: Date,
+  to: Date
+): Promise<BestSellingProduct[]> {
+  return reportRepo.fetchBestSellingProducts(from, to);
+}
+
 export async function getSummary(from: Date, to: Date): Promise<SummaryResult> {
   const { revenue, orderCount, itemsSold } = await reportRepo.fetchSummaryData(
     from,
