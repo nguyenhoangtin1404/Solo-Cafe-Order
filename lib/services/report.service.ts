@@ -89,10 +89,29 @@ export async function getRevenueByCategory(
 ): Promise<CategoryRevenueItem[]> {
   const rows = await reportRepo.fetchRevenueByCategory(from, to);
   const total = rows.reduce((sum, r) => sum + r.revenue, 0);
-  return rows.map((r) => ({
-    name: r.categoryName,
+  if (total === 0) {
+    return rows.map((r) => ({
+      name: r.categoryName,
+      revenue: r.revenue,
+      percentage: 0,
+    }));
+  }
+  // Largest-remainder method: guarantees percentages sum to exactly 100.
+  const withRemainders = rows.map((r) => {
+    const exact = (r.revenue / total) * 100;
+    return {
+      name: r.categoryName,
+      revenue: r.revenue,
+      floor: Math.floor(exact),
+      remainder: exact - Math.floor(exact),
+    };
+  });
+  let remaining = 100 - withRemainders.reduce((s, r) => s + r.floor, 0);
+  withRemainders.sort((a, b) => b.remainder - a.remainder);
+  return withRemainders.map((r, i) => ({
+    name: r.name,
     revenue: r.revenue,
-    percentage: total > 0 ? Math.round((r.revenue / total) * 100) : 0,
+    percentage: r.floor + (i < remaining ? 1 : 0),
   }));
 }
 

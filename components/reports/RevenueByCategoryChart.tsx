@@ -107,7 +107,7 @@ export function RevenueByCategoryChart({
       </div>
       <div className="p-4">
         {isLoading ? (
-          <div className="h-48 animate-pulse rounded-lg bg-muted/30" />
+          <div className="h-64 animate-pulse rounded-lg bg-muted/30 sm:h-52" />
         ) : error ? (
           <div className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle size={16} aria-hidden="true" />
