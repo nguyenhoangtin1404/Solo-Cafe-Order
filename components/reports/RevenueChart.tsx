@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
+import { toInputDateHCM } from "@/lib/utils/timezone";
 import type { DateRange } from "./DateFilter";
 import type { RevenueTrendPoint } from "@/lib/services/report.service";
 
@@ -137,7 +138,11 @@ function useRevenueTrend(fromMs: number, toMs: number): FetchedState | null {
       )
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        setFetched({ data: [], groupBy: "hour", fromMs, toMs, error: true });
+        const groupBy =
+          toInputDateHCM(new Date(fromMs)) === toInputDateHCM(new Date(toMs))
+            ? "hour"
+            : "day";
+        setFetched({ data: [], groupBy, fromMs, toMs, error: true });
       });
 
     return () => controller.abort();

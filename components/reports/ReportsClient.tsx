@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateFilter, type DateRange } from "./DateFilter";
 import { SummaryKPIs } from "./SummaryKPIs";
 import { RevenueChart } from "./RevenueChart";
-import { startOfDayHCM } from "@/lib/utils/timezone";
+import { startOfDayHCM, toInputDateHCM } from "@/lib/utils/timezone";
 
 export function ReportsClient() {
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
     from: startOfDayHCM(new Date()),
     to: new Date(), // "hôm nay đến hiện tại" per spec
   }));
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDateRange((prev) => {
+        if (toInputDateHCM(prev.to) !== toInputDateHCM(new Date())) return prev;
+        return { ...prev, to: new Date() };
+      });
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div

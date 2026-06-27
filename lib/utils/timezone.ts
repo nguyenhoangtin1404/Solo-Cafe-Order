@@ -57,14 +57,16 @@ export function endOfPrevMonthHCM(date: Date): Date {
   return new Date(startOfMonthHCM(date).getTime() - 1);
 }
 
+const _hcmDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: HCM_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 /** YYYY-MM-DD string in HCM timezone (suitable for input[type=date] value). */
 export function toInputDateHCM(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: HCM_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
+  return _hcmDateFormatter.format(date);
 }
 
 /** Current hour in Asia/Ho_Chi_Minh (0–23). */
