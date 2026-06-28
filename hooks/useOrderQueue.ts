@@ -1,37 +1,89 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import type { Order } from "@/types/order";
+import {
+  makeSubscribeHandler,
+  type ConnectionStatus,
+  type OrderRow,
+} from "./realtimeShared";
 
-type ConnectionStatus = "connected" | "connecting" | "disconnected";
+export type { ConnectionStatus, OrderRow };
 
-// Realtime delivers only the `orders` row — items are NOT included (order_items is a separate table).
 // Callers should pass initialOrders fetched from GET /api/orders on mount so the list
 // is populated immediately; Realtime then delivers deltas (INSERT / UPDATE events).
-// If the parent refetches orders, remount this hook (e.g. key={refetchToken}) — useState(initial)
-// only applies on first mount (eslint disallows syncing props via setState-in-effect).
-export type OrderRow = Omit<Order, "items">;
+// If the parent refetches orders, remount this hook (e.g. key={refetchToken}).
 
-// Columns sent by the Realtime publication (restricted to non-PII).
-// Full order data is fetched from the API on INSERT events.
+// Columns sent by the Realtime publication (restricted to non-PII, no order_code).
+// Full order data is fetched via the auth-gated dashboard API on INSERT events.
 type RealtimeOrderPayload = Pick<
   OrderRow,
-  "id" | "order_code" | "status" | "cancelled_by" | "updated_at" | "created_at"
+  "id" | "status" | "cancelled_by" | "updated_at" | "created_at"
 >;
 
-async function fetchOrderByCode(
-  code: string
+async function fetchOrderById(
+  id: string
 ): Promise<OrderRow & { items: Order["items"] }> {
-  const res = await fetch(`/api/orders/${code}`);
-  if (!res.ok) throw new Error("fetch failed");
+  const res = await fetch(`/api/dashboard/orders/${id}`);
+  if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
   return res.json();
+}
+
+function handleInsert(
+  incoming: RealtimeOrderPayload,
+  setOrders: React.Dispatch<React.SetStateAction<OrderRow[]>>
+): void {
+  fetchOrderById(incoming.id)
+    .then((full) =>
+      setOrders((prev) =>
+        prev.some((o) => o.id === full.id) ? prev : [full, ...prev]
+      )
+    )
+    .catch((err) =>
+      console.error("[dashboard] Failed to load new order:", err)
+    );
+}
+
+async function handleUpdate(
+  incoming: RealtimeOrderPayload,
+  ordersRef: React.MutableRefObject<OrderRow[]>,
+  setOrders: React.Dispatch<React.SetStateAction<OrderRow[]>>
+): Promise<void> {
+  // Read current state via ref (avoids side-effect inside setState callback).
+  const isKnown = ordersRef.current.some((o) => o.id === incoming.id);
+  if (!isKnown) {
+    // Order absent from list (e.g. missed INSERT during reconnect) — fetch full order.
+    try {
+      const full = await fetchOrderById(incoming.id);
+      setOrders((cur) =>
+        cur.some((o) => o.id === full.id) ? cur : [full, ...cur]
+      );
+    } catch (err) {
+      console.error("[dashboard] Failed to load missing order:", err);
+    }
+    return;
+  }
+  setOrders((prev) => {
+    const i = prev.findIndex((o) => o.id === incoming.id);
+    if (i === -1) return prev;
+    // Discard stale replayed events (reconnect buffer).
+    if (
+      incoming.updated_at &&
+      prev[i].updated_at &&
+      new Date(incoming.updated_at) < new Date(prev[i].updated_at)
+    )
+      return prev;
+    // Spread-merge: preserve fields not in the restricted payload (pickup_name, note, etc.)
+    return prev.map((o, j) => (j === i ? { ...o, ...incoming } : o));
+  });
 }
 
 export function useOrderQueue(initialOrders: OrderRow[] = []) {
   const [orders, setOrders] = useState<OrderRow[]>(initialOrders);
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
+  const ordersRef = useRef(initialOrders);
 
   const updateRow = useCallback(
     (id: string, patch: Partial<Omit<OrderRow, "id">>) => {
@@ -43,68 +95,30 @@ export function useOrderQueue(initialOrders: OrderRow[] = []) {
   );
 
   useEffect(() => {
-    const supabase = createClient();
+    ordersRef.current = orders;
+  }, [orders]);
 
+  useEffect(() => {
+    const supabase = createClient();
     const channel = supabase
       .channel("orders-dashboard")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "orders" },
-        (payload) => {
-          const incoming = payload.new as RealtimeOrderPayload;
-          // Publication is column-restricted — fetch full order (with items) from API.
-          fetchOrderByCode(incoming.order_code)
-            .then((full) => {
-              setOrders((prev) => {
-                if (prev.some((o) => o.id === full.id)) return prev;
-                return [full, ...prev];
-              });
-            })
-            .catch(() => null);
-        }
+        (payload) =>
+          handleInsert(payload.new as RealtimeOrderPayload, setOrders)
       )
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "orders" },
-        (payload) => {
-          const incoming = payload.new as RealtimeOrderPayload;
-          setOrders((prev) => {
-            const idx = prev.findIndex((o) => o.id === incoming.id);
-            if (idx === -1) {
-              // Order absent from list (e.g. missed INSERT during reconnect) — fetch full order.
-              fetchOrderByCode(incoming.order_code)
-                .then((full) => {
-                  setOrders((cur) => {
-                    if (cur.some((o) => o.id === full.id)) return cur;
-                    return [full, ...cur];
-                  });
-                })
-                .catch(() => null);
-              return prev;
-            }
-            // Discard stale replayed events (reconnect buffer).
-            if (
-              incoming.updated_at &&
-              prev[idx].updated_at &&
-              new Date(incoming.updated_at) < new Date(prev[idx].updated_at)
-            )
-              return prev;
-            // Spread-merge: preserve fields not in the restricted payload (pickup_name, note, etc.)
-            return prev.map((o, i) => (i === idx ? { ...o, ...incoming } : o));
-          });
-        }
+        (payload) =>
+          handleUpdate(
+            payload.new as RealtimeOrderPayload,
+            ordersRef,
+            setOrders
+          )
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") setConnectionStatus("connected");
-        else if (
-          status === "CLOSED" ||
-          status === "CHANNEL_ERROR" ||
-          status === "TIMED_OUT"
-        )
-          setConnectionStatus("disconnected");
-        else setConnectionStatus("connecting");
-      });
-
+      .subscribe(makeSubscribeHandler(setConnectionStatus));
     return () => {
       supabase.removeChannel(channel).catch(() => null);
     };
