@@ -87,9 +87,10 @@ function resolveAuthRedirect(
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   // Per-request nonce for script-src CSP (Next.js reads x-nonce from request headers).
-  const nonce = Buffer.from(
-    crypto.getRandomValues(new Uint8Array(16))
-  ).toString("base64");
+  // Use btoa + String.fromCharCode — Buffer is Node-only and unavailable in Edge Runtime.
+  const nonce = btoa(
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))
+  );
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
 
@@ -110,7 +111,9 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
   });
+  const isProd = process.env.NODE_ENV === "production";
   // Preserve x-nonce in requestHeaders when Supabase refreshes cookies mid-request.
+  // Re-apply httpOnly/secure/sameSite so hardened flags survive token refreshes.
   const setAll = (
     cs: { name: string; value: string; options: CookieOptions }[]
   ) => {
@@ -119,7 +122,12 @@ export async function middleware(request: NextRequest) {
       request: { headers: requestHeaders },
     });
     cs.forEach(({ name, value, options }) =>
-      supabaseResponse.cookies.set(name, value, options)
+      supabaseResponse.cookies.set(name, value, {
+        ...options,
+        httpOnly: true,
+        secure: isProd,
+        sameSite: "lax",
+      })
     );
   };
   const supabase = createServerClient(

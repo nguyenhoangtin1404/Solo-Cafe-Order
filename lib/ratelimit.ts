@@ -18,6 +18,10 @@ class MemoryFallback {
     const now = Date.now();
     const bucket = this.buckets.get(key);
     if (!bucket || now > bucket.resetAt) {
+      // Prune all expired buckets on each new/reset entry to bound memory growth.
+      for (const [k, v] of this.buckets) {
+        if (now > v.resetAt) this.buckets.delete(k);
+      }
       this.buckets.set(key, { count: 1, resetAt: now + this.windowMs });
       return true;
     }
