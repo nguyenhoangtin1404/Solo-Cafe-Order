@@ -43,7 +43,14 @@ export function useOrderTracking(
           filter,
         },
         (payload) => {
-          setOrder(payload.new as OrderRow);
+          // Spread-merge: Realtime only sends the 6 restricted publication columns —
+          // preserve existing fields (total_amount, payment_method, pickup_name, note)
+          // that are absent from the restricted payload.
+          setOrder((prev) =>
+            prev
+              ? { ...prev, ...(payload.new as Partial<OrderRow>) }
+              : (payload.new as OrderRow)
+          );
         }
       )
       .subscribe((status) => {
