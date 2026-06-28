@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { createClient } from "@/lib/supabase/browser";
 import { OWNER_PATH_PREFIXES } from "@/lib/constants";
 
 function LoginForm() {
@@ -21,17 +20,16 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
-      if (authError) {
-        const isRateLimit =
-          authError.code?.includes("rate_limit") || authError.status === 429;
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         setError(
-          isRateLimit
+          data.code === "RATE_LIMITED"
             ? "Quá nhiều lần thử. Vui lòng thử lại sau ít phút."
             : "Email hoặc mật khẩu không đúng"
         );
@@ -52,7 +50,6 @@ function LoginForm() {
           : "/dashboard";
       window.location.href = target;
     } catch {
-      // unexpected error (network, SDK init failure, etc.)
       setError("Có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
       setLoading(false);

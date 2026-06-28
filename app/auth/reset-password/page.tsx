@@ -49,7 +49,7 @@ function PasswordForm({
                 type={showPassword ? "text" : "password"}
                 required
                 autoComplete="new-password"
-                placeholder="Tối thiểu 6 ký tự"
+                placeholder="Tối thiểu 8 ký tự, gồm chữ và số"
                 value={password}
                 onChange={(e) => onPasswordChange(e.target.value)}
                 className="w-full pl-9 pr-12 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ring text-sm bg-background"
@@ -114,8 +114,12 @@ export default function ResetPasswordPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự");
+    if (password.length < 8) {
+      setError("Mật khẩu phải có ít nhất 8 ký tự");
+      return;
+    }
+    if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      setError("Mật khẩu phải gồm cả chữ cái và số");
       return;
     }
     setLoading(true);

@@ -62,6 +62,14 @@ export const cancelBodySchema = z
   .strict();
 export type CancelBodyInput = z.infer<typeof cancelBodySchema>;
 
+export const loginSchema = z
+  .object({
+    email: z.string().email().max(254),
+    password: z.string().min(1).max(128),
+  })
+  .strict();
+export type LoginInput = z.infer<typeof loginSchema>;
+
 export const createCategorySchema = z
   .object({
     name: z
