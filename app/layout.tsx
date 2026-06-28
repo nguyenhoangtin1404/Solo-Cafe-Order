@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { NavController } from "@/components/layout/NavController";
 import "./globals.css";
+
+// Force dynamic rendering on every route so Next.js reads x-nonce from the
+// per-request middleware header and injects it into its own inline scripts,
+// matching the Content-Security-Policy nonce the middleware sets on the response.
+export const dynamic = "force-dynamic";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-sans",
@@ -53,14 +57,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Calling headers() opts into dynamic rendering so the per-request CSP nonce
-  // set by middleware is read by Next.js and applied to its own inline scripts.
-  await headers();
   return (
     <html lang="vi" className={`${beVietnamPro.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">

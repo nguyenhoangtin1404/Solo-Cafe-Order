@@ -4,6 +4,8 @@ import { requireOwner } from "@/lib/auth/requireOwner";
 import { getAdminCategoryGroups } from "@/lib/services/product.service";
 import { AdminView } from "@/components/admin/AdminView";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   try {
     await requireOwner();

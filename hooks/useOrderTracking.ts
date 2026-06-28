@@ -3,15 +3,18 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { ORDER_CODE_RE } from "@/lib/constants";
-import type { Order } from "@/types/order";
+import {
+  makeSubscribeHandler,
+  type ConnectionStatus,
+  type OrderRow,
+} from "./realtimeShared";
 
-type ConnectionStatus = "connected" | "connecting" | "disconnected";
+export type { ConnectionStatus, OrderRow };
 
 // Realtime delivers only the `orders` row — items are NOT included.
 // Pass initialOrder from a server-side fetch (GET /api/orders/[code]) so the tracking
 // page renders immediately; Realtime then delivers subsequent status UPDATE events.
 // Remount with key={orderCode} (or refetch token) if initialOrder changes after fetch.
-export type OrderRow = Omit<Order, "items">;
 
 export function useOrderTracking(
   orderCode: string,
@@ -28,22 +31,20 @@ export function useOrderTracking(
   useEffect(() => {
     // Guard: only subscribe if format matches A001–Z999 to prevent filter injection
     if (!orderCode || !ORDER_CODE_RE.test(orderCode)) return;
+    // orderId is always available from the SSR-fetched initialOrder
+    // (page.tsx redirects to 404 if order not found, so initialOrder is never null here).
+    if (!orderId) return;
 
     const supabase = createClient();
-    const filter = orderId ? `id=eq.${orderId}` : `order_code=eq.${orderCode}`;
+    const filter = `id=eq.${orderId}`;
 
     const channel = supabase
       .channel(`order:${orderCode}`)
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter,
-        },
+        { event: "UPDATE", schema: "public", table: "orders", filter },
         (payload) => {
-          // Spread-merge: Realtime only sends the 6 restricted publication columns —
+          // Spread-merge: Realtime only sends the restricted publication columns —
           // preserve existing fields (total_amount, payment_method, pickup_name, note)
           // that are absent from the restricted payload.
           setOrder((prev) =>
@@ -53,16 +54,7 @@ export function useOrderTracking(
           );
         }
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") setConnectionStatus("connected");
-        else if (
-          status === "CLOSED" ||
-          status === "CHANNEL_ERROR" ||
-          status === "TIMED_OUT"
-        )
-          setConnectionStatus("disconnected");
-        else setConnectionStatus("connecting");
-      });
+      .subscribe(makeSubscribeHandler(setConnectionStatus));
 
     return () => {
       supabase.removeChannel(channel).catch(() => null);

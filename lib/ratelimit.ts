@@ -1,21 +1,24 @@
-import { Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// In-memory fallback for when Upstash is unreachable.
-// Fixed 60-second window per IP — used only on Redis errors, not as primary limiter.
+// In-memory fallback for when Upstash is unreachable OR unconfigured.
+// Configurable window per IP — used on Redis errors and when Redis env vars are absent.
 class MemoryFallback {
   private readonly buckets = new Map<
     string,
     { count: number; resetAt: number }
   >();
 
-  constructor(private readonly maxRequests: number) {}
+  constructor(
+    private readonly maxRequests: number,
+    private readonly windowMs = 60_000
+  ) {}
 
   check(key: string): boolean {
     const now = Date.now();
     const bucket = this.buckets.get(key);
     if (!bucket || now > bucket.resetAt) {
-      this.buckets.set(key, { count: 1, resetAt: now + 60_000 });
+      this.buckets.set(key, { count: 1, resetAt: now + this.windowMs });
       return true;
     }
     if (bucket.count >= this.maxRequests) return false;
@@ -42,11 +45,12 @@ const RATE_LIMIT_WINDOW = "1 m" as const;
 function createLimiter(
   redis: Redis,
   prefix: string,
-  requests: number
+  requests: number,
+  window: Duration = RATE_LIMIT_WINDOW
 ): Ratelimit {
   return new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(requests, RATE_LIMIT_WINDOW),
+    limiter: Ratelimit.slidingWindow(requests, window),
     prefix,
   });
 }
@@ -54,27 +58,28 @@ function createLimiter(
 const redis = createRedis();
 if (!redis && process.env.NODE_ENV === "production") {
   console.warn(
-    "[ratelimit] UPSTASH_REDIS_REST_URL / TOKEN missing — rate limiting is disabled in production"
+    "[ratelimit] UPSTASH_REDIS_REST_URL / TOKEN missing — using in-memory fallback in production"
   );
 }
 const orderLimiter = redis ? createLimiter(redis, "rl:orders", 10) : null;
 const cancelLimiter = redis ? createLimiter(redis, "rl:cancel", 5) : null;
 const trackLimiter = redis ? createLimiter(redis, "rl:track", 30) : null;
-const loginLimiter = redis ? createLimiter(redis, "rl:login", 5) : null;
+const loginLimiter = redis ? createLimiter(redis, "rl:login", 5, "15 m") : null;
 
 const orderFallback = new MemoryFallback(10);
 const cancelFallback = new MemoryFallback(5);
 const trackFallback = new MemoryFallback(30);
-const loginFallback = new MemoryFallback(5);
+const loginFallback = new MemoryFallback(5, 15 * 60_000);
 
 async function checkLimit(
   limiter: Ratelimit | null,
   fallback: MemoryFallback,
   ip: string
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
-  if (!limiter) return { allowed: true, retryAfterSeconds: 0 };
   // Unresolvable IPs share a sentinel bucket rather than bypassing the limiter.
   const effectiveIp = ip === "unknown" ? "unknown-ip" : ip;
+  if (!limiter)
+    return { allowed: fallback.check(effectiveIp), retryAfterSeconds: 0 };
   try {
     const { success, reset } = await limiter.limit(effectiveIp);
     return {
