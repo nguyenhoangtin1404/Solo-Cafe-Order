@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { NavController } from "@/components/layout/NavController";
@@ -52,11 +53,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Calling headers() opts into dynamic rendering so the per-request CSP nonce
+  // set by middleware is read by Next.js and applied to its own inline scripts.
+  await headers();
   return (
     <html lang="vi" className={`${beVietnamPro.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">

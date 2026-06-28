@@ -32,8 +32,11 @@ export async function GET(
       total_amount: order.total_amount,
       payment_method: order.payment_method,
       pickup_name: order.pickup_name,
+      note: order.note,
+      cancelled_by: order.cancelled_by,
       items: order.items.map((item) => toItemDto(item)),
       created_at: order.created_at,
+      updated_at: order.updated_at,
     });
   } catch (err) {
     return handleRouteError(err);
