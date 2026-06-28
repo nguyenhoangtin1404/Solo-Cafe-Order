@@ -14,16 +14,27 @@ class MemoryFallback {
     private readonly windowMs = 60_000
   ) {}
 
-  check(key: string): boolean {
+  check(key: string): { allowed: boolean; retryAfterSeconds: number } {
     const now = Date.now();
     const bucket = this.buckets.get(key);
     if (!bucket || now > bucket.resetAt) {
+      // Guard threshold prevents O(n²) on IP burst: scan only when map is unusually large.
+      if (this.buckets.size > 10_000) {
+        for (const [k, v] of this.buckets) {
+          if (now > v.resetAt) this.buckets.delete(k);
+        }
+      }
       this.buckets.set(key, { count: 1, resetAt: now + this.windowMs });
-      return true;
+      return { allowed: true, retryAfterSeconds: 0 };
     }
-    if (bucket.count >= this.maxRequests) return false;
+    if (bucket.count >= this.maxRequests) {
+      return {
+        allowed: false,
+        retryAfterSeconds: Math.ceil((bucket.resetAt - now) / 1000),
+      };
+    }
     bucket.count++;
-    return true;
+    return { allowed: true, retryAfterSeconds: 0 };
   }
 }
 
@@ -78,8 +89,7 @@ async function checkLimit(
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   // Unresolvable IPs share a sentinel bucket rather than bypassing the limiter.
   const effectiveIp = ip === "unknown" ? "unknown-ip" : ip;
-  if (!limiter)
-    return { allowed: fallback.check(effectiveIp), retryAfterSeconds: 0 };
+  if (!limiter) return fallback.check(effectiveIp);
   try {
     const { success, reset } = await limiter.limit(effectiveIp);
     return {
@@ -93,7 +103,7 @@ async function checkLimit(
       "[ratelimit] Upstash unreachable — using in-memory fallback:",
       err
     );
-    return { allowed: fallback.check(effectiveIp), retryAfterSeconds: 0 };
+    return fallback.check(effectiveIp);
   }
 }
 
