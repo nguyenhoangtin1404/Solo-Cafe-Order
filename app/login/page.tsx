@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -13,11 +13,24 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setLoading(false);
+        setRedirecting(false);
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    let didRedirect = false;
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -48,11 +61,13 @@ function LoginForm() {
         next && isSafeRelative(next) && isOwnerRoute(next)
           ? next
           : "/dashboard";
+      didRedirect = true;
+      setRedirecting(true);
       window.location.href = target;
     } catch {
       setError("Có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
-      setLoading(false);
+      if (!didRedirect) setLoading(false);
     }
   }
 
@@ -141,11 +156,13 @@ function LoginForm() {
 
       <button
         type="submit"
-        disabled={loading}
-        aria-busy={loading}
+        disabled={loading || redirecting}
+        aria-busy={loading || redirecting}
         className="w-full py-3.5 bg-primary text-primary-foreground rounded-full font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] flex items-center justify-center gap-2"
       >
-        {loading ? (
+        {redirecting ? (
+          "Đang chuyển trang..."
+        ) : loading ? (
           "Đang đăng nhập..."
         ) : (
           <>
