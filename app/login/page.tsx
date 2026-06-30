@@ -188,7 +188,7 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <h1 className="text-2xl font-bold text-secondary">Vibe Cafe ☕</h1>
+          <h1 className="text-2xl font-bold text-secondary">Vibe Cafe</h1>
         </div>
         <Suspense
           fallback={

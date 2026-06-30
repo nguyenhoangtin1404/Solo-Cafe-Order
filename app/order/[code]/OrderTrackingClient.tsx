@@ -212,7 +212,7 @@ function OrderTrackingLayout({
       style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
     >
       <header className="flex items-center justify-between border-b px-4 py-3">
-        <span className="text-lg font-bold text-primary">☕ Vibe Cafe</span>
+        <span className="text-lg font-bold text-primary">Vibe Cafe</span>
         <ConnectionStatus status={connectionStatus} />
       </header>
 
