@@ -176,7 +176,7 @@ export function MenuView({ categories }: Props) {
   return (
     <>
       <header className="px-4 pb-3 pt-4">
-        <h1 className="text-xl font-bold">Vibe Cafe ☕</h1>
+        <h1 className="text-xl font-bold">Vibe Cafe</h1>
         <p className="text-sm text-muted-foreground" suppressHydrationWarning>
           {greeting} Bạn muốn uống gì hôm nay?
         </p>
