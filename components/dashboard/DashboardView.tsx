@@ -14,6 +14,7 @@ import { toItemDto } from "@/lib/dto/order";
 import { OrderCard } from "./OrderCard";
 import type { DashboardOrder } from "./OrderCard";
 import type { OrderRow } from "@/hooks/useOrderQueue";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type TabId = "all" | "new" | "making" | "done";
 
@@ -303,10 +304,10 @@ export function DashboardView({ initialOrders }: Props) {
     >
       {/* Sticky top block: header + optional audio banner + tabs all stick together
           so the tab bar never overlaps the banner during scroll. */}
-      <div className="sticky top-0 z-10 bg-background">
-        <header className="border-b px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="min-w-0 truncate text-lg font-bold">Dashboard</h1>
+      <div className="sticky top-0 z-10 bg-card">
+        <PageHeader
+          title="Dashboard"
+          trailing={
             <div className="flex shrink-0 items-center gap-3">
               <Link
                 href="/reports"
@@ -318,8 +319,8 @@ export function DashboardView({ initialOrders }: Props) {
               </Link>
               <ConnectionStatus status={connectionStatus} />
             </div>
-          </div>
-        </header>
+          }
+        />
 
         {/* Audio unlock banner — shown until first user interaction */}
         {!unlocked && (

@@ -1,4 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  HEADER_BAR_CLASS,
+  PAGE_TITLE_CLASS,
+} from "@/components/layout/PageHeader";
 
 function OrderCardSkeleton() {
   return (
@@ -33,11 +37,10 @@ function OrderCardSkeleton() {
 export default function DashboardLoading() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-10 bg-background">
-        {/* Header */}
-        <header className="border-b px-4 py-3">
+      <div className="sticky top-0 z-10 bg-card">
+        <header className={HEADER_BAR_CLASS}>
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold">Dashboard</h1>
+            <h1 className={PAGE_TITLE_CLASS}>Dashboard</h1>
             <Skeleton className="h-4 w-10" />
           </div>
         </header>

@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { OWNER_PATH_PREFIXES } from "@/lib/constants";
+import { OWNER_PATH_PREFIXES, APP_NAME } from "@/lib/constants";
+import { BRAND_TITLE_CLASS } from "@/components/layout/PageHeader";
+import { cn } from "@/lib/utils";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -188,7 +190,7 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <h1 className="text-2xl font-bold text-secondary">Vibe Cafe</h1>
+          <h1 className={cn("text-2xl", BRAND_TITLE_CLASS)}>{APP_NAME}</h1>
         </div>
         <Suspense
           fallback={

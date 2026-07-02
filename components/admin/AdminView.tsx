@@ -10,6 +10,7 @@ import type { Category } from "@/types/product";
 import { CategoriesSection } from "./CategoriesSection";
 import { ProductForm } from "./ProductForm";
 import { ProductsSection } from "./ProductsSection";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type AdminProductState = AdminProduct & { pending?: boolean };
 
@@ -246,9 +247,9 @@ export function AdminView({
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {toggleStatusMessage}
       </div>
-      <header className="border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold">Quản lý menu</h1>
+      <PageHeader
+        title="Quản lý menu"
+        trailing={
           <button
             type="button"
             ref={headerAddButtonRef}
@@ -268,8 +269,8 @@ export function AdminView({
           >
             <span aria-hidden="true">+</span> Thêm sản phẩm
           </button>
-        </div>
-      </header>
+        }
+      />
 
       <main className="space-y-6 px-4 py-4">
         {showGlobalAdd && (

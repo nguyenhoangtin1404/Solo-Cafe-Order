@@ -4,6 +4,8 @@ import { type RefObject, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Leaf, Search, ShoppingCart, X } from "lucide-react";
 import { normalizeSearch } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useCart } from "@/hooks/useCart";
 import { CategoryTabs } from "./CategoryTabs";
 import { MenuCard } from "./MenuCard";
@@ -175,12 +177,12 @@ export function MenuView({ categories }: Props) {
 
   return (
     <>
-      <header className="px-4 pb-3 pt-4">
-        <h1 className="text-xl font-bold">Vibe Cafe</h1>
-        <p className="text-sm text-muted-foreground" suppressHydrationWarning>
-          {greeting} Bạn muốn uống gì hôm nay?
-        </p>
-      </header>
+      <PageHeader
+        variant="hero"
+        brand
+        title={APP_NAME}
+        subtitle={`${greeting} Bạn muốn uống gì hôm nay?`}
+      />
 
       <MenuSearchBar
         search={search}

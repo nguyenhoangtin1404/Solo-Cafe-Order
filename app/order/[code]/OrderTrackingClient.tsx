@@ -7,8 +7,9 @@ import { Phone, User } from "lucide-react";
 import { useOrderTracking } from "@/hooks/useOrderTracking";
 import type { OrderRow } from "@/hooks/useOrderTracking";
 import type { OrderItem } from "@/types/order";
-import { ORDER_STATUS } from "@/lib/constants";
+import { ORDER_STATUS, APP_NAME } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 interface Props {
   orderCode: string;
@@ -211,10 +212,11 @@ function OrderTrackingLayout({
       className="flex min-h-screen flex-col bg-background"
       style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
     >
-      <header className="flex items-center justify-between border-b px-4 py-3">
-        <span className="text-lg font-bold text-primary">Vibe Cafe</span>
-        <ConnectionStatus status={connectionStatus} />
-      </header>
+      <PageHeader
+        brand
+        title={APP_NAME}
+        trailing={<ConnectionStatus status={connectionStatus} />}
+      />
 
       <main className="flex flex-1 flex-col">
         {connectionStatus === "disconnected" && (
