@@ -1,14 +1,13 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { HEADER_BAR_CLASS } from "@/components/layout/PageHeader";
 
 export default function OrderTrackingLoading() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b px-4 py-3">
-        <Skeleton className="h-11 w-11 rounded-full" />
-        <div className="space-y-1.5">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-3 w-16" />
+      <header className={HEADER_BAR_CLASS}>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-6 w-24 bg-secondary/20" />
         </div>
       </header>
 

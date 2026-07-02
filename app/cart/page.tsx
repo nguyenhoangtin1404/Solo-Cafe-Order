@@ -5,6 +5,7 @@ import { ArrowLeft, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function CartPage() {
   const cart = useCart();
@@ -45,17 +46,17 @@ export default function CartPage() {
       className="flex min-h-screen flex-col"
       style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
     >
-      <header className="flex items-center gap-3 border-b px-4 py-3">
-        <Link
-          href="/menu"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="font-semibold">
-          Giỏ hàng ({cart.items.reduce((s, i) => s + i.quantity, 0)} món)
-        </h1>
-      </header>
+      <PageHeader
+        title={`Giỏ hàng (${cart.items.reduce((s, i) => s + i.quantity, 0)} món)`}
+        leading={
+          <Link
+            href="/menu"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+        }
+      />
 
       <div className="flex-1 space-y-3 px-4 py-4">
         {cart.items.map((item, idx) => (

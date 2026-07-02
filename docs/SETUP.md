@@ -1,5 +1,7 @@
 # Infrastructure Setup (Fresh Start)
 
+> **Chạy app local lần đầu?** Xem [`HUONG_DAN_CHAY_APP.md`](./HUONG_DAN_CHAY_APP.md) — hướng dẫn đầy đủ từ clone repo đến test end-to-end.
+
 Làm theo thứ tự — mỗi bước phụ thuộc bước trước.
 
 ---

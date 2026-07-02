@@ -7,6 +7,7 @@ import { RevenueChart } from "./RevenueChart";
 import { BestSellingProducts } from "./BestSellingProducts";
 import { RevenueByCategoryChart } from "./RevenueByCategoryChart";
 import { startOfDayHCM, toInputDateHCM } from "@/lib/utils/timezone";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export function ReportsClient() {
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
@@ -29,10 +30,7 @@ export function ReportsClient() {
       className="min-h-screen bg-background"
       style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}
     >
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background px-4 py-3">
-        <h1 className="text-lg font-bold">Báo cáo</h1>
-      </header>
+      <PageHeader title="Báo cáo" sticky />
 
       <main className="space-y-4 p-4">
         {/* Date filter */}

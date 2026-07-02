@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-
 function MenuCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-card shadow-sm">
@@ -17,8 +16,8 @@ export default function MenuLoading() {
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="px-4 pb-3 pt-4">
-        <Skeleton className="h-7 w-32 bg-card" />
-        <Skeleton className="mt-1.5 h-4 w-56 bg-card" />
+        <Skeleton className="h-7 w-32 bg-secondary/20" />
+        <Skeleton className="mt-1.5 h-4 w-56 bg-muted-foreground/10" />
       </header>
 
       {/* Search bar skeleton */}

@@ -1,3 +1,5 @@
+import { HEADER_BAR_CLASS } from "@/components/layout/PageHeader";
+
 export default function ReportsLoading() {
   return (
     <div
@@ -5,7 +7,7 @@ export default function ReportsLoading() {
       aria-label="Đang tải báo cáo…"
       className="min-h-screen bg-background pb-24"
     >
-      <header className="sticky top-0 z-10 border-b bg-background px-4 py-3">
+      <header className={`sticky top-0 z-10 ${HEADER_BAR_CLASS}`}>
         <div className="h-6 w-24 animate-pulse rounded bg-muted" />
       </header>
 
