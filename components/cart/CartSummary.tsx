@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -14,6 +14,11 @@ import {
 } from "@/lib/constants";
 import { saveLastOrderCode } from "@/lib/lastOrderStorage";
 import type { PaymentMethod } from "@/lib/constants";
+import {
+  getSavedPickupName,
+  savePickupName,
+  deleteSavedPickupName,
+} from "@/lib/customerStorage";
 
 interface Props {
   items: CartItem[];
@@ -50,11 +55,23 @@ export function CartSummary({ items, total, onClearCart }: Props) {
   const router = useRouter();
   const submittingRef = useRef(false);
   const [pickupName, setPickupName] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [orderNote, setOrderNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     PAYMENT_METHOD.CASH
   );
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const saved = getSavedPickupName();
+    if (saved) {
+      const timer = setTimeout(() => {
+        setPickupName(saved);
+        setRememberMe(true);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const pickupNameTooLong = pickupName.length > MAX_PICKUP_NAME_LENGTH;
 
@@ -93,6 +110,15 @@ export function CartSummary({ items, total, onClearCart }: Props) {
         toast.error(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         return;
       }
+
+      // Save or delete pickup name based on checkbox status
+      const trimmedName = pickupName.trim();
+      if (rememberMe && trimmedName) {
+        savePickupName(trimmedName);
+      } else {
+        deleteSavedPickupName();
+      }
+
       let data: OrderSuccessData;
       try {
         data = (await res.json()) as OrderSuccessData;
@@ -132,6 +158,22 @@ export function CartSummary({ items, total, onClearCart }: Props) {
             Tên quá dài ({pickupName.length}/{MAX_PICKUP_NAME_LENGTH} ký tự)
           </p>
         )}
+
+        <div className="mt-2.5 flex items-center gap-2">
+          <input
+            id="remember-me"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-primary accent-primary focus:ring-primary cursor-pointer"
+          />
+          <label
+            htmlFor="remember-me"
+            className="select-none text-xs text-muted-foreground cursor-pointer"
+          >
+            Lưu tên lấy đồ cho lần đặt sau
+          </label>
+        </div>
       </div>
 
       <div>

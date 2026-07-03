@@ -40,6 +40,7 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 
 export const ORDER_SUCCESS_SESSION_KEY = "vibe_cafe_order_success";
 export const LAST_ORDER_CODE_KEY = "vibe_cafe_last_order_code";
+export const PICKUP_NAME_STORAGE_KEY = "vibe_cafe_saved_pickup_name";
 
 export const ORDER_CODE_RE = /^[A-Z]\d{3}$/;
 
