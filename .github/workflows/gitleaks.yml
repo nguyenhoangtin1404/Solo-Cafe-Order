@@ -10,7 +10,7 @@ jobs:
     name: Secret Scanning
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 0
 
@@ -20,6 +20,6 @@ jobs:
       #   push (new branch, before=0000…) → falls back to full-repo scan,
       #     same as the old script's "Branch mới tạo — scan toàn bộ repo" path.
       # .gitleaks.toml allowlist applies to all modes.
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

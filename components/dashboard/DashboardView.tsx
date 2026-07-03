@@ -104,6 +104,11 @@ export function DashboardView({ initialOrders }: Props) {
     [rows, itemsMap]
   );
 
+  const ordersRef = useRef(orders);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
+
   // Detect INSERT events → fetch items asynchronously, then update map
   useEffect(() => {
     // Capture the ref value so the cleanup closure uses the same Set instance
@@ -230,46 +235,78 @@ export function DashboardView({ initialOrders }: Props) {
     };
   }, [unreadCount]);
 
-  function handleTabChange(tab: TabId) {
+  const newOrdersRef = useRef(newOrders);
+  useEffect(() => {
+    newOrdersRef.current = newOrders;
+  }, [newOrders]);
+
+  const handleTabChange = useCallback((tab: TabId) => {
     setActiveTab(tab);
     if (tab === "new") {
       setSeenNewIds((prev) => {
         const next = new Set(prev);
-        newOrders.forEach((o) => next.add(o.id));
+        newOrdersRef.current.forEach((o) => next.add(o.id));
         return next;
       });
     }
-  }
+  }, []);
 
   const handleStatusUpdate = useCallback(
     async (orderId: string, newStatus: OrderStatus) => {
+      const originalOrder = ordersRef.current.find((o) => o.id === orderId);
+      if (!originalOrder) return;
+      const originalStatus = originalOrder.status;
+
       setPendingActions((prev) => new Set(prev).add(orderId));
+
+      // Optimistic update: apply locally so the card moves immediately.
+      updateRow(orderId, { status: newStatus });
+
+      // Optimistic tab switch for better UX.
+      const originalTab = activeTabRef.current;
+      let tabSwitched = false;
+      if (newStatus === ORDER_STATUS.MAKING && originalTab === "new") {
+        handleTabChange("making");
+        tabSwitched = true;
+      } else if (newStatus === ORDER_STATUS.DONE && originalTab === "making") {
+        handleTabChange("new");
+        tabSwitched = true;
+      }
+
       try {
         const res = await fetch(`/api/orders/${orderId}/status`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: newStatus }),
         });
+
         if (!res.ok) {
           const body = (await res.json().catch(() => ({}))) as {
             message?: string;
           };
           toast.error(body.message ?? "Cập nhật trạng thái thất bại.");
+          // Rollback local status and tab
+          updateRow(orderId, { status: originalStatus });
+          if (tabSwitched) {
+            handleTabChange(originalTab);
+          }
         } else {
-          // Optimistic update: apply locally so the card moves immediately even
-          // if the Realtime event is delayed or dropped.
           // Include server-confirmed updated_at so the staleness guard in
-          // useOrderQueue correctly discards any Realtime replay for this update
-          // if the owner triggers a second status change before it arrives.
+          // useOrderQueue correctly discards any Realtime replay for this update.
           const body = (await res.json().catch(() => ({}))) as {
             updated_at?: string;
           };
-          const patch: Partial<Omit<OrderRow, "id">> = { status: newStatus };
-          if (body.updated_at) patch.updated_at = body.updated_at;
-          updateRow(orderId, patch);
+          if (body.updated_at) {
+            updateRow(orderId, { updated_at: body.updated_at });
+          }
         }
       } catch {
         toast.error("Mất kết nối. Vui lòng thử lại.");
+        // Rollback local status and tab
+        updateRow(orderId, { status: originalStatus });
+        if (tabSwitched) {
+          handleTabChange(originalTab);
+        }
       } finally {
         setPendingActions((prev) => {
           const next = new Set(prev);
@@ -278,21 +315,24 @@ export function DashboardView({ initialOrders }: Props) {
         });
       }
     },
-    [updateRow]
+    [updateRow, handleTabChange]
   );
 
   const activeStatuses = TABS.find((t) => t.id === activeTab)?.statuses ?? [];
   const visibleOrders = orders.filter((o) => activeStatuses.includes(o.status));
 
-  const tabCounts: Record<TabId, number> = {
-    all: orders.length,
-    new: newOrders.length,
-    making: orders.filter((o) => o.status === ORDER_STATUS.MAKING).length,
-    done: orders.filter(
-      (o) =>
-        o.status === ORDER_STATUS.DONE || o.status === ORDER_STATUS.CANCELLED
-    ).length,
-  };
+  const tabCounts = useMemo<Record<TabId, number>>(
+    () => ({
+      all: orders.length,
+      new: newOrders.length,
+      making: orders.filter((o) => o.status === ORDER_STATUS.MAKING).length,
+      done: orders.filter(
+        (o) =>
+          o.status === ORDER_STATUS.DONE || o.status === ORDER_STATUS.CANCELLED
+      ).length,
+    }),
+    [orders, newOrders]
+  );
 
   return (
     // Any pointer interaction triggers audio unlock so the owner doesn't have
