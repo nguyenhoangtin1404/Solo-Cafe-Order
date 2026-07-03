@@ -35,8 +35,16 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
   return (
     <>
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => setDrawerOpen(true)}
-        className={`cursor-pointer rounded-xl border bg-card p-4 shadow-sm transition-all duration-700 ${
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setDrawerOpen(true);
+          }
+        }}
+        className={`cursor-pointer rounded-xl border bg-card p-4 shadow-sm transition-all duration-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
           isNew ? "bg-primary/5 ring-2 ring-primary ring-offset-1" : ""
         }`}
       >
@@ -122,6 +130,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
                         e.stopPropagation();
                         onStatusUpdate(order.id, ORDER_STATUS.MAKING);
                       }}
+                      onKeyDown={(e) => e.stopPropagation()}
                       className="min-h-[44px] rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform active:scale-95"
                     >
                       Bắt đầu pha
@@ -131,6 +140,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
                         e.stopPropagation();
                         onStatusUpdate(order.id, ORDER_STATUS.CANCELLED);
                       }}
+                      onKeyDown={(e) => e.stopPropagation()}
                       className="min-h-[44px] rounded-lg border px-3 py-1.5 text-xs font-medium text-destructive transition-transform active:scale-95"
                     >
                       Hủy
@@ -143,6 +153,7 @@ export function OrderCard({ order, isNew, isPending, onStatusUpdate }: Props) {
                       e.stopPropagation();
                       onStatusUpdate(order.id, ORDER_STATUS.DONE);
                     }}
+                    onKeyDown={(e) => e.stopPropagation()}
                     className="min-h-[44px] rounded-lg bg-status-done px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-95"
                   >
                     Hoàn thành
