@@ -1,4 +1,4 @@
-﻿import type { OrderStatus, PaymentMethod } from "@/lib/constants";
+import type { OrderStatus, PaymentMethod } from "@/lib/constants";
 import type { BankTransferInfo } from "@/lib/config/bank";
 
 // DB-facing: shape trả về từ Supabase khi join order_items với options
@@ -31,6 +31,8 @@ export interface OrderItem {
 export interface Order {
   id: string;
   order_code: string;
+  /** UUID, chỉ trả về cho customer lúc đặt hàng — không expose qua dashboard API hay realtime. */
+  cancel_token?: string;
   status: OrderStatus;
   payment_method: PaymentMethod;
   total_amount: number;
@@ -42,6 +44,7 @@ export interface Order {
   updated_at: string;
   items: OrderItem[]; // luôn populated khi fetch — dùng Partial<Order> nếu chưa join
 }
+
 
 export interface CartItem {
   productId: string;
@@ -66,6 +69,7 @@ export type { BankTransferInfo };
 
 export interface OrderSuccessData {
   order_code: string;
+  cancel_token: string; // UUID — stored locally so cancel requests can be authenticated
   total_amount: number;
   payment_method: PaymentMethod;
   wait_estimate: string;
@@ -73,3 +77,4 @@ export interface OrderSuccessData {
   items: OrderItemSummary[];
   bank_transfer_info: BankTransferInfo | null;
 }
+

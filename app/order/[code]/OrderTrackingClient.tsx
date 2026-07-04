@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import Link from "next/link";
 import { toast } from "sonner";
 import { Phone, User } from "lucide-react";
@@ -10,6 +11,7 @@ import type { OrderItem } from "@/types/order";
 import { ORDER_STATUS, APP_NAME } from "@/lib/constants";
 import type { OrderStatus } from "@/lib/constants";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { readStoredCancelToken } from "@/lib/lastOrderStorage";
 
 interface Props {
   orderCode: string;
@@ -78,7 +80,7 @@ function formatOrderTime(iso: string): string {
   });
 }
 
-function useCancelOrder(orderCode: string, orderId: string) {
+function useCancelOrder(orderCode: string) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [localCancelled, setLocalCancelled] = useState(false);
@@ -86,6 +88,13 @@ function useCancelOrder(orderCode: string, orderId: string) {
 
   const handleCancel = useCallback(async () => {
     if (inFlightRef.current) return;
+
+    const cancelToken = readStoredCancelToken();
+    if (!cancelToken) {
+      toast.error("Không thể hủy đơn. Vui lòng liên hệ nhân viên.");
+      return;
+    }
+
     inFlightRef.current = true;
     setCancelling(true);
     setShowConfirm(false);
@@ -93,7 +102,7 @@ function useCancelOrder(orderCode: string, orderId: string) {
       const res = await fetch(`/api/orders/${orderCode}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: orderId }),
+        body: JSON.stringify({ cancel_token: cancelToken }),
       });
       if (!res.ok) {
         let errMsg = "Không thể hủy đơn.";
@@ -112,7 +121,7 @@ function useCancelOrder(orderCode: string, orderId: string) {
       inFlightRef.current = false;
       setCancelling(false);
     }
-  }, [orderCode, orderId]);
+  }, [orderCode]);
 
   return {
     showConfirm,
@@ -124,6 +133,7 @@ function useCancelOrder(orderCode: string, orderId: string) {
   };
 }
 
+
 export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
   const { order, connectionStatus } = useOrderTracking(orderCode, initialOrder);
   const {
@@ -133,7 +143,7 @@ export function OrderTrackingClient({ orderCode, initialOrder, items }: Props) {
     localCancelled,
     setLocalCancelled,
     handleCancel,
-  } = useCancelOrder(orderCode, (order ?? initialOrder).id);
+  } = useCancelOrder(orderCode);
 
   const current = order ?? initialOrder;
   const rawStatus = current.status;

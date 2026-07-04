@@ -46,6 +46,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
   return {
     id: "33333333-3333-7333-8333-333333333333",
     order_code: "A001",
+    cancel_token: "aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa",
     status: ORDER_STATUS.NEW,
     total_amount: 30_000,
     payment_method: PAYMENT_METHOD.CASH,
@@ -362,8 +363,11 @@ describe("submitOrder", () => {
 });
 
 describe("cancelOrder", () => {
-  it("thành công khi status = new", async () => {
-    const order = makeOrder({ status: ORDER_STATUS.NEW });
+  const VALID_TOKEN = "aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa";
+  const WRONG_TOKEN = "00000000-0000-7000-8000-000000000000";
+
+  it("thành công khi customer cung cấp cancel_token đúng", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.NEW, cancel_token: VALID_TOKEN });
     mockedOrderRepo.findByCode.mockResolvedValue(order);
     mockedOrderRepo.updateStatus.mockResolvedValue({
       ...order,
@@ -371,7 +375,7 @@ describe("cancelOrder", () => {
       cancelled_by: "customer",
     });
 
-    const result = await cancelOrder("A001", "customer");
+    const result = await cancelOrder("A001", "customer", VALID_TOKEN);
 
     expect(result.status).toBe(ORDER_STATUS.CANCELLED);
     expect(mockedOrderRepo.updateStatus).toHaveBeenCalledWith(
@@ -382,55 +386,59 @@ describe("cancelOrder", () => {
     );
   });
 
-  it("throws INVALID_STATUS_TRANSITION khi status = making", async () => {
-    mockedOrderRepo.findByCode.mockResolvedValue(
-      makeOrder({ status: ORDER_STATUS.MAKING })
-    );
+  it("throws ORDER_NOT_FOUND khi customer không cung cấp cancel_token", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.NEW, cancel_token: VALID_TOKEN });
+    mockedOrderRepo.findByCode.mockResolvedValue(order);
 
     await expect(cancelOrder("A001", "customer")).rejects.toMatchObject({
+      code: "ORDER_NOT_FOUND",
+      httpStatus: 404,
+    });
+  });
+
+  it("throws ORDER_NOT_FOUND khi customer cung cấp cancel_token sai", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.NEW, cancel_token: VALID_TOKEN });
+    mockedOrderRepo.findByCode.mockResolvedValue(order);
+
+    await expect(
+      cancelOrder("A001", "customer", WRONG_TOKEN)
+    ).rejects.toMatchObject({
+      code: "ORDER_NOT_FOUND",
+      httpStatus: 404,
+    });
+  });
+
+  it("owner có thể hủy mà không cần cancel_token", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.NEW, cancel_token: VALID_TOKEN });
+    mockedOrderRepo.findByCode.mockResolvedValue(order);
+    mockedOrderRepo.updateStatus.mockResolvedValue({
+      ...order,
+      status: ORDER_STATUS.CANCELLED,
+      cancelled_by: "owner",
+    });
+
+    const result = await cancelOrder("A001", "owner");
+    expect(result.status).toBe(ORDER_STATUS.CANCELLED);
+  });
+
+  it("throws INVALID_STATUS_TRANSITION khi status = making", async () => {
+    const order = makeOrder({ status: ORDER_STATUS.MAKING, cancel_token: VALID_TOKEN });
+    mockedOrderRepo.findByCode.mockResolvedValue(order);
+
+    await expect(cancelOrder("A001", "customer", VALID_TOKEN)).rejects.toMatchObject({
       code: "INVALID_STATUS_TRANSITION",
       httpStatus: 422,
     });
   });
 
   it("throws 409 khi optimistic lock fail (race cancel)", async () => {
-    const order = makeOrder({ status: ORDER_STATUS.NEW });
+    const order = makeOrder({ status: ORDER_STATUS.NEW, cancel_token: VALID_TOKEN });
     mockedOrderRepo.findByCode.mockResolvedValue(order);
     mockedOrderRepo.updateStatus.mockResolvedValue(null);
 
-    await expect(cancelOrder("A001", "customer")).rejects.toMatchObject({
+    await expect(cancelOrder("A001", "customer", VALID_TOKEN)).rejects.toMatchObject({
       code: "INVALID_STATUS_TRANSITION",
       httpStatus: 409,
-    });
-  });
-
-  it("thành công khi expectedId khớp", async () => {
-    const order = makeOrder({ status: ORDER_STATUS.NEW });
-    mockedOrderRepo.findByCode.mockResolvedValue(order);
-    mockedOrderRepo.updateStatus.mockResolvedValue({
-      ...order,
-      status: ORDER_STATUS.CANCELLED,
-      cancelled_by: "customer",
-    });
-
-    const result = await cancelOrder(
-      "A001",
-      "customer",
-      order.id.toLowerCase()
-    );
-
-    expect(result.status).toBe(ORDER_STATUS.CANCELLED);
-  });
-
-  it("throws ORDER_NOT_FOUND khi expectedId không khớp", async () => {
-    const order = makeOrder({ status: ORDER_STATUS.NEW });
-    mockedOrderRepo.findByCode.mockResolvedValue(order);
-
-    await expect(
-      cancelOrder("A001", "customer", "00000000-0000-7000-8000-000000000000")
-    ).rejects.toMatchObject({
-      code: "ORDER_NOT_FOUND",
-      httpStatus: 404,
     });
   });
 });

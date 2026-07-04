@@ -37,7 +37,8 @@ function applyOrderSuccess(
   router: AppRouterInstance
 ): void {
   const codeValid = ORDER_CODE_RE.test(data.order_code);
-  if (codeValid) saveLastOrderCode(data.order_code);
+  if (codeValid) saveLastOrderCode(data.order_code, data.cancel_token);
+
   try {
     sessionStorage.setItem(ORDER_SUCCESS_SESSION_KEY, JSON.stringify(data));
     onClearCart();

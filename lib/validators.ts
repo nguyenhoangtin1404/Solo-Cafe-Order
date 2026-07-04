@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import {
   MAX_ITEM_NOTE_LENGTH,
   MAX_ORDER_NOTE_LENGTH,
@@ -58,9 +58,10 @@ export const updateStatusSchema = z
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
 export const cancelBodySchema = z
-  .object({ order_id: z.string().uuid() })
+  .object({ cancel_token: z.string().uuid() })
   .strict();
 export type CancelBodyInput = z.infer<typeof cancelBodySchema>;
+
 
 export const loginSchema = z
   .object({

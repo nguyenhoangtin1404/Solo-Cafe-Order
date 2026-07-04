@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
     return Response.json(
       {
         order_code: order.order_code,
+        cancel_token: order.cancel_token,
         total_amount: order.total_amount,
         payment_method: order.payment_method,
         wait_estimate: formatWaitEstimate(wait_estimate),

@@ -35,11 +35,15 @@ export async function POST(
     }
     const parsed = cancelBodySchema.safeParse(body);
     if (!parsed.success) {
-      return errorResponse("VALIDATION_ERROR", "order_id không hợp lệ.", 400);
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "cancel_token không hợp lệ.",
+        400
+      );
     }
-    const { order_id: orderId } = parsed.data;
+    const { cancel_token: cancelToken } = parsed.data;
 
-    const order = await cancelOrder(code, "customer", orderId);
+    const order = await cancelOrder(code, "customer", cancelToken);
     return Response.json({
       order_code: order.order_code,
       status: order.status,

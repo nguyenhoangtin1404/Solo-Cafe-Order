@@ -3,11 +3,12 @@
 import { LAST_ORDER_CODE_KEY, ORDER_CODE_RE } from "@/lib/constants";
 import { addDaysHCM, toInputDateHCM } from "@/lib/utils/timezone";
 
-type StoredOrder = { code: string; date: string };
+type StoredOrder = { code: string; date: string; cancelToken?: string };
 
 export const storageListeners = new Set<() => void>();
 
 let _cached: string | null | undefined = undefined;
+let _cachedToken: string | null | undefined = undefined;
 
 function isStoredOrder(v: unknown): v is StoredOrder {
   return (
@@ -38,6 +39,7 @@ export function pruneStaleOrders(): void {
       ) {
         storage.removeItem(LAST_ORDER_CODE_KEY);
         _cached = undefined;
+        _cachedToken = undefined;
       }
     } catch {
       // storage unavailable or access denied
@@ -65,6 +67,7 @@ export function readStoredOrder(): string | null {
         ORDER_CODE_RE.test(parsed.code)
       ) {
         _cached = parsed.code;
+        _cachedToken = parsed.cancelToken ?? null;
         return _cached;
       }
     } catch {
@@ -75,14 +78,27 @@ export function readStoredOrder(): string | null {
   return null;
 }
 
-export function invalidateCache(): void {
-  _cached = undefined;
+/** Returns the cancel_token for the stored order, or null if not found. */
+export function readStoredCancelToken(): string | null {
+  if (_cachedToken !== undefined) return _cachedToken;
+  // Trigger a full read to populate _cachedToken
+  readStoredOrder();
+  return _cachedToken ?? null;
 }
 
-export function saveLastOrderCode(code: string): void {
+export function invalidateCache(): void {
+  _cached = undefined;
+  _cachedToken = undefined;
+}
+
+export function saveLastOrderCode(code: string, cancelToken?: string): void {
   if (!ORDER_CODE_RE.test(code)) return;
   if (typeof window === "undefined") return;
-  const entry: StoredOrder = { code, date: toInputDateHCM(new Date()) };
+  const entry: StoredOrder = {
+    code,
+    date: toInputDateHCM(new Date()),
+    ...(cancelToken ? { cancelToken } : {}),
+  };
   const json = JSON.stringify(entry);
   let saved = false;
   for (const getStorage of [
@@ -99,6 +115,8 @@ export function saveLastOrderCode(code: string): void {
   }
   if (saved) {
     _cached = code;
+    _cachedToken = cancelToken ?? null;
     storageListeners.forEach((cb) => cb());
   }
 }
+

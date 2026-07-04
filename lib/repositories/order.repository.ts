@@ -25,7 +25,7 @@ export interface CreateOrderData {
   items: CreateOrderItemData[];
 }
 
-const WITH_ITEMS = "*, items:order_items(*)";
+const WITH_ITEMS = "id, order_code, cancel_token, status, payment_method, total_amount, pickup_name, note, customer_ref, cancelled_by, created_at, updated_at, items:order_items(*)"; 
 
 export async function createOrder(data: CreateOrderData): Promise<Order> {
   const supabase = createAdminSupabaseClient();
@@ -39,13 +39,15 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
   });
   if (error) throw error;
 
-  if (typeof rpcResult !== "string" || !rpcResult) {
+  // RPC now returns JSONB: { id: string, cancel_token: string }
+  const rpcData = rpcResult as { id?: string; cancel_token?: string } | null;
+  if (!rpcData || typeof rpcData.id !== "string" || !rpcData.id) {
     throw new Error(
       `create_order RPC returned unexpected result: ${JSON.stringify(rpcResult)}`
     );
   }
 
-  const order = await findById(rpcResult);
+  const order = await findById(rpcData.id);
   if (!order) {
     throw new AppError(
       "INTERNAL_ERROR",

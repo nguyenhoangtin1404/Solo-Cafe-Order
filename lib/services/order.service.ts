@@ -343,14 +343,19 @@ export async function getOrderItemsWithImages(
 export async function cancelOrder(
   orderCode: string,
   actor: "customer" | "owner",
-  expectedId?: string
+  cancelToken?: string
 ): Promise<Order> {
   const order = await orderRepo.findByCode(orderCode);
   if (!order) {
     throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
   }
-  if (expectedId !== undefined && order.id !== expectedId) {
-    throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
+
+  // Customer cancel: validate cancel_token — keeps order existence opaque to attackers.
+  // Always return 404 (not 403) on token mismatch to prevent order enumeration.
+  if (actor === "customer") {
+    if (!cancelToken || order.cancel_token !== cancelToken) {
+      throw new AppError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng.", 404);
+    }
   }
 
   if (!VALID_TRANSITIONS[order.status].includes(ORDER_STATUS.CANCELLED)) {
@@ -375,6 +380,7 @@ export async function cancelOrder(
   }
   return updated;
 }
+
 
 export async function updateStatus(
   id: string,
